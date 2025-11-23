@@ -155,6 +155,53 @@ if(importBtn && importFile){
   });
 }
 
+// --- EXPORT PDF ---
+const pdfBtn = document.getElementById("pdfBtn");
+
+pdfBtn.addEventListener("click", () => {
+  if (!currentPlanning) return;
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  // Titre principal
+  doc.setFont("Helvetica", "bold");
+  doc.setFontSize(18);
+  doc.text("Программа встречи в будние дни", 14, 18);
+
+  // Date
+  doc.setFontSize(13);
+  doc.setFont("Helvetica", "normal");
+  doc.text(currentPlanning.date || "", 14, 28);
+
+  // Construire tableau PDF
+  const rows = currentPlanning.items.map(item => [
+    item.time || "",
+    item.theme || "",
+    item.person || ""
+  ]);
+
+  doc.autoTable({
+    startY: 40,
+    head: [["Время", "Тема", "Назначенный"]],
+    body: rows,
+    styles: {
+      font: "Helvetica",
+      fontSize: 11,
+      cellPadding: 3,
+    },
+    headStyles: {
+      fillColor: [60, 60, 60],
+      textColor: [255, 255, 255]
+    },
+    alternateRowStyles: { fillColor: [245, 245, 245] }
+  });
+
+  // Télécharger
+  doc.save(`programme-${(currentPlanning.date || "planning").replace(/\s+/g, "_")}.pdf`);
+});
+
+
 // init : load server planning then override with localStorage if present
 (async function init(){
   const server = await fetchServerPlanning();
