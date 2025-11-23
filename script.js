@@ -176,32 +176,37 @@ if (importBtn && importFile) {
   });
 }
 
-// --- EXPORT PDF ---
+// --- EXPORT PDF FIDÈLE AU “PROGRAMME VCM”
 if (pdfBtn) {
   pdfBtn.addEventListener("click", () => {
     if (!currentPlanning) return;
 
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF("p", "mm", "a4");
-
     const pageWidth = doc.internal.pageSize.getWidth();
 
-    // Titre centré
+    // Titre principal
     doc.setFont("Helvetica", "bold");
     doc.setFontSize(16);
-    doc.text("Программа встречи", pageWidth / 2, 18, { align: "center" });
+    doc.text("Программа встречи в будние дни", pageWidth / 2, 18, { align: "center" });
 
-    // Date centrée
+    // Date
     doc.setFont("Helvetica", "normal");
     doc.setFontSize(12);
     doc.text(currentPlanning.date || "", pageWidth / 2, 26, { align: "center" });
 
-    // Construire tableau
-    const rows = currentPlanning.items.map((item) => [
-      item.time || "",
-      item.theme || "",
-      item.person || "",
-    ]);
+    // Construire tableau avec couleurs de section
+    const rows = currentPlanning.items.map(item => {
+      let bgColor = [255, 255, 255]; // défaut blanc
+      if(item.section === 1) bgColor = [229, 246, 245];       // section1
+      if(item.section === 2) bgColor = [255, 244, 230];       // section2
+      if(item.section === 3) bgColor = [251, 234, 234];       // section3
+      return [
+        { content: item.time || "", styles: { halign: "center", fillColor: bgColor } },
+        { content: item.theme || "", styles: { halign: "left", fillColor: bgColor } },
+        { content: item.person || "", styles: { halign: "right", fillColor: bgColor } },
+      ];
+    });
 
     doc.autoTable({
       startY: 36,
@@ -210,24 +215,19 @@ if (pdfBtn) {
       styles: {
         font: "Helvetica",
         fontSize: 10,
-        cellPadding: 4,
+        cellPadding: 3,
         valign: "middle",
       },
-      columnStyles: {
-        0: { halign: "center", cellWidth: 25 },
-        1: { halign: "left", cellWidth: 125 },
-        2: { halign: "right", cellWidth: 50 },
-      },
       headStyles: {
-        fillColor: [50, 50, 50],
+        fillColor: [60, 60, 60],
         textColor: [255, 255, 255],
         fontStyle: "bold",
+        halign: "center",
       },
-      bodyStyles: {
-        fillColor: [255, 255, 255],
-      },
-      alternateRowStyles: {
-        fillColor: [245, 245, 245],
+      columnStyles: {
+        0: { cellWidth: 25 },
+        1: { cellWidth: 125 },
+        2: { cellWidth: 50 },
       },
       tableLineWidth: 0.2,
       tableLineColor: 200,
