@@ -2,81 +2,59 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <!-- Couleur du thème (PWA) -->
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#ffffff">
-
   <title>Программа встречи — editable</title>
 
-  <!-- Favicon / logo -->
-  <link rel="icon" type="image/jpeg" href="logo.jpeg">
-  <link rel="apple-touch-icon" href="logo.jpeg">
-
-  <!-- PWA manifest -->
   <link rel="manifest" href="manifest.json">
-
-  <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
   <header class="topbar">
     <div class="brand">
       <img src="logo.jpeg" alt="logo" class="logo" id="siteLogo"/>
-      <h1>Программа встречи</h1>
+      <div>
+        <h1>Программа встречи</h1>
+        <div id="subtitle" class="subtitle">Редактируй одну неделю, exporte deux semaines en PDF</div>
+      </div>
     </div>
 
     <div class="controls">
-      <button id="resetBtn" title="Recharger le planning d'origine (fichier planning.json)">Reset → server</button>
-      <button id="saveBtn" title="Sauvegarder dans votre navigateur (localStorage)">Sauvegarder (local)</button>
-      <button id="exportBtn" title="Exporter le planning en JSON">Exporter JSON</button>
-
-      <input id="importFile" type="file" accept=".json" hidden />
-      <button id="importBtn" title="Importer un fichier planning.json">Importer JSON</button>
-
-      <button id="pdfBtn" title="Exporter en PDF">Exporter PDF</button>
+      <select id="weekSelect" title="Sélectionner une semaine"></select>
+      <button id="resetBtn">Reset → server</button>
+      <button id="saveBtn">Sauvegarder (local)</button>
+      <button id="exportBtn">Exporter JSON</button>
+      <input id="importFile" type="file" accept=".json" hidden/>
+      <button id="importBtn">Importer JSON</button>
+      <button id="pdfBtn">Exporter PDF</button>
     </div>
   </header>
 
   <main>
     <section id="meta">
-      <div id="dateDisplay"></div>
-      <div id="infoText">
-        Cliquez sur une zone modifiable (thème, durée, nom) pour éditer.  
-        Les modifications sont enregistrées localement.
-      </div>
+      <div id="dateDisplay" class="dateDisplay"></div>
+      <div id="infoText">Cliquez sur un champ pour éditer (thème, durée, personne, note). Les modifications sont locales.</div>
     </section>
 
     <section id="planning" aria-live="polite"></section>
 
-    <!-- Prévisualisation PDF -->
-    <section id="pdfPreviewContainer" style="margin-top:20px; display:none;">
+    <section id="pdfPreviewContainer" style="display:none;margin-top:16px;">
       <h2>Prévisualisation PDF</h2>
-      <iframe id="pdfPreview" style="width:100%; height:500px; border:1px solid #ccc;"></iframe>
+      <iframe id="pdfPreview" style="width:100%; height:600px; border:1px solid #ccc;"></iframe>
     </section>
   </main>
 
   <footer>
-    <small>Version A2 — modifications locales (localStorage).  
-      Pour GitHub Pages : déposer ces fichiers dans votre repo.</small>
+    <small>Version A3 — Export PDF 2 semaines par page. Basé sur ton modèle PDF. :contentReference[oaicite:1]{index=1}</small>
   </footer>
 
-  <!-- Librairies PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-
-  <!-- Script -->
   <script src="script.js"></script>
 
-  <!-- Fallback logo -->
   <script>
     const img = document.getElementById('siteLogo');
-    if (img) {
-      img.addEventListener('error', () => {
-        img.src = 'logo.jpeg';
-      });
-    }
+    if(img) img.addEventListener('error', ()=> img.src='logo.jpeg');
   </script>
 </body>
 </html>
