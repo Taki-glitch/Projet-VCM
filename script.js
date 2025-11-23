@@ -1,4 +1,4 @@
-/* script.js — Version A4 FINAL — PDF identique au modèle
+/* script.js — Version A4 FINAL CORRIGÉE — PDF lisible
    - Édition complète par semaine
    - Sauvegarde localStorage
    - Recalcul automatique des horaires
@@ -25,7 +25,7 @@ let currentWeekIndex = 0;
 /* -----------------------------
    CHARGEMENT DU PLANNING.JSON
 --------------------------------*/
-async function loadServer(){
+async function loadServer() {
   try {
     const res = await fetch("planning.json",{cache:"no-store"});
     if(!res.ok) throw new Error("planning.json non trouvé");
@@ -226,7 +226,6 @@ function exportPDF(){
   const lineHeight = 12;
   const timeWidth = 50;
   const durWidth = 40;
-  const themeWidth = colWidth - timeWidth - durWidth - 12;
   const sectionColors = ["#e6f7f5","#fff7e6","#fff1f2"];
 
   function renderWeek(xStart, yStart, week){
@@ -298,9 +297,9 @@ function exportPDF(){
     if(weeks[i+1]) renderWeek(marginLeft + colWidth + colGap, marginTop, weeks[i+1]);
   }
 
-  const url = doc.output("bloburl");
-  pdfPreviewContainer.style.display = "block";
-  pdfPreviewIframe.src = url;
+  // Affiche PDF dans un nouvel onglet lisible
+  const pdfUrl = doc.output("bloburl");
+  window.open(pdfUrl, "_blank");
 }
 
 pdfBtn.addEventListener("click", exportPDF);
