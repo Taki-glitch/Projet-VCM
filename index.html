@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Программа встречи — editable</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <!-- Exemple de logo — remplacez par votre image hébergée -->
+      <img src="/mnt/data/6B25934E-A3A7-49C8-830A-FA63ADC962B2.jpeg" alt="logo" class="logo"/>
+      <h1>Программа встречи</h1>
+    </div>
+
+    <div class="controls">
+      <button id="resetBtn" title="Recharger le planning d'origine (fichier planning.json)">Reset → server</button>
+      <button id="saveBtn" title="Sauvegarder dans votre navigateur (localStorage)">Sauvegarder (local)</button>
+      <button id="exportBtn" title="Télécharger le planning en JSON">Exporter JSON</button>
+      <input id="importFile" type="file" accept=".json" style="display:none"/>
+      <button id="importBtn" title="Importer un fichier planning.json">Importer JSON</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="meta">
+      <div id="dateDisplay"></div>
+      <div id="infoText">Cliquez sur un thème (flèche rouge) ou un nom (flèche bleue) pour éditer. Les modifications sont locales.</div>
+    </section>
+
+    <section id="planning"></section>
+  </main>
+
+  <footer>
+    <small>Version A1 — modifications locales (localStorage). Héberger sur GitHub Pages : déposer ces fichiers dans votre repo.</small>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
