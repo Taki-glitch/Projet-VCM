@@ -3,7 +3,7 @@
  - Edition inline (contentEditable)
  - Sauvegarde dans localStorage
  - Export / Import JSON
- - Export PDF fidèle “Programme VCM”
+ - Export PDF optimisé A4
  - Reset depuis le fichier serveur
 */
 
@@ -82,8 +82,10 @@ function handleEdit(e) {
   if (!row) return;
   const idx = Number(row.getAttribute("data-idx"));
   const field = el.getAttribute("data-field");
-  if (!currentPlanning || !Array.isArray(currentPlanning.items) || typeof idx !== "number") return;
+  if (!currentPlanning || !Array.isArray(currentPlanning.items) || typeof idx !== "number")
+    return;
   currentPlanning.items[idx][field] = el.textContent.trim();
+
   try {
     localStorage.setItem(PLANNING_KEY, JSON.stringify(currentPlanning));
   } catch (err) {
@@ -91,7 +93,7 @@ function handleEdit(e) {
   }
 }
 
-// save button
+// save button explicit
 if (saveBtn) {
   saveBtn.addEventListener("click", () => {
     if (!currentPlanning) return;
@@ -133,7 +135,10 @@ if (exportBtn) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    const safeDate = (currentPlanning.date || "planning").replace(/[^\w\d\-_.]/g, "_");
+    const safeDate = (currentPlanning.date || "planning").replace(
+      /[^\w\d\-_.]/g,
+      "_"
+    );
     a.download = `planning-export-${safeDate}.json`;
     document.body.appendChild(a);
     a.click();
@@ -167,62 +172,56 @@ if (importBtn && importFile) {
   });
 }
 
-// --- EXPORT PDF fidèle Programme VCM ---
+// --- EXPORT PDF A4 corrige ---
 if (pdfBtn) {
   pdfBtn.addEventListener("click", () => {
     if (!currentPlanning) return;
 
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF("p", "mm", "a4");
+
     const pageWidth = doc.internal.pageSize.getWidth();
 
     // Titre principal
     doc.setFont("Helvetica", "bold");
-    doc.setFontSize(16);
-    doc.text("Программа встречи в будние дни", pageWidth / 2, 18, { align: "center" });
+    doc.setFontSize(18);
+    doc.text("Программа встречи в будние дни", 14, 18);
 
     // Date
+    doc.setFontSize(13);
     doc.setFont("Helvetica", "normal");
-    doc.setFontSize(12);
-    doc.text(currentPlanning.date || "", pageWidth / 2, 26, { align: "center" });
+    doc.text(currentPlanning.date || "", 14, 28);
 
-    // Construire tableau avec couleurs de section
-    const rows = currentPlanning.items.map((item) => {
-      let bgColor = [255, 255, 255];
-      if (item.section === 1) bgColor = [229, 246, 245];
-      if (item.section === 2) bgColor = [255, 244, 230];
-      if (item.section === 3) bgColor = [251, 234, 234];
-      return [
-        { content: item.time || "", styles: { halign: "center", fillColor: bgColor } },
-        { content: item.theme || "", styles: { halign: "left", fillColor: bgColor } },
-        { content: item.person || "", styles: { halign: "right", fillColor: bgColor } },
-      ];
-    });
+    // Construire tableau PDF
+    const rows = currentPlanning.items.map((item) => [
+      item.time || "",
+      item.theme || "",
+      item.person || "",
+    ]);
+
+    const margin = 14;
+    const usableWidth = pageWidth - margin * 2;
 
     doc.autoTable({
-      startY: 36,
+      startY: 40,
       head: [["Время", "Тема", "Назначенный"]],
       body: rows,
       styles: {
         font: "Helvetica",
-        fontSize: 10,
+        fontSize: 11,
         cellPadding: 3,
-        valign: "middle",
       },
       headStyles: {
         fillColor: [60, 60, 60],
         textColor: [255, 255, 255],
-        fontStyle: "bold",
-        halign: "center",
       },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
       columnStyles: {
         0: { cellWidth: 25 },
-        1: { cellWidth: 125 },
-        2: { cellWidth: 50 },
+        1: { cellWidth: usableWidth - 25 - 40 }, // 40 mm pour la colonne personne
+        2: { cellWidth: 40 },
       },
-      tableLineWidth: 0.2,
-      tableLineColor: 200,
-      margin: { left: 14, right: 14 },
+      margin: { left: margin, right: margin },
     });
 
     const safeDate = (currentPlanning.date || "planning").replace(/\s+/g, "_");
@@ -239,9 +238,7 @@ if (pdfBtn) {
   if (local) {
     try {
       const localObj = JSON.parse(local);
-      if (localObj && Array.isArray(localObj.items)) {
-        pl = localObj;
-      }
+      if (localObj && Array.isArray(localObj.items)) pl = localObj;
     } catch (e) {
       console.warn("localStorage parse error", e);
     }
