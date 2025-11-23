@@ -216,73 +216,100 @@ function exportPDF(){
 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({unit:"pt", format:"a4"});
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
 
-  const marginLeft = 32, marginTop = 40, colGap = 18, lineHeight = 10.5;
-  const columnWidth = (doc.internal.pageSize.getWidth() - marginLeft*2 - colGap) / 2;
-  const timeWidth = 50, themeWidth = 230, durWidth = 40;
-  const titleSpacing = 14, sectionSpacing = 10;
+  const marginLeft = 32;
+  const marginTop = 40;
+  const colGap = 18;
 
-  function renderWeek(x, y, week){
-    doc.setFont("Helvetica","bold");
-    doc.setFontSize(11);
-    doc.text(planningData.title||"", x, y); y+=titleSpacing;
+  const colWidth = (pageWidth - marginLeft*2 - colGap)/2;
+  const lineHeight = 12;
 
+  const timeWidth = 50;
+  const durWidth = 40;
+  const themeWidth = colWidth - timeWidth - durWidth - 12; // 12pt padding
+
+  const sectionColors = ["#e6f7f5","#fff7e6","#fff1f2"];
+
+  function renderWeek(xStart, yStart, week, colIndex){
+    let y = yStart;
+
+    // Titre
+    doc.setFont("Helvetica","bold"); doc.setFontSize(11);
+    const titleLines = doc.splitTextToSize(planningData.title||"", colWidth);
+    doc.text(titleLines, xStart, y); y += lineHeight*titleLines.length + 4;
+
+    // Date / Scripture / Chairman
     doc.setFont("Helvetica","normal"); doc.setFontSize(10);
-    doc.text(`${week.date} | ${week.scripture}`, x, y); y+=titleSpacing;
-    doc.text(`Председатель : ${week.chairman||""}`, x, y); y+=titleSpacing;
+    doc.text(`${week.date} | ${week.scripture}`, xStart, y); y += lineHeight;
+    doc.text(`Председатель : ${week.chairman||""}`, xStart, y); y += lineHeight + 4;
 
-    week.sections.forEach(section=>{
+    week.sections.forEach((section,sidx)=>{
+      // Section title
       if(section.title){
-        doc.setFont("Helvetica","bold"); doc.setFontSize(10); doc.setTextColor(60);
-        doc.text(section.title + (section.location ? " — "+section.location : ""), x, y);
-        doc.setTextColor(0); y+=sectionSpacing;
+        doc.setFont("Helvetica","bold"); doc.setFontSize(10);
+        doc.setTextColor(60);
+        doc.text(section.title + (section.location ? " — "+section.location : ""), xStart, y);
+        doc.setTextColor(0);
+        y += lineHeight;
       }
 
+      // Items
       section.items.forEach(item=>{
+        // Fond alterné
+        doc.setFillColor(sectionColors[sidx % sectionColors.length]);
+        doc.rect(xStart-2, y-2, colWidth, lineHeight, 'F');
+
+        // Time
         doc.setFont("Helvetica","bold"); doc.setFontSize(9);
-        doc.text(item.time||"", x, y);
+        doc.text(item.time||"", xStart, y);
 
-        const part = item.part ? item.part+" " : "";
-        const theme = part + (item.theme||"");
+        // Theme
+        const themeText = (item.part ? item.part + " " : "") + (item.theme||"");
         doc.setFont("Helvetica","normal");
-        doc.text(theme, x + timeWidth, y);
+        const themeLines = doc.splitTextToSize(themeText, themeWidth);
+        doc.text(themeLines, xStart + timeWidth, y);
 
-        const durText = item.duration ? (item.duration + " мин.") : "";
-        doc.text(durText, x + timeWidth + themeWidth, y);
+        // Duration
+        const durText = item.duration ? item.duration + " мин." : "";
+        doc.text(durText, xStart + timeWidth + themeWidth, y);
 
-        y += lineHeight;
-
+        // Person + note
         if(item.person || item.note){
           doc.setFont("Helvetica","italic");
-          let line = item.person || "";
-          if(item.note) line += (line ? " — " : "") + item.note;
-          doc.text(line, x + timeWidth + 12, y);
-          y += lineHeight;
+          const personNote = [item.person || "", item.note || ""].filter(Boolean).join(" — ");
+          const pnLines = doc.splitTextToSize(personNote, themeWidth + durWidth);
+          doc.text(pnLines, xStart + timeWidth, y + lineHeight);
+          y += lineHeight * pnLines.length;
         }
 
-        y += 2;
+        y += lineHeight;
+        // Vérifier si on dépasse la page
+        if(y > pageHeight - marginTop){
+          doc.addPage();
+          y = marginTop;
+        }
       });
 
-      y += 4;
+      y += 6; // espace après section
     });
 
     return y;
   }
 
+  // Parcours 2 semaines par page
   const weeks = planningData.weeks;
-
   for(let i=0; i<weeks.length; i+=2){
     if(i>0) doc.addPage();
-    renderWeek(marginLeft, marginTop, weeks[i]);
-    if(weeks[i+1]) renderWeek(marginLeft + columnWidth + colGap, marginTop, weeks[i+1]);
+    const y1 = renderWeek(marginLeft, marginTop, weeks[i], 0);
+    if(weeks[i+1]) renderWeek(marginLeft + colWidth + colGap, marginTop, weeks[i+1], 1);
   }
 
   const url = doc.output("bloburl");
   pdfPreviewContainer.style.display = "block";
   pdfPreviewIframe.src = url;
 }
-
-pdfBtn.addEventListener("click", exportPDF);
 
 /* -----------------------------
    SÉLECTION SEMAINE
