@@ -4,30 +4,19 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#ffffff">
-
   <title>Программа встречи — editable</title>
 
-  <!-- Favicon / logo (place logo.jpeg à la racine du repo pour GitHub Pages) -->
   <link rel="icon" type="image/jpeg" href="logo.jpeg">
-
-  <!-- PWA manifest -->
   <link rel="manifest" href="manifest.json">
-
-  <!-- iOS -->
   <link rel="apple-touch-icon" href="logo.jpeg">
-
-  <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
   <header class="topbar">
     <div class="brand">
-      <!-- Use logo at repo root (logo.jpeg). If not found (local testing) JS will try /mnt/data/logo.jpeg -->
       <img src="logo.jpeg" alt="logo" class="logo" id="siteLogo"/>
       <h1>Программа встречи</h1>
     </div>
-
     <div class="controls">
       <button id="resetBtn" title="Recharger le planning d'origine (fichier planning.json)">Reset → server</button>
       <button id="saveBtn" title="Sauvegarder dans votre navigateur (localStorage)">Sauvegarder (local)</button>
@@ -44,7 +33,6 @@
       <div id="dateDisplay"></div>
       <div id="infoText">Cliquez sur un thème (flèche rouge) ou un nom (flèche bleue) pour éditer. Les modifications sont locales.</div>
     </section>
-
     <section id="planning" aria-live="polite"></section>
   </main>
 
@@ -52,27 +40,21 @@
     <small>Version A1 — modifications locales (localStorage). Héberger sur GitHub Pages : déposer ces fichiers dans votre repo.</small>
   </footer>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
   <script src="script.js"></script>
 
   <script>
-    // Fallback: si logo.jpeg n'est pas accessible (ex: test local ici), remplace par le chemin uploadé
     (function(){
       const img = document.getElementById('siteLogo');
       if(!img) return;
       img.addEventListener('error', () => {
-        // chemin local uploadé — utile pour tests locaux dans cet environnement
         const localPath = '/mnt/data/logo.jpeg';
         img.src = localPath;
       });
-      // Try to force a re-check (in case cached 404)
       const src = img.src;
-      img.src = src; 
+      img.src = src;
     })();
   </script>
-  
-  <!-- Librairies PDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-
 </body>
 </html>
