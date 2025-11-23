@@ -1,216 +1,71 @@
-/* style.css — version "Programme VCM" */
-
 :root {
-  /* couleurs principales */
-  --bg: #f7f7f7;           /* fond général */
-  --card: #ffffff;          /* fond des lignes */
-  --muted: #666666;         /* texte secondaire */
-  --accent: #007bff;        /* couleur boutons / focus */
-
-  /* couleurs sections du planning */
-  --section1: #2f968f;      /* teal pour section 1 */
-  --section2: #d08a00;      /* orange pour section 2 */
-  --section3: #b83b2b;      /* rouge pour section 3 */
-
+  --bg: #f7f7f7;
+  --card: #ffffff;
+  --muted: #666666;
+  --accent: #007bff;
+  --section1: #2f968f;
+  --section2: #d08a00;
+  --section3: #b83b2b;
   --gap: 12px;
   --radius: 6px;
 
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
-/* reset basique */
-* {
-  box-sizing: border-box;
-}
-body {
-  margin: 0;
-  background: var(--bg);
-  color: #222;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:#222;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
 }
 
-/* TOPBAR */
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  background: linear-gradient(90deg, #ffffff, #f1f1f1);
-  border-bottom: 1px solid #e2e2e2;
-  gap: 16px;
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px;
+  background:linear-gradient(90deg, #ffffff, #f1f1f1);
+  border-bottom:1px solid #e2e2e2;
+  gap:16px;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:64px;height:64px;object-fit:contain;background:#fff;border-radius:8px;border:1px solid #ddd;padding:6px;box-shadow:0 1px 2px rgba(0,0,0,0.03);}
+.brand h1{font-size:1.15rem;margin:0;font-weight:bold;color:#333}
 
-.logo {
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
-  background: #fff;
-  border-radius: 8px;
-  border: 1px solid #ddd;
-  padding: 6px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-}
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.controls button{background:#fff;border:1px solid #ddd;padding:8px 10px;border-radius:6px;cursor:pointer;font-size:0.95rem;transition:all 0.2s}
+.controls button:hover{box-shadow:0 2px 6px rgba(0,0,0,0.06)}
 
-.brand h1 {
-  font-size: 1.15rem;
-  margin: 0;
-  font-weight: bold;
-  color: #333;
-}
+main{padding:16px;max-width:1100px;margin:0 auto}
+#meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+#dateDisplay{font-weight:700;font-size:1rem}
+#infoText{font-size:0.85rem;color:var(--muted)}
 
-/* BOUTONS TOPBAR */
-.controls {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-}
+#planning{display:block;border-radius:8px;overflow:hidden}
 
-.controls button {
-  background: #fff;
-  border: 1px solid #ddd;
-  padding: 8px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
-}
+.row{display:grid;grid-template-columns:90px 1fr 220px;gap:8px;align-items:center;padding:10px;border-bottom:1px solid #eee;background:var(--card);transition:background 0.2s}
+.row.head{background:#f1f1f1;border-bottom:2px solid #ddd;font-weight:700}
+.time{color:var(--muted);font-weight:600;font-size:0.9rem}
 
-.controls button:hover {
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-}
+.theme, .person{padding:8px 10px;border-radius:6px;min-height:28px;white-space:pre-wrap}
+.editable{cursor:text}
+.editable:focus{outline:2px solid rgba(0,123,255,0.2);box-shadow:0 1px 0 rgba(0,0,0,0.02);background-color:#fffbe6}
 
-/* MAIN */
-main {
-  padding: 16px;
-  max-width: 1100px;
-  margin: 0 auto;
-}
+.section-1{border-left:6px solid var(--section1)}
+.section-1 .theme{background:linear-gradient(90deg,#e9f6f5,#f6f9f9)}
+.section-2{border-left:6px solid var(--section2)}
+.section-2 .theme{background:linear-gradient(90deg,#fff4e6,#fffbf2)}
+.section-3{border-left:6px solid var(--section3)}
+.section-3 .theme{background:linear-gradient(90deg,#fbeaea,#fff7f6)}
 
-#meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
+footer{padding:16px;font-size:0.75rem;color:var(--muted);text-align:center}
 
-#dateDisplay {
-  font-weight: 700;
-  font-size: 1rem;
-}
-
-#infoText {
-  font-size: 0.85rem;
-  color: var(--muted);
-}
-
-/* PLANNING */
-#planning {
-  display: block;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-/* lignes comme tableau */
-.row {
-  display: grid;
-  grid-template-columns: 90px 1fr 220px;
-  gap: 8px;
-  align-items: center;
-  padding: 10px;
-  border-bottom: 1px solid #eee;
-  background: var(--card);
-  transition: background 0.2s ease;
-}
-
-/* Header (si utilisé) */
-.row.head {
-  background: #f1f1f1;
-  border-bottom: 2px solid #ddd;
-  font-weight: 700;
-}
-
-/* texte temps */
-.time {
-  color: var(--muted);
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-/* cellules éditables */
-.theme,
-.person {
-  padding: 8px 10px;
-  border-radius: 6px;
-  min-height: 28px;
-  white-space: pre-wrap;
-}
-
-.editable {
-  cursor: text;
-}
-
-.editable:focus {
-  outline: 2px solid rgba(0, 123, 255, 0.2);
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
-  background-color: #fffbe6;
-}
-
-/* SECTION COLORS — correspond aux couleurs du PDF VCM */
-.section-1 {
-  border-left: 6px solid var(--section1);
-}
-
-.section-1 .theme {
-  background: linear-gradient(90deg, #e9f6f5, #f6f9f9);
-}
-
-.section-2 {
-  border-left: 6px solid var(--section2);
-}
-
-.section-2 .theme {
-  background: linear-gradient(90deg, #fff4e6, #fffbf2);
-}
-
-.section-3 {
-  border-left: 6px solid var(--section3);
-}
-
-.section-3 .theme {
-  background: linear-gradient(90deg, #fbeaea, #fff7f6);
-}
-
-/* FOOTER */
-footer {
-  padding: 16px;
-  font-size: 0.75rem;
-  color: var(--muted);
-  text-align: center;
-}
-
-/* RESPONSIVE */
-@media (max-width: 800px) {
-  .row {
-    grid-template-columns: 70px 1fr 160px;
-  }
-  .logo {
-    width: 48px;
-    height: 48px;
-    padding: 5px;
-  }
-  .brand h1 {
-    font-size: 1rem;
-  }
-  .controls button {
-    font-size: 0.85rem;
-    padding: 6px 8px;
-  }
+@media(max-width:800px){
+  .row{grid-template-columns:70px 1fr 160px}
+  .logo{width:48px;height:48px;padding:5px}
+  .brand h1{font-size:1rem}
+  .controls button{font-size:0.85rem;padding:6px 8px}
 }
