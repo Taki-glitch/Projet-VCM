@@ -15,99 +15,113 @@ const resetBtn = document.getElementById("resetBtn");
 const exportBtn = document.getElementById("exportBtn");
 const importBtn = document.getElementById("importBtn");
 const importFile = document.getElementById("importFile");
+const pdfBtn = document.getElementById("pdfBtn");
 
 let currentPlanning = null;
 
 // util : charger planning.json depuis serveur
-async function fetchServerPlanning(){
-  try{
-    const res = await fetch("planning.json", {cache: "no-store"});
-    if(!res.ok) throw new Error("planning.json non trouvé");
+async function fetchServerPlanning() {
+  try {
+    const res = await fetch("planning.json", { cache: "no-store" });
+    if (!res.ok) throw new Error("planning.json non trouvé");
     const data = await res.json();
     return data;
-  }catch(e){
+  } catch (e) {
     console.warn("Impossible de charger planning.json :", e);
     return null;
   }
 }
 
 // render
-function render(pl){
-  currentPlanning = pl || {date:"", items:[]};
+function render(pl) {
+  currentPlanning = pl || { date: "", items: [] };
   dateDisplay.textContent = pl.date || "";
-  if(!Array.isArray(pl.items)) pl.items = [];
+  if (!Array.isArray(pl.items)) pl.items = [];
 
-  const html = pl.items.map((it, idx) => {
-    // section class optional — check for 0 too
-    const sectionClass = (it.section !== undefined && it.section !== null) ? `section-${it.section}` : "";
-    const theme = escapeHtml(it.theme || "");
-    const person = escapeHtml(it.person || "");
-    const time = escapeHtml(it.time || "");
-    return `
+  const html = pl.items
+    .map((it, idx) => {
+      const sectionClass =
+        it.section !== undefined && it.section !== null
+          ? `section-${it.section}`
+          : "";
+      const theme = escapeHtml(it.theme || "");
+      const person = escapeHtml(it.person || "");
+      const time = escapeHtml(it.time || "");
+      return `
       <div class="row ${sectionClass}" data-idx="${idx}">
         <div class="time">${time}</div>
         <div class="theme editable" contenteditable="true" data-field="theme" aria-label="Thème">${theme}</div>
         <div class="person editable" contenteditable="true" data-field="person" aria-label="Personne">${person}</div>
       </div>
     `;
-  }).join("");
-  planningContainer.innerHTML = html || "<div style='padding:12px;color:#666'>Aucun élément dans le planning.</div>";
+    })
+    .join("");
+  planningContainer.innerHTML =
+    html || "<div style='padding:12px;color:#666'>Aucun élément dans le planning.</div>";
 
   // add listeners for inline edits
-  planningContainer.querySelectorAll(".editable").forEach(el => {
+  planningContainer.querySelectorAll(".editable").forEach((el) => {
     el.addEventListener("input", handleEdit);
     el.addEventListener("blur", handleEdit); // save on blur
   });
 }
 
 // escape HTML small util
-function escapeHtml(s){
-  return (s||"").toString()
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;");
+function escapeHtml(s) {
+  return (s || "")
+    .toString()
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
 }
 
 // handle edit
-function handleEdit(e){
+function handleEdit(e) {
   const el = e.target;
   const row = el.closest(".row");
-  if(!row) return;
+  if (!row) return;
   const idx = Number(row.getAttribute("data-idx"));
   const field = el.getAttribute("data-field");
-  if(!currentPlanning || !Array.isArray(currentPlanning.items) || typeof idx !== "number") return;
-  // store raw textContent (preserve simple text)
+  if (
+    !currentPlanning ||
+    !Array.isArray(currentPlanning.items) ||
+    typeof idx !== "number"
+  )
+    return;
   currentPlanning.items[idx][field] = el.textContent.trim();
-  // autosave to localStorage
   try {
     localStorage.setItem(PLANNING_KEY, JSON.stringify(currentPlanning));
-  } catch(err) {
+  } catch (err) {
     console.warn("localStorage set error", err);
   }
 }
 
-// save button explicit (redundant because autosave)
-if(saveBtn) {
+// save button explicit
+if (saveBtn) {
   saveBtn.addEventListener("click", () => {
-    if(!currentPlanning) return;
-    try{
+    if (!currentPlanning) return;
+    try {
       localStorage.setItem(PLANNING_KEY, JSON.stringify(currentPlanning));
       saveBtn.textContent = "Saved ✅";
-      setTimeout(()=> saveBtn.textContent = "Sauvegarder (local)", 1500);
-    }catch(e){
+      setTimeout(() => (saveBtn.textContent = "Sauvegarder (local)"), 1500);
+    } catch (e) {
       alert("Impossible de sauvegarder localement : " + e.message);
     }
   });
 }
 
 // reset from server file
-if(resetBtn){
+if (resetBtn) {
   resetBtn.addEventListener("click", async () => {
     const server = await fetchServerPlanning();
-    if(server){
+    if (server) {
       render(server);
-      try{ localStorage.removeItem(PLANNING_KEY); }catch(e){}
-      alert("Planning réinitialisé depuis le fichier serveur. Vos modifications locales ont été supprimées.");
+      try {
+        localStorage.removeItem(PLANNING_KEY);
+      } catch (e) {}
+      alert(
+        "Planning réinitialisé depuis le fichier serveur. Vos modifications locales ont été supprimées."
+      );
     } else {
       alert("Impossible de recharger planning.json depuis le serveur.");
     }
@@ -115,14 +129,19 @@ if(resetBtn){
 }
 
 // export JSON
-if(exportBtn){
+if (exportBtn) {
   exportBtn.addEventListener("click", () => {
-    if(!currentPlanning) return;
-    const blob = new Blob([JSON.stringify(currentPlanning, null, 2)], {type:"application/json"});
+    if (!currentPlanning) return;
+    const blob = new Blob([JSON.stringify(currentPlanning, null, 2)], {
+      type: "application/json",
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    const safeDate = (currentPlanning.date||"planning").replace(/[^\w\d\-_.]/g,"_");
+    const safeDate = (currentPlanning.date || "planning").replace(
+      /[^\w\d\-_.]/g,
+      "_"
+    );
     a.download = `planning-export-${safeDate}.json`;
     document.body.appendChild(a);
     a.click();
@@ -132,91 +151,105 @@ if(exportBtn){
 }
 
 // import JSON
-if(importBtn && importFile){
-  importBtn.addEventListener("click", ()=> importFile.click());
-  importFile.addEventListener("change", (ev)=>{
+if (importBtn && importFile) {
+  importBtn.addEventListener("click", () => importFile.click());
+  importFile.addEventListener("change", (ev) => {
     const f = ev.target.files && ev.target.files[0];
-    if(!f) return;
+    if (!f) return;
     const reader = new FileReader();
-    reader.onload = e => {
-      try{
+    reader.onload = (e) => {
+      try {
         const obj = JSON.parse(e.target.result);
-        // basic validation
-        if(!Array.isArray(obj.items)) throw new Error("Format invalide : items manquant");
+        if (!Array.isArray(obj.items))
+          throw new Error("Format invalide : items manquant");
         render(obj);
-        try{ localStorage.setItem(PLANNING_KEY, JSON.stringify(obj)); }catch(e){}
+        try {
+          localStorage.setItem(PLANNING_KEY, JSON.stringify(obj));
+        } catch (e) {}
         alert("Planning importé et enregistré localement.");
-      }catch(err){
-        alert("Fichier JSON invalide : "+err.message);
+      } catch (err) {
+        alert("Fichier JSON invalide : " + err.message);
       }
     };
     reader.readAsText(f);
-    // reset input
     importFile.value = "";
   });
 }
 
 // --- EXPORT PDF ---
-const pdfBtn = document.getElementById("pdfBtn");
+if (pdfBtn) {
+  pdfBtn.addEventListener("click", () => {
+    if (!currentPlanning) return;
 
-pdfBtn.addEventListener("click", () => {
-  if (!currentPlanning) return;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF("p", "mm", "a4");
 
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
 
-  // Titre principal
-  doc.setFont("Helvetica", "bold");
-  doc.setFontSize(18);
-  doc.text("Программа встречи в будние дни", 14, 18);
+    // Titre centré
+    doc.setFont("Helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text("Программа встречи", pageWidth / 2, 18, { align: "center" });
 
-  // Date
-  doc.setFontSize(13);
-  doc.setFont("Helvetica", "normal");
-  doc.text(currentPlanning.date || "", 14, 28);
+    // Date centrée
+    doc.setFont("Helvetica", "normal");
+    doc.setFontSize(12);
+    doc.text(currentPlanning.date || "", pageWidth / 2, 26, { align: "center" });
 
-  // Construire tableau PDF
-  const rows = currentPlanning.items.map(item => [
-    item.time || "",
-    item.theme || "",
-    item.person || ""
-  ]);
+    // Construire tableau
+    const rows = currentPlanning.items.map((item) => [
+      item.time || "",
+      item.theme || "",
+      item.person || "",
+    ]);
 
-  doc.autoTable({
-    startY: 40,
-    head: [["Время", "Тема", "Назначенный"]],
-    body: rows,
-    styles: {
-      font: "Helvetica",
-      fontSize: 11,
-      cellPadding: 3,
-    },
-    headStyles: {
-      fillColor: [60, 60, 60],
-      textColor: [255, 255, 255]
-    },
-    alternateRowStyles: { fillColor: [245, 245, 245] }
+    doc.autoTable({
+      startY: 36,
+      head: [["Время", "Тема", "Назначенный"]],
+      body: rows,
+      styles: {
+        font: "Helvetica",
+        fontSize: 10,
+        cellPadding: 4,
+        valign: "middle",
+      },
+      columnStyles: {
+        0: { halign: "center", cellWidth: 25 },
+        1: { halign: "left", cellWidth: 125 },
+        2: { halign: "right", cellWidth: 50 },
+      },
+      headStyles: {
+        fillColor: [50, 50, 50],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+      },
+      bodyStyles: {
+        fillColor: [255, 255, 255],
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245],
+      },
+      tableLineWidth: 0.2,
+      tableLineColor: 200,
+      margin: { left: 14, right: 14 },
+    });
+
+    const safeDate = (currentPlanning.date || "planning").replace(/\s+/g, "_");
+    doc.save(`programme-${safeDate}.pdf`);
   });
-
-  // Télécharger
-  doc.save(`programme-${(currentPlanning.date || "planning").replace(/\s+/g, "_")}.pdf`);
-});
-
+}
 
 // init : load server planning then override with localStorage if present
-(async function init(){
+(async function init() {
   const server = await fetchServerPlanning();
-  let pl = server || {date:"", items:[]};
+  let pl = server || { date: "", items: [] };
 
-  // if user has local copy, use it
   const local = localStorage.getItem(PLANNING_KEY);
-  if(local){
-    try{
+  if (local) {
+    try {
       const localObj = JSON.parse(local);
-      if(localObj && Array.isArray(localObj.items)) {
-        pl = localObj;
-      }
-    }catch(e){
+      if (localObj && Array.isArray(localObj.items)) pl = localObj;
+    } catch (e) {
       console.warn("localStorage parse error", e);
     }
   }
