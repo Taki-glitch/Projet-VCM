@@ -2,7 +2,9 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Couleur du thème (PWA) -->
   <meta name="theme-color" content="#ffffff">
 
   <title>Программа встречи — editable</title>
@@ -28,9 +30,11 @@
     <div class="controls">
       <button id="resetBtn" title="Recharger le planning d'origine (fichier planning.json)">Reset → server</button>
       <button id="saveBtn" title="Sauvegarder dans votre navigateur (localStorage)">Sauvegarder (local)</button>
-      <button id="exportBtn" title="Télécharger le planning en JSON">Exporter JSON</button>
-      <input id="importFile" type="file" accept=".json" style="display:none"/>
+      <button id="exportBtn" title="Exporter le planning en JSON">Exporter JSON</button>
+
+      <input id="importFile" type="file" accept=".json" hidden />
       <button id="importBtn" title="Importer un fichier planning.json">Importer JSON</button>
+
       <button id="pdfBtn" title="Exporter en PDF">Exporter PDF</button>
     </div>
   </header>
@@ -38,7 +42,10 @@
   <main>
     <section id="meta">
       <div id="dateDisplay"></div>
-      <div id="infoText">Cliquez sur une zone modifiable (thème du discours/sujet, une durée ou un nom) pour éditer. Les modifications sont locales.</div>
+      <div id="infoText">
+        Cliquez sur une zone modifiable (thème, durée, nom) pour éditer.  
+        Les modifications sont enregistrées localement.
+      </div>
     </section>
 
     <section id="planning" aria-live="polite"></section>
@@ -51,25 +58,25 @@
   </main>
 
   <footer>
-    <small>Version A2 — modifications locales (localStorage). Héberger sur GitHub Pages : déposer ces fichiers dans votre repo.</small>
+    <small>Version A2 — modifications locales (localStorage).  
+      Pour GitHub Pages : déposer ces fichiers dans votre repo.</small>
   </footer>
 
   <!-- Librairies PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
+  <!-- Script -->
   <script src="script.js"></script>
 
+  <!-- Fallback logo -->
   <script>
-    // Fallback logo si erreur de chargement
-    (function(){
-      const img = document.getElementById('siteLogo');
-      if(!img) return;
+    const img = document.getElementById('siteLogo');
+    if (img) {
       img.addEventListener('error', () => {
-        img.src = '/mnt/data/logo.jpeg';
+        img.src = 'logo.jpeg';
       });
-      img.src = img.src; 
-    })();
+    }
   </script>
 </body>
 </html>
