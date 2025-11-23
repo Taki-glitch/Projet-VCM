@@ -9,12 +9,10 @@
 
   <!-- Favicon / logo -->
   <link rel="icon" type="image/jpeg" href="logo.jpeg">
+  <link rel="apple-touch-icon" href="logo.jpeg">
 
   <!-- PWA manifest -->
   <link rel="manifest" href="manifest.json">
-
-  <!-- iOS -->
-  <link rel="apple-touch-icon" href="logo.jpeg">
 
   <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css" />
@@ -31,7 +29,6 @@
       <button id="resetBtn" title="Recharger le planning d'origine (fichier planning.json)">Reset → server</button>
       <button id="saveBtn" title="Sauvegarder dans votre navigateur (localStorage)">Sauvegarder (local)</button>
       <button id="exportBtn" title="Télécharger le planning en JSON">Exporter JSON</button>
-
       <input id="importFile" type="file" accept=".json" style="display:none"/>
       <button id="importBtn" title="Importer un fichier planning.json">Importer JSON</button>
       <button id="pdfBtn" title="Exporter en PDF">Exporter PDF</button>
@@ -41,10 +38,16 @@
   <main>
     <section id="meta">
       <div id="dateDisplay"></div>
-      <div id="infoText">Cliquez sur une zone modifiable pour l'éditer et la modifier. Les modifications sont locales.</div>
+      <div id="infoText">Cliquez sur un thème (flèche rouge) ou un nom (flèche bleue) pour éditer. Les modifications sont locales.</div>
     </section>
 
     <section id="planning" aria-live="polite"></section>
+
+    <!-- Prévisualisation PDF -->
+    <section id="pdfPreviewContainer" style="margin-top:20px; display:none;">
+      <h2>Prévisualisation PDF</h2>
+      <iframe id="pdfPreview" style="width:100%; height:500px; border:1px solid #ccc;"></iframe>
+    </section>
   </main>
 
   <footer>
@@ -58,15 +61,14 @@
   <script src="script.js"></script>
 
   <script>
-    // Fallback logo si test local
+    // Fallback logo si erreur de chargement
     (function(){
       const img = document.getElementById('siteLogo');
       if(!img) return;
       img.addEventListener('error', () => {
         img.src = '/mnt/data/logo.jpeg';
       });
-      const src = img.src;
-      img.src = src;
+      img.src = img.src; 
     })();
   </script>
 </body>
