@@ -1,0 +1,15 @@
+{
+  "name": "Planning TPL",
+  "short_name": "Planning",
+  "start_url": "./",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "logo.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ],
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff"
+}
