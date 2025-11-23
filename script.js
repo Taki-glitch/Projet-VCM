@@ -3,7 +3,7 @@
  - Edition inline (contentEditable)
  - Sauvegarde dans localStorage
  - Export / Import JSON
- - Export PDF
+ - Export PDF fidèle “Programme VCM”
  - Reset depuis le fichier serveur
 */
 
@@ -82,12 +82,7 @@ function handleEdit(e) {
   if (!row) return;
   const idx = Number(row.getAttribute("data-idx"));
   const field = el.getAttribute("data-field");
-  if (
-    !currentPlanning ||
-    !Array.isArray(currentPlanning.items) ||
-    typeof idx !== "number"
-  )
-    return;
+  if (!currentPlanning || !Array.isArray(currentPlanning.items) || typeof idx !== "number") return;
   currentPlanning.items[idx][field] = el.textContent.trim();
   try {
     localStorage.setItem(PLANNING_KEY, JSON.stringify(currentPlanning));
@@ -96,7 +91,7 @@ function handleEdit(e) {
   }
 }
 
-// save button explicit
+// save button
 if (saveBtn) {
   saveBtn.addEventListener("click", () => {
     if (!currentPlanning) return;
@@ -138,10 +133,7 @@ if (exportBtn) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    const safeDate = (currentPlanning.date || "planning").replace(
-      /[^\w\d\-_.]/g,
-      "_"
-    );
+    const safeDate = (currentPlanning.date || "planning").replace(/[^\w\d\-_.]/g, "_");
     a.download = `planning-export-${safeDate}.json`;
     document.body.appendChild(a);
     a.click();
@@ -160,8 +152,7 @@ if (importBtn && importFile) {
     reader.onload = (e) => {
       try {
         const obj = JSON.parse(e.target.result);
-        if (!Array.isArray(obj.items))
-          throw new Error("Format invalide : items manquant");
+        if (!Array.isArray(obj.items)) throw new Error("Format invalide : items manquant");
         render(obj);
         try {
           localStorage.setItem(PLANNING_KEY, JSON.stringify(obj));
@@ -176,7 +167,7 @@ if (importBtn && importFile) {
   });
 }
 
-// --- EXPORT PDF FIDÈLE AU “PROGRAMME VCM”
+// --- EXPORT PDF fidèle Programme VCM ---
 if (pdfBtn) {
   pdfBtn.addEventListener("click", () => {
     if (!currentPlanning) return;
@@ -196,11 +187,11 @@ if (pdfBtn) {
     doc.text(currentPlanning.date || "", pageWidth / 2, 26, { align: "center" });
 
     // Construire tableau avec couleurs de section
-    const rows = currentPlanning.items.map(item => {
-      let bgColor = [255, 255, 255]; // défaut blanc
-      if(item.section === 1) bgColor = [229, 246, 245];       // section1
-      if(item.section === 2) bgColor = [255, 244, 230];       // section2
-      if(item.section === 3) bgColor = [251, 234, 234];       // section3
+    const rows = currentPlanning.items.map((item) => {
+      let bgColor = [255, 255, 255];
+      if (item.section === 1) bgColor = [229, 246, 245];
+      if (item.section === 2) bgColor = [255, 244, 230];
+      if (item.section === 3) bgColor = [251, 234, 234];
       return [
         { content: item.time || "", styles: { halign: "center", fillColor: bgColor } },
         { content: item.theme || "", styles: { halign: "left", fillColor: bgColor } },
@@ -248,7 +239,9 @@ if (pdfBtn) {
   if (local) {
     try {
       const localObj = JSON.parse(local);
-      if (localObj && Array.isArray(localObj.items)) pl = localObj;
+      if (localObj && Array.isArray(localObj.items)) {
+        pl = localObj;
+      }
     } catch (e) {
       console.warn("localStorage parse error", e);
     }
