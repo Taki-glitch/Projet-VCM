@@ -277,4 +277,29 @@ function exportPDF(){
     if(weeks[i+1]) renderWeek(marginLeft + columnWidth + colGap, marginTop, weeks[i+1]);
   }
 
-  const url = doc.output("blob
+  const url = doc.output("bloburl");
+  pdfPreviewContainer.style.display = "block";
+  pdfPreviewIframe.src = url;
+}
+
+pdfBtn.addEventListener("click", exportPDF);
+
+/* -----------------------------
+   SÉLECTION SEMAINE
+--------------------------------*/
+weekSelect.addEventListener("change", e=>{
+  currentWeekIndex = Number(e.target.value);
+  renderWeek(currentWeekIndex);
+});
+
+/* -----------------------------
+   INITIALISATION
+--------------------------------*/
+(async function init(){
+  planningData = loadLocal() || await loadServer();
+  if(!planningData){ alert("Impossible de charger le planning"); return; }
+
+  if(!planningData.title) planningData.title = "Planning TPL";
+  populateWeekSelect();
+  renderWeek(currentWeekIndex);
+})();
