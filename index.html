@@ -1,63 +1,52 @@
 <!doctype html>
-<html lang="ru">
+<html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#ffffff">
-  <title>Программа встречи — editable</title>
+  <title>Planning TPL</title>
 
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css" />
+  <!-- Favicon / logos -->
+  <link rel="icon" href="tpl-logo.png" type="image/png">
+
+  <!-- FullCalendar CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet">
+
+  <!-- Style CSS -->
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <img src="logo.jpeg" alt="logo" class="logo" id="siteLogo"/>
-      <div>
-        <h1>Программа встречи</h1>
-        <div id="subtitle" class="subtitle">Редактируй одну неделю, exporte deux semaines en PDF</div>
-      </div>
-    </div>
 
-    <div class="controls">
-      <select id="weekSelect" title="Sélectionner une semaine"></select>
-      <button id="resetBtn">Reset → server</button>
-      <button id="saveBtn">Sauvegarder (local)</button>
-      <button id="exportBtn">Exporter JSON</button>
-      <input id="importFile" type="file" accept=".json" hidden/>
-      <button id="importBtn">Importer JSON</button>
-      <button id="pdfBtn">Exporter PDF</button>
-    </div>
+  <!-- En-tête / Logo et titre -->
+  <header class="header">
+    <img src="tpl-logo-blue.svg" alt="TPL Logo" class="logo">
+    <h1>Planning TPL</h1>
+    <button id="btnThemeToggle">🌙</button>
   </header>
 
-  <main>
-    <section id="meta">
-      <div id="dateDisplay" class="dateDisplay"></div>
-      <div id="infoText">Cliquez sur un champ pour éditer (thème, durée, personne, note). Les modifications sont locales.</div>
-    </section>
-
-    <section id="planning" aria-live="polite"></section>
-
-    <section id="pdfPreviewContainer" style="display:none;margin-top:16px;">
-      <h2>Prévisualisation PDF</h2>
-      <iframe id="pdfPreview" style="width:100%; height:600px; border:1px solid #ccc;"></iframe>
-    </section>
+  <!-- Conteneur du planning (HTML capturé pour PDF) -->
+  <main id="planning" class="planning-container">
+    <!-- Exemple : FullCalendar -->
+    <div id="calendar"></div>
   </main>
 
-  <footer>
-    <small>Version A4 — Export PDF 2 semaines par page. Basé sur ton modèle PDF.</small>
+  <!-- Boutons d'action -->
+  <footer class="footer">
+    <button id="btnExportPDF" class="btn-export">Exporter PDF</button>
+    <button id="btnSaveLocal" class="btn-save">Sauvegarder local</button>
   </footer>
 
+  <!-- Scripts -->
+  <!-- FullCalendar JS -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/locales/fr.js"></script>
+
+  <!-- jsPDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <!-- Script principal -->
   <script src="script.js"></script>
 
-  <script>
-    const img = document.getElementById('siteLogo');
-    if(img) img.addEventListener('error', ()=> {
-      console.warn("Logo non trouvé, fallback appliqué");
-      img.src='logo.jpeg';
-    });
-  </script>
 </body>
 </html>
