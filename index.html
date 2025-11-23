@@ -45,7 +45,7 @@
   </main>
 
   <footer>
-    <small>Version A3 — Export PDF 2 semaines par page. Basé sur ton modèle PDF. :contentReference[oaicite:1]{index=1}</small>
+    <small>Version A4 — Export PDF 2 semaines par page. Basé sur ton modèle PDF.</small>
   </footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -54,7 +54,10 @@
 
   <script>
     const img = document.getElementById('siteLogo');
-    if(img) img.addEventListener('error', ()=> img.src='logo.jpeg');
+    if(img) img.addEventListener('error', ()=> {
+      console.warn("Logo non trouvé, fallback appliqué");
+      img.src='logo.jpeg';
+    });
   </script>
 </body>
 </html>
