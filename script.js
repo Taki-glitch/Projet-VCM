@@ -3,6 +3,7 @@
  - Edition inline (contentEditable)
  - Sauvegarde dans localStorage
  - Export / Import JSON
+ - Export PDF
  - Reset depuis le fichier serveur
 */
 
