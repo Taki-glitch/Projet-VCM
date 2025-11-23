@@ -32,20 +32,25 @@ async function fetchServerPlanning(){
 
 // render
 function render(pl){
-  currentPlanning = pl;
+  currentPlanning = pl || {date:"", items:[]};
   dateDisplay.textContent = pl.date || "";
+  if(!Array.isArray(pl.items)) pl.items = [];
+
   const html = pl.items.map((it, idx) => {
-    // section class optional
-    const sectionClass = it.section ? `section-${it.section}` : "";
+    // section class optional — check for 0 too
+    const sectionClass = (it.section !== undefined && it.section !== null) ? `section-${it.section}` : "";
+    const theme = escapeHtml(it.theme || "");
+    const person = escapeHtml(it.person || "");
+    const time = escapeHtml(it.time || "");
     return `
       <div class="row ${sectionClass}" data-idx="${idx}">
-        <div class="time">${escapeHtml(it.time || "")}</div>
-        <div class="theme editable" contenteditable="true" data-field="theme">${escapeHtml(it.theme || "")}</div>
-        <div class="person editable" contenteditable="true" data-field="person">${escapeHtml(it.person || "")}</div>
+        <div class="time">${time}</div>
+        <div class="theme editable" contenteditable="true" data-field="theme" aria-label="Thème">${theme}</div>
+        <div class="person editable" contenteditable="true" data-field="person" aria-label="Personne">${person}</div>
       </div>
     `;
   }).join("");
-  planningContainer.innerHTML = html;
+  planningContainer.innerHTML = html || "<div style='padding:12px;color:#666'>Aucun élément dans le planning.</div>";
 
   // add listeners for inline edits
   planningContainer.querySelectorAll(".editable").forEach(el => {
@@ -66,70 +71,89 @@ function escapeHtml(s){
 function handleEdit(e){
   const el = e.target;
   const row = el.closest(".row");
+  if(!row) return;
   const idx = Number(row.getAttribute("data-idx"));
   const field = el.getAttribute("data-field");
+  if(!currentPlanning || !Array.isArray(currentPlanning.items) || typeof idx !== "number") return;
   // store raw textContent (preserve simple text)
   currentPlanning.items[idx][field] = el.textContent.trim();
   // autosave to localStorage
-  localStorage.setItem(PLANNING_KEY, JSON.stringify(currentPlanning));
+  try {
+    localStorage.setItem(PLANNING_KEY, JSON.stringify(currentPlanning));
+  } catch(err) {
+    console.warn("localStorage set error", err);
+  }
 }
 
 // save button explicit (redundant because autosave)
-saveBtn.addEventListener("click", () => {
-  if(!currentPlanning) return;
-  localStorage.setItem(PLANNING_KEY, JSON.stringify(currentPlanning));
-  saveBtn.textContent = "Saved ✅";
-  setTimeout(()=> saveBtn.textContent = "Sauvegarder (local)", 1500);
-});
+if(saveBtn) {
+  saveBtn.addEventListener("click", () => {
+    if(!currentPlanning) return;
+    try{
+      localStorage.setItem(PLANNING_KEY, JSON.stringify(currentPlanning));
+      saveBtn.textContent = "Saved ✅";
+      setTimeout(()=> saveBtn.textContent = "Sauvegarder (local)", 1500);
+    }catch(e){
+      alert("Impossible de sauvegarder localement : " + e.message);
+    }
+  });
+}
 
 // reset from server file
-resetBtn.addEventListener("click", async () => {
-  const server = await fetchServerPlanning();
-  if(server){
-    render(server);
-    localStorage.removeItem(PLANNING_KEY);
-    alert("Planning réinitialisé depuis le fichier serveur. Vos modifications locales ont été supprimées.");
-  } else {
-    alert("Impossible de recharger planning.json depuis le serveur.");
-  }
-});
+if(resetBtn){
+  resetBtn.addEventListener("click", async () => {
+    const server = await fetchServerPlanning();
+    if(server){
+      render(server);
+      try{ localStorage.removeItem(PLANNING_KEY); }catch(e){}
+      alert("Planning réinitialisé depuis le fichier serveur. Vos modifications locales ont été supprimées.");
+    } else {
+      alert("Impossible de recharger planning.json depuis le serveur.");
+    }
+  });
+}
 
 // export JSON
-exportBtn.addEventListener("click", () => {
-  if(!currentPlanning) return;
-  const blob = new Blob([JSON.stringify(currentPlanning, null, 2)], {type:"application/json"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `planning-export-${(currentPlanning.date||"planning").replace(/\s+/g,"_")}.json`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-});
+if(exportBtn){
+  exportBtn.addEventListener("click", () => {
+    if(!currentPlanning) return;
+    const blob = new Blob([JSON.stringify(currentPlanning, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const safeDate = (currentPlanning.date||"planning").replace(/[^\w\d\-_.]/g,"_");
+    a.download = `planning-export-${safeDate}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+}
 
 // import JSON
-importBtn.addEventListener("click", ()=> importFile.click());
-importFile.addEventListener("change", (ev)=>{
-  const f = ev.target.files && ev.target.files[0];
-  if(!f) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    try{
-      const obj = JSON.parse(e.target.result);
-      // basic validation
-      if(!Array.isArray(obj.items)) throw new Error("Format invalide");
-      render(obj);
-      localStorage.setItem(PLANNING_KEY, JSON.stringify(obj));
-      alert("Planning importé et enregistré localement.");
-    }catch(err){
-      alert("Fichier JSON invalide : "+err.message);
-    }
-  };
-  reader.readAsText(f);
-  // reset input
-  importFile.value = "";
-});
+if(importBtn && importFile){
+  importBtn.addEventListener("click", ()=> importFile.click());
+  importFile.addEventListener("change", (ev)=>{
+    const f = ev.target.files && ev.target.files[0];
+    if(!f) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try{
+        const obj = JSON.parse(e.target.result);
+        // basic validation
+        if(!Array.isArray(obj.items)) throw new Error("Format invalide : items manquant");
+        render(obj);
+        try{ localStorage.setItem(PLANNING_KEY, JSON.stringify(obj)); }catch(e){}
+        alert("Planning importé et enregistré localement.");
+      }catch(err){
+        alert("Fichier JSON invalide : "+err.message);
+      }
+    };
+    reader.readAsText(f);
+    // reset input
+    importFile.value = "";
+  });
+}
 
 // init : load server planning then override with localStorage if present
 (async function init(){
