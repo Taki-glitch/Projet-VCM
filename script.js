@@ -1,13 +1,4 @@
-/* script.js
- - Chargement de planning.json
- - Edition inline
- - Sauvegarde localStorage
- - Export / Import JSON
- - Export et prévisualisation PDF
- - Reset depuis serveur
-*/
-
-const PLANNING_KEY = "planning_tpl_local_v1";
+const PLANNING_KEY = "planning_tpl_local_v2";
 const planningContainer = document.getElementById("planning");
 const dateDisplay = document.getElementById("dateDisplay");
 const saveBtn = document.getElementById("saveBtn");
@@ -21,7 +12,6 @@ const pdfPreviewIframe = document.getElementById("pdfPreview");
 
 let currentPlanning = null;
 
-// Charger planning.json depuis serveur
 async function fetchServerPlanning(){
   try{
     const res = await fetch("planning.json",{cache:"no-store"});
@@ -33,7 +23,13 @@ async function fetchServerPlanning(){
   }
 }
 
-// Rendu planning
+function escapeHtml(s){
+  return (s||"").toString()
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;");
+}
+
 function render(pl){
   currentPlanning = pl || {date:"", items:[]};
   dateDisplay.textContent = pl.date || "";
@@ -43,33 +39,25 @@ function render(pl){
     const sectionClass = it.section != null ? `section-${it.section}` : "";
     const theme = escapeHtml(it.theme||"");
     const person = escapeHtml(it.person||"");
+    const duration = escapeHtml(it.duration||"");
     const time = escapeHtml(it.time||"");
     return `
       <div class="row ${sectionClass}" data-idx="${idx}">
         <div class="time">${time}</div>
         <div class="theme editable" contenteditable="true" data-field="theme" aria-label="Thème">${theme}</div>
+        <div class="duration editable" contenteditable="true" data-field="duration" aria-label="Durée (min)">${duration}</div>
         <div class="person editable" contenteditable="true" data-field="person" aria-label="Personne">${person}</div>
       </div>
     `;
   }).join("");
   planningContainer.innerHTML = html || "<div style='padding:12px;color:#666'>Aucun élément dans le planning.</div>";
 
-  // Listeners edits
   planningContainer.querySelectorAll(".editable").forEach(el=>{
     el.addEventListener("input", handleEdit);
     el.addEventListener("blur", handleEdit);
   });
 }
 
-// Escape HTML
-function escapeHtml(s){
-  return (s||"").toString()
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;");
-}
-
-// Gestion edition inline
 function handleEdit(e){
   const el = e.target;
   const row = el.closest(".row");
@@ -79,50 +67,58 @@ function handleEdit(e){
   if(!currentPlanning || !Array.isArray(currentPlanning.items) || typeof idx!=="number") return;
   currentPlanning.items[idx][field] = el.textContent.trim();
   try{ localStorage.setItem(PLANNING_KEY, JSON.stringify(currentPlanning)); }catch(err){console.warn(err);}
+  if(field==="duration") recalcTimes();
 }
 
-// Bouton save
-if(saveBtn){
-  saveBtn.addEventListener("click", ()=>{
-    if(!currentPlanning) return;
-    try{
-      localStorage.setItem(PLANNING_KEY, JSON.stringify(currentPlanning));
-      saveBtn.textContent="Saved ✅";
-      setTimeout(()=> saveBtn.textContent="Sauvegarder (local)",1500);
-    }catch(e){ alert("Impossible de sauvegarder localement : "+e.message); }
-  });
+function recalcTimes(){
+  if(!currentPlanning || !Array.isArray(currentPlanning.items)) return;
+  for(let i=1; i<currentPlanning.items.length; i++){
+    const prev = currentPlanning.items[i-1];
+    const item = currentPlanning.items[i];
+    const [h,m] = prev.time.split(":").map(Number);
+    if(isNaN(h) || isNaN(m)) continue;
+    let duration = Number(prev.duration) || 0;
+    let totalMin = h*60 + m + duration;
+    let nh = Math.floor(totalMin/60)%24;
+    let nm = totalMin%60;
+    item.time = `${nh.toString().padStart(2,"0")}:${nm.toString().padStart(2,"0")}`;
+  }
+  render(currentPlanning);
 }
 
-// Bouton reset
-if(resetBtn){
-  resetBtn.addEventListener("click", async ()=>{
-    const server = await fetchServerPlanning();
-    if(server){
-      render(server);
-      try{localStorage.removeItem(PLANNING_KEY);}catch(e){}
-      alert("Planning réinitialisé depuis le serveur.");
-    } else alert("Impossible de recharger planning.json.");
-  });
-}
+// --- Boutons ---
+if(saveBtn) saveBtn.addEventListener("click", ()=>{
+  if(!currentPlanning) return;
+  try{
+    localStorage.setItem(PLANNING_KEY, JSON.stringify(currentPlanning));
+    saveBtn.textContent="Saved ✅";
+    setTimeout(()=> saveBtn.textContent="Sauvegarder (local)",1500);
+  }catch(e){ alert("Impossible de sauvegarder localement : "+e.message); }
+});
 
-// Export JSON
-if(exportBtn){
-  exportBtn.addEventListener("click", ()=>{
-    if(!currentPlanning) return;
-    const blob = new Blob([JSON.stringify(currentPlanning,null,2)],{type:"application/json"});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    const safeDate = (currentPlanning.date||"planning").replace(/[^\w\d\-_.]/g,"_");
-    a.download = `planning-export-${safeDate}.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  });
-}
+if(resetBtn) resetBtn.addEventListener("click", async ()=>{
+  const server = await fetchServerPlanning();
+  if(server){
+    render(server);
+    try{localStorage.removeItem(PLANNING_KEY);}catch(e){}
+    alert("Planning réinitialisé depuis le serveur.");
+  } else alert("Impossible de recharger planning.json.");
+});
 
-// Import JSON
+if(exportBtn) exportBtn.addEventListener("click", ()=>{
+  if(!currentPlanning) return;
+  const blob = new Blob([JSON.stringify(currentPlanning,null,2)],{type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const safeDate = (currentPlanning.date||"planning").replace(/[^\w\d\-_.]/g,"_");
+  a.download = `planning-export-${safeDate}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+});
+
 if(importBtn && importFile){
   importBtn.addEventListener("click", ()=> importFile.click());
   importFile.addEventListener("change", ev=>{
@@ -143,7 +139,7 @@ if(importBtn && importFile){
   });
 }
 
-// --- PDF Preview ---
+// --- PDF ---
 function previewPDF(){
   if(!currentPlanning) return;
   const { jsPDF } = window.jspdf;
@@ -155,16 +151,16 @@ function previewPDF(){
   doc.setFontSize(12);
   doc.text(currentPlanning.date||"",14,56);
 
-  const rows = currentPlanning.items.map(item=>[item.time||"",item.theme||"",item.person||""]);
+  const rows = currentPlanning.items.map(item=>[item.time||"", item.theme||"", item.duration||"", item.person||""]);
 
   doc.autoTable({
     startY:70,
-    head:[["Время","Тема","Назначенный"]],
+    head:[["Время","Тема","Длительность (мин)","Назначенный"]],
     body:rows,
     styles:{font:"Helvetica",fontSize:10,cellPadding:4},
     headStyles:{fillColor:[60,60,60],textColor:[255,255,255]},
     alternateRowStyles:{fillColor:[245,245,245]},
-    columnStyles:{0:{cellWidth:50},1:{cellWidth:320},2:{cellWidth:120}},
+    columnStyles:{0:{cellWidth:50},1:{cellWidth:220},2:{cellWidth:60},3:{cellWidth:120}},
     tableWidth:"auto"
   });
 
