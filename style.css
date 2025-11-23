@@ -1,204 +1,152 @@
-/**************************************************************
- * 🌈 VARIABLES GLOBALES
- **************************************************************/
-:root {
-  --primary: #007bff;
-  --primary-dark: #0056b3;
-  --bg-light: #f5f7fb;
-  --bg-dark: #1a1d21;
-  --card-light: #ffffff;
-  --card-dark: #2b2f36;
-  --text-light: #333333;
-  --text-dark: #e5e5e5;
-  --header-height: 60px;
-  --footer-height: 60px;
-  --border-radius: 8px;
-  --font-family: Arial, Helvetica, sans-serif;
+:root{
+  --bg:#f7f7f7;
+  --card:#ffffff;
+  --muted:#555;
+  --accent:#222;
+  --section1:#e6f7f5;
+  --section2:#fff7e6;
+  --section3:#fff1f2;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  color: var(--accent);
 }
 
-/**************************************************************
- * 🌓 MODE SOMBRE / CLAIR
- **************************************************************/
-[data-theme="light"] {
-  --bg: var(--bg-light);
-  --card-bg: var(--card-light);
-  --text-color: var(--text-light);
+/* -----------------------------
+   RESET & BODY
+--------------------------------*/
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--bg);
+  -webkit-font-smoothing:antialiased;
 }
 
-[data-theme="dark"] {
-  --bg: var(--bg-dark);
-  --card-bg: var(--card-dark);
-  --text-color: var(--text-dark);
+/* -----------------------------
+   TOPBAR
+--------------------------------*/
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px 16px;
+  background:#fff;
+  border-bottom:1px solid #e6e6e6;
+}
+.brand{
+  display:flex;
+  gap:12px;
+  align-items:center;
+}
+.logo{
+  width:64px;
+  height:64px;
+  object-fit:cover;
+  border-radius:6px;
+  border:1px solid #ddd;
+  padding:4px;
+  background:#fff;
+}
+.subtitle{
+  font-size:12px;
+  color:#666;
+}
+.controls{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+.controls select, .controls button{
+  padding:8px 10px;
+  border-radius:6px;
+  border:1px solid #ddd;
+  background:#fff;
+  cursor:pointer;
 }
 
-/**************************************************************
- * 🌍 STYLE GLOBAL
- **************************************************************/
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: var(--font-family);
+/* -----------------------------
+   MAIN
+--------------------------------*/
+main{
+  max-width:1100px;
+  margin:18px auto;
+  padding:0 16px;
+}
+#meta{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:8px;
+}
+.dateDisplay{
+  font-weight:700;
+}
+#planning{
+  border-radius:8px;
+  overflow:hidden;
 }
 
-body {
-  background-color: var(--bg);
-  color: var(--text-color);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+/* -----------------------------
+   LIGNES & SECTIONS
+--------------------------------*/
+.row{
+  display:grid;
+  grid-template-columns:90px 1fr 80px 280px;
+  gap:10px;
+  padding:10px;
+  border-bottom:1px solid #eee;
+  background:var(--card);
+  align-items:start;
+}
+.row.section-1{background:linear-gradient(90deg,#f5fffb,#ffffff);}
+.row.section-2{background:linear-gradient(90deg,#fffaf0,#ffffff);}
+.row.section-3{background:linear-gradient(90deg,#fff6f7,#ffffff);}
+.time{font-weight:700;color:var(--muted);}
+.theme,.duration,.person,.note{
+  padding:6px;
+  border-radius:6px;
+  min-height:20px;
+}
+.duration{
+  min-width:48px;
+  text-align:center;
+  background:#fafafa;
+}
+.editable{cursor:text;}
+.editable:focus{
+  outline:2px solid rgba(0,0,0,0.08);
+  background:#fff;
+}
+.sectionTitle{
+  padding:10px 8px;
+  font-weight:700;
+  background:#f0f0f0;
+  border-bottom:1px solid #e6e6e6;
 }
 
-/**************************************************************
- * 🏠 HEADER
- **************************************************************/
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: var(--header-height);
-  padding: 0 20px;
-  background-color: var(--card-bg);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+/* -----------------------------
+   RESPONSIVE
+--------------------------------*/
+@media (max-width:900px){
+  .row{grid-template-columns:70px 1fr 60px 160px;}
+  .controls{flex-wrap:wrap;}
 }
 
-.header .logo {
-  height: 40px;
-}
-
-.header h1 {
-  font-size: 1.5rem;
-  font-weight: bold;
-}
-
-#btnThemeToggle {
-  font-size: 1.2rem;
-  cursor: pointer;
-  background: none;
-  border: none;
-  color: var(--text-color);
-}
-
-/**************************************************************
- * 📅 PLANNING / CALENDAR
- **************************************************************/
-.planning-container {
-  flex: 1;
-  padding: 20px;
-  background-color: var(--bg);
-}
-
-/* FullCalendar */
-.fc {
-  background-color: var(--bg);
-  color: var(--text-color);
-  font-family: var(--font-family);
-}
-
-.fc-toolbar-title {
-  font-size: 1.2rem;
-  font-weight: bold;
-}
-
-.fc .fc-daygrid-event, .fc .fc-timegrid-event {
-  background-color: var(--primary);
-  border-radius: var(--border-radius);
-  border: none;
-  color: #fff;
-  padding: 2px 4px;
-  font-size: 0.85rem;
-}
-
-/**************************************************************
- * 🦶 FOOTER / BOUTONS
- **************************************************************/
-.footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 10px 20px;
-  background-color: var(--card-bg);
-  height: var(--footer-height);
-  box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
-}
-
-.footer button {
-  padding: 8px 16px;
-  font-size: 0.95rem;
-  font-weight: bold;
-  border-radius: var(--border-radius);
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.btn-export {
-  background-color: var(--primary);
-  color: #fff;
-}
-
-.btn-export:hover {
-  background-color: var(--primary-dark);
-}
-
-.btn-save {
-  background-color: #28a745;
-  color: #fff;
-}
-
-.btn-save:hover {
-  background-color: #218838;
-}
-
-/**************************************************************
- * 🖼️ IMAGES / LOGO DANS PDF
- **************************************************************/
-#planning img {
-  max-width: 100%;
-  height: auto;
-}
-
-/**************************************************************
- * 🔹 TABLEAUX / SECTIONS DU PLANNING
- **************************************************************/
-.planning-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-}
-
-.planning-table th, .planning-table td {
-  border: 1px solid #ccc;
-  padding: 6px 8px;
-  font-size: 0.9rem;
-}
-
-.planning-table th {
-  background-color: var(--primary);
-  color: #fff;
-  font-weight: bold;
-  text-align: left;
-}
-
-.planning-table td {
-  background-color: var(--card-bg);
-  color: var(--text-color);
-}
-
-/**************************************************************
- * 🔹 RESPONSIVE
- **************************************************************/
-@media (max-width: 768px) {
-  .header h1 {
-    font-size: 1.2rem;
+/* -----------------------------
+   THEME SOMBRE AUTOMATIQUE
+--------------------------------*/
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#1a1d21;
+    --card:#2b2f36;
+    --muted:#e5e5e5;
+    --accent:#fff;
+    --section1:#2b2f36;
+    --section2:#333;
+    --section3:#444;
   }
-
-  .fc-toolbar-title {
-    font-size: 1rem;
-  }
-
-  .footer button {
-    padding: 6px 12px;
-    font-size: 0.85rem;
-  }
+  body{color:var(--accent);}
+  .topbar{background:#2b2f36;border-bottom:1px solid #444;}
+  .controls select, .controls button{background:#3a3f4b;border:1px solid #555;color:#e5e5e5;}
+  .row{background:var(--card);border-bottom:1px solid #444;}
+  .sectionTitle{background:#333;border-bottom:1px solid #444;}
+  .editable:focus{background:#444;}
 }
