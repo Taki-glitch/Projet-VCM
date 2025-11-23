@@ -1,0 +1,85 @@
+:root{
+  --bg:#f7f7f7;
+  --card:#fff;
+  --muted:#666;
+  --accent:#007bff;
+  --section1:#2f968f; /* teal for "Сокровища" */
+  --section2:#d08a00; /* orange for service training */
+  --section3:#b83b2b; /* red for "Христианская жизнь" */
+  --gap:12px;
+  --radius:6px;
+  font-family: system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:#222;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:16px;
+  padding:12px;
+  background:linear-gradient(90deg, #ffffff, #f1f1f1);
+  border-bottom:1px solid #e2e2e2;
+}
+
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:64px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #ddd}
+.brand h1{font-size:1.15rem;margin:0}
+
+.controls{display:flex;gap:8px;align-items:center}
+.controls button{
+  background:#fff;border:1px solid #ddd;padding:8px 10px;border-radius:6px;cursor:pointer;
+}
+.controls button:hover{box-shadow:0 2px 6px rgba(0,0,0,0.06)}
+
+main{padding:16px;max-width:1100px;margin:0 auto}
+#meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+#dateDisplay{font-weight:700}
+
+#planning{display:block;background:transparent;border-radius:8px;overflow:hidden}
+
+/* table-like rows */
+.row{
+  display:grid;
+  grid-template-columns:90px 1fr 220px;
+  gap:8px;
+  align-items:center;
+  padding:10px;
+  border-bottom:1px solid #eee;
+  background:var(--card);
+}
+
+.row.head{background:#fff;border-bottom:2px solid #ddd;font-weight:700}
+.time{color:var(--muted);font-weight:600}
+
+.theme, .person{
+  padding:8px 10px;border-radius:6px;
+  min-height:28px;
+}
+
+/* editable look */
+.editable{cursor:text}
+.editable:focus{outline:2px solid rgba(0,123,255,0.18);box-shadow:0 1px 0 rgba(0,0,0,0.02)}
+
+/* section colors by data-section attribute */
+.section-1 .theme{background:linear-gradient(90deg,#e9f6f5,#f6f9f9)}
+.section-1{border-left:6px solid var(--section1)}
+.section-2 .theme{background:linear-gradient(90deg,#fff4e6,#fffbf2)}
+.section-2{border-left:6px solid var(--section2)}
+.section-3 .theme{background:linear-gradient(90deg,#fbeaea,#fff7f6)}
+.section-3{border-left:6px solid var(--section3)}
+
+/* responsive */
+@media (max-width:800px){
+  .row{grid-template-columns:70px 1fr 160px}
+  .logo{width:48px;height:36px}
+  .brand h1{font-size:1rem}
+}
