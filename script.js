@@ -209,7 +209,7 @@ importFile.addEventListener("change", async (ev)=>{
 });
 
 /* -----------------------------
-   EXPORT PDF
+   EXPORT PDF OPTIMISÉ
 --------------------------------*/
 function exportPDF(){
   if(!planningData) return;
@@ -222,17 +222,14 @@ function exportPDF(){
   const marginLeft = 32;
   const marginTop = 40;
   const colGap = 18;
-
   const colWidth = (pageWidth - marginLeft*2 - colGap)/2;
   const lineHeight = 12;
-
   const timeWidth = 50;
   const durWidth = 40;
-  const themeWidth = colWidth - timeWidth - durWidth - 12; // 12pt padding
-
+  const themeWidth = colWidth - timeWidth - durWidth - 12;
   const sectionColors = ["#e6f7f5","#fff7e6","#fff1f2"];
 
-  function renderWeek(xStart, yStart, week, colIndex){
+  function renderWeek(xStart, yStart, week){
     let y = yStart;
 
     // Titre
@@ -246,7 +243,6 @@ function exportPDF(){
     doc.text(`Председатель : ${week.chairman||""}`, xStart, y); y += lineHeight + 4;
 
     week.sections.forEach((section,sidx)=>{
-      // Section title
       if(section.title){
         doc.setFont("Helvetica","bold"); doc.setFontSize(10);
         doc.setTextColor(60);
@@ -255,9 +251,7 @@ function exportPDF(){
         y += lineHeight;
       }
 
-      // Items
       section.items.forEach(item=>{
-        // Fond alterné
         doc.setFillColor(sectionColors[sidx % sectionColors.length]);
         doc.rect(xStart-2, y-2, colWidth, lineHeight, 'F');
 
@@ -285,31 +279,31 @@ function exportPDF(){
         }
 
         y += lineHeight;
-        // Vérifier si on dépasse la page
         if(y > pageHeight - marginTop){
           doc.addPage();
           y = marginTop;
         }
       });
 
-      y += 6; // espace après section
+      y += 6;
     });
 
     return y;
   }
 
-  // Parcours 2 semaines par page
   const weeks = planningData.weeks;
   for(let i=0; i<weeks.length; i+=2){
     if(i>0) doc.addPage();
-    const y1 = renderWeek(marginLeft, marginTop, weeks[i], 0);
-    if(weeks[i+1]) renderWeek(marginLeft + colWidth + colGap, marginTop, weeks[i+1], 1);
+    renderWeek(marginLeft, marginTop, weeks[i]);
+    if(weeks[i+1]) renderWeek(marginLeft + colWidth + colGap, marginTop, weeks[i+1]);
   }
 
   const url = doc.output("bloburl");
   pdfPreviewContainer.style.display = "block";
   pdfPreviewIframe.src = url;
 }
+
+pdfBtn.addEventListener("click", exportPDF);
 
 /* -----------------------------
    SÉLECTION SEMAINE
