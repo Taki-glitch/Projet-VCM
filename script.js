@@ -1,10 +1,4 @@
-/* script.js — Version A4 FINAL CORRIGÉE — PDF lisible
-   - Édition complète par semaine
-   - Sauvegarde localStorage
-   - Recalcul automatique des horaires
-   - Import / export JSON
-   - Export PDF 2 semaines par page (layout identique au PDF modèle)
-*/
+/* script.js — Version A4 FINAL — PDF identique au modèle */
 
 const PLANNING_KEY = "planning_tpl_full_v1";
 const weekSelect = document.getElementById("weekSelect");
@@ -16,8 +10,6 @@ const exportBtn = document.getElementById("exportBtn");
 const importBtn = document.getElementById("importBtn");
 const importFile = document.getElementById("importFile");
 const pdfBtn = document.getElementById("pdfBtn");
-const pdfPreviewContainer = document.getElementById("pdfPreviewContainer");
-const pdfPreviewIframe = document.getElementById("pdfPreview");
 
 let planningData = null;
 let currentWeekIndex = 0;
@@ -25,7 +17,7 @@ let currentWeekIndex = 0;
 /* -----------------------------
    CHARGEMENT DU PLANNING.JSON
 --------------------------------*/
-async function loadServer() {
+async function loadServer(){
   try {
     const res = await fetch("planning.json",{cache:"no-store"});
     if(!res.ok) throw new Error("planning.json non trouvé");
@@ -36,8 +28,8 @@ async function loadServer() {
   }
 }
 
-function escapeHtml(s){
-  return (s||"").toString()
+function escapeHtml(str){
+  return (str||"").toString()
     .replace(/&/g,"&amp;")
     .replace(/</g,"&lt;")
     .replace(/>/g,"&gt;");
@@ -54,7 +46,7 @@ function populateWeekSelect(){
     opt.textContent = `${w.date} | ${w.scripture} | ${w.chairman}`;
     weekSelect.appendChild(opt);
   });
-  weekSelect.value = currentWeekIndex || 0;
+  weekSelect.value = currentWeekIndex;
 }
 
 /* -----------------------------
@@ -69,20 +61,26 @@ function renderWeek(idx){
 
   let html = "";
 
-  week.sections.forEach((sec, sidx)=>{
+  week.sections.forEach((sec,sidx)=>{
     if(sec.title){
       html += `<div class="sectionTitle">${escapeHtml(sec.title)}${sec.location? " — "+escapeHtml(sec.location):""}</div>`;
     }
 
     html += sec.items.map((it, itidx)=>{
-      const part = it.part ? `<span class="part">${escapeHtml(it.part)} </span>` : "";
       const noteHtml = `<div class="note editable" contenteditable="true" data-field="note" data-section="${sidx}" data-item="${itidx}">${escapeHtml(it.note||"")}</div>`;
 
-      return `<div class="row section-${(sidx%4)+1}" data-section="${sidx}" data-item="${itidx}">
+      return `
+      <div class="row section-${(sidx%4)+1}" data-section="${sidx}" data-item="${itidx}">
         <div class="time">${escapeHtml(it.time)}</div>
-        <div class="theme editable" contenteditable="true" data-field="theme" data-section="${sidx}" data-item="${itidx}">${part}${escapeHtml(it.theme)}</div>
-        <div class="duration editable" contenteditable="true" data-field="duration" data-section="${sidx}" data-item="${itidx}">${escapeHtml(it.duration)}</div>
-        <div class="person editable" contenteditable="true" data-field="person" data-section="${sidx}" data-item="${itidx}">${escapeHtml(it.person)}${noteHtml}</div>
+        <div class="theme editable" contenteditable="true" data-field="theme" data-section="${sidx}" data-item="${itidx}">
+          ${it.part ? `<span class="part">${escapeHtml(it.part)} </span>` : ""}${escapeHtml(it.theme)}
+        </div>
+        <div class="duration editable" contenteditable="true" data-field="duration" data-section="${sidx}" data-item="${itidx}">
+          ${escapeHtml(it.duration)}
+        </div>
+        <div class="person editable" contenteditable="true" data-field="person" data-section="${sidx}" data-item="${itidx}">
+          ${escapeHtml(it.person)}${noteHtml}
+        </div>
       </div>`;
     }).join("");
   });
@@ -96,32 +94,30 @@ function renderWeek(idx){
 }
 
 /* -----------------------------
-   MODIFICATION CHAMP
+   EDITION
 --------------------------------*/
 function onEdit(e){
   const el = e.target;
-  const field = el.dataset.field;
-  const sec = Number(el.dataset.section);
-  const idx = Number(el.dataset.item);
-
   const week = planningData.weeks[currentWeekIndex];
-  const item = week.sections[sec].items[idx];
+  const section = Number(el.dataset.section);
+  const item = Number(el.dataset.item);
+  const field = el.dataset.field;
 
   let value = el.textContent.trim();
 
   if(field === "duration"){
     const num = value.match(/(\d+)/);
-    item.duration = num ? Number(num[1]) : 0;
+    week.sections[section].items[item].duration = num ? Number(num[1]) : 0;
     recalcTimesForWeek(currentWeekIndex);
     renderWeek(currentWeekIndex);
     return;
   }
 
-  item[field] = value;
+  week.sections[section].items[item][field] = value;
 }
 
 /* -----------------------------
-   RECALCUL DES HEURES
+   RECALCUL HEURES
 --------------------------------*/
 function recalcTimesForWeek(weekIndex){
   const week = planningData.weeks[weekIndex];
@@ -129,21 +125,18 @@ function recalcTimesForWeek(weekIndex){
 
   let flat = [];
   week.sections.forEach((sec,s)=>{
-    sec.items.forEach((it,i)=> flat.push({sec:s, idx:i, it}));
+    sec.items.forEach((it,i)=> flat.push(it));
   });
 
   for(let i=1; i<flat.length; i++){
-    const prev = flat[i-1].it;
-    const cur  = flat[i].it;
+    const prev = flat[i-1];
+    const cur  = flat[i];
 
     let [h,m] = (prev.time||"00:00").split(":").map(Number);
     let dur = Number(prev.duration)||0;
 
     let total = h*60 + m + dur;
-    let nh = String(Math.floor(total/60)).padStart(2,"0");
-    let nm = String(total%60).padStart(2,"0");
-
-    cur.time = `${nh}:${nm}`;
+    cur.time = `${String(Math.floor(total/60)).padStart(2,"0")}:${String(total%60).padStart(2,"0")}`;
   }
 }
 
@@ -151,7 +144,7 @@ function recalcTimesForWeek(weekIndex){
    LOCAL STORAGE
 --------------------------------*/
 function saveLocal(){
-  try{ localStorage.setItem(PLANNING_KEY, JSON.stringify(planningData)); }catch(e){ console.warn(e); }
+  try{ localStorage.setItem(PLANNING_KEY, JSON.stringify(planningData)); }catch(e){}
 }
 function loadLocal(){
   try{ let raw = localStorage.getItem(PLANNING_KEY); if(raw) return JSON.parse(raw); }catch(e){}
@@ -159,120 +152,99 @@ function loadLocal(){
 }
 
 /* -----------------------------
-   BOUTONS
+   EXPORT JSON
 --------------------------------*/
-saveBtn.addEventListener("click", ()=>{
-  saveLocal();
-  saveBtn.textContent = "Saved ✅";
-  setTimeout(()=> saveBtn.textContent="Sauvegarder (local)", 1200);
-});
-
-resetBtn.addEventListener("click", async ()=>{
-  const server = await loadServer();
-  if(server){
-    planningData = server;
-    localStorage.removeItem(PLANNING_KEY);
-    populateWeekSelect();
-    currentWeekIndex = 0;
-    renderWeek(0);
-    alert("Planning réinitialisé depuis le serveur.");
-  } else alert("Impossible de recharger planning.json");
-});
-
 exportBtn.addEventListener("click", ()=>{
   const blob = new Blob([JSON.stringify(planningData,null,2)],{type:"application/json"});
-  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url;
-  a.download = "planning-export.json";
+  a.href = URL.createObjectURL(blob);
+  a.download = "planning.json";
   a.click();
-  URL.revokeObjectURL(url);
-});
-
-importBtn.addEventListener("click", ()=> importFile.click());
-importFile.addEventListener("change", async (ev)=>{
-  const f = ev.target.files[0];
-  if(!f) return;
-  try{
-    const text = await f.text();
-    const obj = JSON.parse(text);
-    if(!obj.weeks) throw new Error("Format JSON invalide");
-    planningData = obj;
-    populateWeekSelect();
-    currentWeekIndex = 0;
-    renderWeek(0);
-    saveLocal();
-    alert("Planning importé.");
-  }catch(e){
-    alert("Erreur : " + e.message);
-  }
 });
 
 /* -----------------------------
-   EXPORT PDF OPTIMISÉ
+   IMPORT JSON
+--------------------------------*/
+importBtn.addEventListener("click", ()=> importFile.click());
+importFile.addEventListener("change", async ev=>{
+  const f = ev.target.files[0];
+  if(!f) return;
+  try{
+    const txt = await f.text();
+    const obj = JSON.parse(txt);
+    if(!obj.weeks) throw new Error("Format invalide");
+    planningData = obj;
+    populateWeekSelect();
+    renderWeek(0);
+    saveLocal();
+  }catch(e){ alert(e.message); }
+});
+
+/* -----------------------------
+   EXPORT PDF (CORRIGÉ)
 --------------------------------*/
 function exportPDF(){
   if(!planningData) return;
 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({unit:"pt", format:"a4"});
+
+  // --- VARIABLES PDF CORRECTEMENT DÉFINIES AVANT USAGE ---
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
   const marginLeft = 32;
   const marginTop = 40;
   const colGap = 18;
+
   const colWidth = (pageWidth - marginLeft*2 - colGap)/2;
   const lineHeight = 12;
+
   const timeWidth = 50;
   const durWidth = 40;
+  const themeWidth = colWidth - timeWidth - durWidth - 12;  // <- **ICI définie**
+
   const sectionColors = ["#e6f7f5","#fff7e6","#fff1f2"];
 
   function renderWeek(xStart, yStart, week){
     let y = yStart;
 
-    // Titre
     doc.setFont("Helvetica","bold"); doc.setFontSize(11);
     const titleLines = doc.splitTextToSize(planningData.title||"", colWidth);
-    doc.text(titleLines, xStart, y); y += lineHeight*titleLines.length + 4;
+    doc.text(titleLines, xStart, y);
+    y += lineHeight*titleLines.length + 4;
 
-    // Date / Scripture / Chairman
     doc.setFont("Helvetica","normal"); doc.setFontSize(10);
-    doc.text(`${week.date} | ${week.scripture}`, xStart, y); y += lineHeight;
-    doc.text(`Председатель : ${week.chairman||""}`, xStart, y); y += lineHeight + 4;
+    doc.text(`${week.date} | ${week.scripture}`, xStart, y); y+=lineHeight;
+    doc.text(`Председатель : ${week.chairman||""}`, xStart, y); y+=lineHeight+4;
 
     week.sections.forEach((section,sidx)=>{
       if(section.title){
-        doc.setFont("Helvetica","bold"); doc.setFontSize(10);
-        doc.setTextColor(60);
-        doc.text(section.title + (section.location ? " — "+section.location : ""), xStart, y);
-        doc.setTextColor(0);
+        doc.setFont("Helvetica","bold").setFontSize(10);
+        doc.text(section.title + (section.location? " — "+section.location:""), xStart, y);
         y += lineHeight;
       }
 
       section.items.forEach(item=>{
         doc.setFillColor(sectionColors[sidx % sectionColors.length]);
-        doc.rect(xStart-2, y-2, colWidth, lineHeight, 'F');
+        doc.rect(xStart-2, y-2, colWidth, lineHeight, "F");
 
-        // Time
-        doc.setFont("Helvetica","bold"); doc.setFontSize(9);
+        doc.setFont("Helvetica","bold").setFontSize(9);
         doc.text(item.time||"", xStart, y);
 
-        // Theme
-        const themeText = (item.part ? item.part + " " : "") + (item.theme||"");
-        doc.setFont("Helvetica","normal");
+        const themeText = (item.part? item.part+" " : "") + (item.theme||"");
         const themeLines = doc.splitTextToSize(themeText, themeWidth);
+
+        doc.setFont("Helvetica","normal");
         doc.text(themeLines, xStart + timeWidth, y);
 
-        // Duration
-        const durText = item.duration ? item.duration + " мин." : "";
-        doc.text(durText, xStart + timeWidth + themeWidth, y);
+        const dtext = item.duration ? item.duration+" мин." : "";
+        doc.text(dtext, xStart + timeWidth + themeWidth, y);
 
-        // Person + note
         if(item.person || item.note){
           doc.setFont("Helvetica","italic");
-          const personNote = [item.person || "", item.note || ""].filter(Boolean).join(" — ");
-          const pnLines = doc.splitTextToSize(personNote, themeWidth + durWidth);
+          const pn = [item.person||"", item.note||""].filter(Boolean).join(" — ");
+          const pnLines = doc.splitTextToSize(pn, themeWidth+durWidth);
           doc.text(pnLines, xStart + timeWidth, y + lineHeight);
           y += lineHeight * pnLines.length;
         }
@@ -291,21 +263,19 @@ function exportPDF(){
   }
 
   const weeks = planningData.weeks;
-  for(let i=0; i<weeks.length; i+=2){
+  for(let i=0;i<weeks.length;i+=2){
     if(i>0) doc.addPage();
     renderWeek(marginLeft, marginTop, weeks[i]);
     if(weeks[i+1]) renderWeek(marginLeft + colWidth + colGap, marginTop, weeks[i+1]);
   }
 
-  // Affiche PDF dans un nouvel onglet lisible
-  const pdfUrl = doc.output("bloburl");
-  window.open(pdfUrl, "_blank");
+  window.open(doc.output("bloburl"), "_blank");
 }
 
 pdfBtn.addEventListener("click", exportPDF);
 
 /* -----------------------------
-   SÉLECTION SEMAINE
+   CHANGEMENT DE SEMAINE
 --------------------------------*/
 weekSelect.addEventListener("change", e=>{
   currentWeekIndex = Number(e.target.value);
