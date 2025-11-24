@@ -1,4 +1,4 @@
-/* script.js — Version A4 FINAL + date editable (mercredi) */
+/* script.js — Version finale avec date synchronisée et PDF A4 */
 
 const PLANNING_KEY = "planning_tpl_full_v1";
 const weekSelect = document.getElementById("weekSelect");
@@ -6,31 +6,22 @@ const planningContainer = document.getElementById("planning");
 const dateDisplay = document.getElementById("dateDisplay");
 const saveBtn = document.getElementById("saveBtn");
 const resetBtn = document.getElementById("resetBtn");
-const exportBtn = document.getElementById("exportBtn");
-const importBtn = document.getElementById("importBtn");
-const importFile = document.getElementById("importFile");
 const pdfBtn = document.getElementById("pdfBtn");
 const presidentInput = document.getElementById("presidentName");
-const pdfPreviewContainer = document.getElementById("pdfPreviewContainer");
-const pdfPreviewIframe = document.getElementById("pdfPreview");
 const weekDateInput = document.getElementById("weekDate");
-const setWeekDateBtn = document.getElementById("setWeekDateBtn");
 
 let planningData = null;
 let currentWeekIndex = 0;
 
 /* -----------------------------
-   CHARGEMENT DU PLANNING.JSON
+   UTILITAIRES
 --------------------------------*/
 async function loadServer(){
   try {
     const res = await fetch("planning.json",{cache:"no-store"});
     if(!res.ok) throw new Error("planning.json non trouvé");
     return await res.json();
-  } catch(e) {
-    console.warn(e);
-    return null;
-  }
+  } catch(e) { console.warn(e); return null; }
 }
 
 function escapeHtml(str){
@@ -40,8 +31,25 @@ function escapeHtml(str){
     .replace(/>/g,"&gt;");
 }
 
+function saveLocal(){ try{ localStorage.setItem(PLANNING_KEY, JSON.stringify(planningData)); }catch(e){ console.warn(e); } }
+function loadLocal(){ try{ let raw = localStorage.getItem(PLANNING_KEY); if(raw) return JSON.parse(raw); }catch(e){} return null; }
+
 /* -----------------------------
-   LISTE DÉROULANTE
+   DATE RUSSE
+--------------------------------*/
+function formatDateRussian(inputDate){
+  if(!inputDate) return "";
+  const months = ["января","февраля","марта","апреля","мая","июня",
+                  "июля","августа","сентября","октября","ноября","декабря"];
+  const d = new Date(inputDate);
+  const day = d.getDate();
+  const month = months[d.getMonth()];
+  const year = d.getFullYear();
+  return `СРЕДА, ${day} ${month} ${year} Г.`;
+}
+
+/* -----------------------------
+   SEMAINE
 --------------------------------*/
 function populateWeekSelect(){
   weekSelect.innerHTML = "";
@@ -54,30 +62,34 @@ function populateWeekSelect(){
   weekSelect.value = currentWeekIndex;
 }
 
-/* -----------------------------
-   AFFICHAGE SEMAINE
---------------------------------*/
 function renderWeek(idx){
   const week = planningData.weeks[idx];
   if(!week) return;
 
-  // Affiche la date + info
   dateDisplay.textContent =
     `${week.date} — ${week.scripture} — Председатель : ${week.chairman || ""}`;
 
-  // Met à jour le champ Président avec la valeur actuelle pour cette semaine
   if(presidentInput) presidentInput.value = week.chairman || "";
 
-  let html = "";
+  if(weekDateInput){
+    const parts = week.date.match(/СРЕДА, (\d+) (\w+) (\d+) Г\./);
+    if(parts){
+      const [_, day, monthName, year] = parts;
+      const months = ["января","февраля","марта","апреля","мая","июня",
+                      "июля","августа","сентября","октября","ноября","декабря"];
+      const monthIndex = months.indexOf(monthName);
+      if(monthIndex>=0) weekDateInput.value = `${year}-${String(monthIndex+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    }
+  }
 
+  let html = "";
   week.sections.forEach((sec,sidx)=>{
     if(sec.title){
       html += `<div class="sectionTitle">${escapeHtml(sec.title)}${sec.location? " — "+escapeHtml(sec.location):""}</div>`;
     }
 
-    html += sec.items.map((it, itidx)=>{
+    html += sec.items.map((it,itidx)=>{
       const noteHtml = `<div class="note editable" contenteditable="true" data-field="note" data-section="${sidx}" data-item="${itidx}">${escapeHtml(it.note||"")}</div>`;
-
       return `
       <div class="row section-${(sidx%4)+1}" data-section="${sidx}" data-item="${itidx}">
         <div class="time">${escapeHtml(it.time)}</div>
@@ -96,18 +108,13 @@ function renderWeek(idx){
 
   planningContainer.innerHTML = html;
 
-  // Attache les listeners d'édition
   planningContainer.querySelectorAll(".editable").forEach(el=>{
     el.addEventListener("input", onEdit);
     el.addEventListener("blur", saveLocal);
   });
 
-  // Met à jour l'option correspondante dans la select
   const opt = weekSelect.querySelector(`option[value="${idx}"]`);
   if(opt) opt.textContent = `${week.date} | ${week.scripture} | ${week.chairman || ""}`;
-
-  // Met à jour le champ date
-  setWeekDateInput();
 }
 
 /* -----------------------------
@@ -119,50 +126,35 @@ function onEdit(e){
   const section = Number(el.dataset.section);
   const item = Number(el.dataset.item);
   const field = el.dataset.field;
-
   let value = el.textContent.trim();
 
-  if(field === "duration"){
+  if(field==="duration"){
     const num = value.match(/(\d+)/);
     week.sections[section].items[item].duration = num ? Number(num[1]) : 0;
     recalcTimesForWeek(currentWeekIndex);
     renderWeek(currentWeekIndex);
     return;
   }
-
   week.sections[section].items[item][field] = value;
 }
 
-/* -----------------------------
-   RECALCUL HEURES
---------------------------------*/
 function recalcTimesForWeek(weekIndex){
   const week = planningData.weeks[weekIndex];
   if(!week) return;
 
   let flat = [];
-  week.sections.forEach((sec,s)=> sec.items.forEach(it=> flat.push(it)));
+  week.sections.forEach(sec=>{ sec.items.forEach(it=>flat.push(it)); });
 
-  for(let i=1; i<flat.length; i++){
-    const prev = flat[i-1];
-    const cur  = flat[i];
-
+  for(let i=1;i<flat.length;i++){
+    const prev = flat[i-1], cur = flat[i];
     let [h,m] = (prev.time||"00:00").split(":").map(Number);
-    let dur = Number(prev.duration)||0;
-
-    let total = h*60 + m + dur;
+    let total = h*60+m+Number(prev.duration||0);
     cur.time = `${String(Math.floor(total/60)).padStart(2,"0")}:${String(total%60).padStart(2,"0")}`;
   }
 }
 
 /* -----------------------------
-   LOCAL STORAGE
---------------------------------*/
-function saveLocal(){ try{ localStorage.setItem(PLANNING_KEY, JSON.stringify(planningData)); }catch(e){ console.warn(e); } }
-function loadLocal(){ try{ let raw = localStorage.getItem(PLANNING_KEY); if(raw) return JSON.parse(raw); }catch(e){} return null; }
-
-/* -----------------------------
-   BOUTONS / IMPORT / EXPORT JSON
+   BOUTONS / PDF
 --------------------------------*/
 saveBtn.addEventListener("click", ()=>{
   saveLocal();
@@ -182,111 +174,63 @@ resetBtn.addEventListener("click", async ()=>{
   } else alert("Impossible de recharger planning.json");
 });
 
-exportBtn.addEventListener("click", ()=>{
-  const blob = new Blob([JSON.stringify(planningData,null,2)],{type:"application/json"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "planning.json";
-  a.click();
-});
-
-importBtn.addEventListener("click", ()=> importFile.click());
-importFile.addEventListener("change", async ev=>{
-  const f = ev.target.files[0];
-  if(!f) return;
-  try{
-    const txt = await f.text();
-    const obj = JSON.parse(txt);
-    if(!obj.weeks) throw new Error("Format invalide");
-    planningData = obj;
-    populateWeekSelect();
-    renderWeek(0);
-    saveLocal();
-  }catch(e){ alert(e.message); }
-});
-
 /* -----------------------------
-   PRÉSIDENT: liaison champ <-> données
+   PRÉSIDENT
 --------------------------------*/
 if(presidentInput){
-  presidentInput.addEventListener("input", (ev)=>{
+  presidentInput.addEventListener("input",(ev)=>{
     const val = ev.target.value.trim();
-    if(planningData && planningData.weeks && planningData.weeks[currentWeekIndex]){
-      planningData.weeks[currentWeekIndex].chairman = val;
-      dateDisplay.textContent = `${planningData.weeks[currentWeekIndex].date} — ${planningData.weeks[currentWeekIndex].scripture} — Председатель : ${val}`;
-      const opt = weekSelect.querySelector(`option[value="${currentWeekIndex}"]`);
-      if(opt) opt.textContent = `${planningData.weeks[currentWeekIndex].date} | ${planningData.weeks[currentWeekIndex].scripture} | ${val}`;
-      saveLocal();
-    }
+    planningData.weeks[currentWeekIndex].chairman = val;
+    dateDisplay.textContent = `${planningData.weeks[currentWeekIndex].date} — ${planningData.weeks[currentWeekIndex].scripture} — Председатель : ${val}`;
+    const opt = weekSelect.querySelector(`option[value="${currentWeekIndex}"]`);
+    if(opt) opt.textContent = `${planningData.weeks[currentWeekIndex].date} | ${planningData.weeks[currentWeekIndex].scripture} | ${val}`;
+    saveLocal();
   });
 }
 
 /* -----------------------------
-   DATE MERCREDI: format russe
+   CHANGEMENT DE SEMAINE
 --------------------------------*/
-function formatDateRussian(date){
-  const months = ["января","февраля","марта","апреля","мая","июня",
-                  "июля","августа","сентября","октября","ноября","декабря"];
-  const d = new Date(date);
-  if(isNaN(d)) return "";
-  const dayName = "Среда"; // toujours mercredi
-  const day = d.getDate();
-  const month = months[d.getMonth()];
-  const year = d.getFullYear();
-  return `${dayName}, ${day} ${month} ${year} г.`;
-}
-
-setWeekDateBtn.addEventListener("click", ()=>{
-  if(!planningData || !planningData.weeks[currentWeekIndex]) return;
-  const selectedDate = weekDateInput.value;
-  if(!selectedDate) return;
-  planningData.weeks[currentWeekIndex].date = formatDateRussian(selectedDate);
+weekSelect.addEventListener("change", e=>{
+  currentWeekIndex = Number(e.target.value);
   renderWeek(currentWeekIndex);
-  saveLocal();
 });
 
-function setWeekDateInput(){
-  if(!planningData || !planningData.weeks[currentWeekIndex]) return;
-  const week = planningData.weeks[currentWeekIndex];
-  const parts = week.date.match(/(\d{1,2})\s([а-яё]+)\s(\d{4})/i);
-  if(!parts) return;
-  const day = parts[1], monthName = parts[2], year = parts[3];
-  const months = ["января","февраля","марта","апреля","мая","июня",
-                  "июля","августа","сентября","октября","ноября","декабря"];
-  const monthIndex = months.indexOf(monthName.toLowerCase());
-  if(monthIndex<0) return;
-  const d = new Date(year, monthIndex, day);
-  weekDateInput.valueAsDate = d;
+/* -----------------------------
+   CHANGEMENT DE DATE
+--------------------------------*/
+if(weekDateInput){
+  weekDateInput.addEventListener("input", ()=>{
+    const newDate = formatDateRussian(weekDateInput.value);
+    planningData.weeks[currentWeekIndex].date = newDate;
+    renderWeek(currentWeekIndex);
+    saveLocal();
+  });
 }
 
 /* -----------------------------
    EXPORT PDF
 --------------------------------*/
+pdfBtn.addEventListener("click", exportPDF);
+
 function exportPDF(){
   if(!planningData) return;
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({unit:"pt", format:"a4"});
-
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const marginLeft = 32;
-  const marginTop = 40;
-  const colGap = 18;
+  const marginLeft = 32, marginTop = 40, colGap = 18;
   const colWidth = (pageWidth - marginLeft*2 - colGap)/2;
   const lineHeight = 12;
-  const timeWidth = 50;
-  const durWidth = 40;
-  const themeWidth = colWidth - timeWidth - durWidth - 12;
+  const timeWidth = 50, durWidth = 40, themeWidth = colWidth - timeWidth - durWidth - 12;
   const sectionColors = ["#e6f7f5","#fff7e6","#fff1f2"];
 
   function renderWeekPDF(xStart, yStart, week){
     let y = yStart;
-    doc.setFont("Helvetica","bold"); doc.setFontSize(11);
+    doc.setFont("Helvetica","bold").setFontSize(11);
     const titleLines = doc.splitTextToSize(planningData.title||"", colWidth);
-    doc.text(titleLines, xStart, y);
-    y += lineHeight*titleLines.length + 4;
-
-    doc.setFont("Helvetica","normal"); doc.setFontSize(10);
+    doc.text(titleLines, xStart, y); y += lineHeight*titleLines.length+4;
+    doc.setFont("Helvetica","normal").setFontSize(10);
     doc.text(`${week.date} | ${week.scripture}`, xStart, y); y+=lineHeight;
     doc.text(`Председатель : ${week.chairman||""}`, xStart, y); y+=lineHeight+4;
 
@@ -300,18 +244,14 @@ function exportPDF(){
       section.items.forEach(item=>{
         doc.setFillColor(sectionColors[sidx % sectionColors.length]);
         doc.rect(xStart-2, y-2, colWidth, lineHeight, "F");
-
         doc.setFont("Helvetica","bold").setFontSize(9);
         doc.text(item.time||"", xStart, y);
-
         const themeText = (item.part? item.part+" " : "") + (item.theme||"");
         const themeLines = doc.splitTextToSize(themeText, themeWidth);
         doc.setFont("Helvetica","normal");
         doc.text(themeLines, xStart + timeWidth, y);
-
         const dtext = item.duration ? item.duration+" мин." : "";
         doc.text(dtext, xStart + timeWidth + themeWidth, y);
-
         if(item.person || item.note){
           doc.setFont("Helvetica","italic");
           const pn = [item.person||"", item.note||""].filter(Boolean).join(" — ");
@@ -319,11 +259,9 @@ function exportPDF(){
           doc.text(pnLines, xStart + timeWidth, y + lineHeight);
           y += lineHeight * pnLines.length;
         }
-
         y += lineHeight;
         if(y > pageHeight - marginTop){
-          doc.addPage();
-          y = marginTop;
+          doc.addPage(); y = marginTop;
         }
       });
       y += 6;
@@ -342,23 +280,12 @@ function exportPDF(){
   window.open(pdfUrl, "_blank");
 }
 
-pdfBtn.addEventListener("click", exportPDF);
-
 /* -----------------------------
-   CHANGEMENT DE SEMAINE
---------------------------------*/
-weekSelect.addEventListener("change", e=>{
-  currentWeekIndex = Number(e.target.value);
-  renderWeek(currentWeekIndex);
-});
-
-/* -----------------------------
-   INITIALISATION
+   INIT
 --------------------------------*/
 (async function init(){
   planningData = loadLocal() || await loadServer();
   if(!planningData){ alert("Impossible de charger le planning"); return; }
-
   if(!planningData.title) planningData.title = "Planning TPL";
   populateWeekSelect();
   renderWeek(currentWeekIndex);
