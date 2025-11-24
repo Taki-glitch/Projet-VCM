@@ -20,28 +20,22 @@
     </div>
 
     <div class="controls">
-      <!-- Champ ajouté pour le président (modifiable) -->
       <div class="president-container">
         <label for="presidentName">Président :</label>
         <input id="presidentName" type="text" placeholder="Nom du président"/>
       </div>
 
-      <!-- Sélection de la semaine -->
       <select id="weekSelect" title="Sélectionner une semaine"></select>
 
-      <!-- Nouveau champ date -->
+      <!-- Champ date synchronisé avec la semaine sélectionnée -->
       <div class="weekDateContainer">
         <label for="weekDate">Дата (среда) :</label>
         <input type="date" id="weekDate" />
-        <button id="setWeekDateBtn">Применить</button>
       </div>
 
-      <!-- Boutons actions -->
-      <!--<button id="resetBtn">Reset → server</button>
+      <!-- Boutons actions restants -->
+      <button id="resetBtn">Reset → server</button>
       <button id="saveBtn">Sauvegarder (local)</button>
-      <button id="exportBtn">Exporter JSON</button>-->
-      <input id="importFile" type="file" accept=".json" hidden/>
-      <button id="importBtn">Importer JSON</button>
       <button id="pdfBtn">Exporter PDF</button>
     </div>
   </header>
