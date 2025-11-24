@@ -1,4 +1,4 @@
-/* script.js — Version A4 FINAL — PDF identique au modèle (avec champ Président éditable) */
+/* script.js — Version A4 FINAL + date editable (mercredi) */
 
 const PLANNING_KEY = "planning_tpl_full_v1";
 const weekSelect = document.getElementById("weekSelect");
@@ -13,6 +13,8 @@ const pdfBtn = document.getElementById("pdfBtn");
 const presidentInput = document.getElementById("presidentName");
 const pdfPreviewContainer = document.getElementById("pdfPreviewContainer");
 const pdfPreviewIframe = document.getElementById("pdfPreview");
+const weekDateInput = document.getElementById("weekDate");
+const setWeekDateBtn = document.getElementById("setWeekDateBtn");
 
 let planningData = null;
 let currentWeekIndex = 0;
@@ -100,9 +102,12 @@ function renderWeek(idx){
     el.addEventListener("blur", saveLocal);
   });
 
-  // Met à jour l'option correspondante dans la select (pour refléter un changement manuel du chairman)
+  // Met à jour l'option correspondante dans la select
   const opt = weekSelect.querySelector(`option[value="${idx}"]`);
   if(opt) opt.textContent = `${week.date} | ${week.scripture} | ${week.chairman || ""}`;
+
+  // Met à jour le champ date
+  setWeekDateInput();
 }
 
 /* -----------------------------
@@ -136,9 +141,7 @@ function recalcTimesForWeek(weekIndex){
   if(!week) return;
 
   let flat = [];
-  week.sections.forEach((sec,s)=>{
-    sec.items.forEach((it,i)=> flat.push(it));
-  });
+  week.sections.forEach((sec,s)=> sec.items.forEach(it=> flat.push(it)));
 
   for(let i=1; i<flat.length; i++){
     const prev = flat[i-1];
@@ -155,13 +158,8 @@ function recalcTimesForWeek(weekIndex){
 /* -----------------------------
    LOCAL STORAGE
 --------------------------------*/
-function saveLocal(){
-  try{ localStorage.setItem(PLANNING_KEY, JSON.stringify(planningData)); }catch(e){ console.warn(e); }
-}
-function loadLocal(){
-  try{ let raw = localStorage.getItem(PLANNING_KEY); if(raw) return JSON.parse(raw); }catch(e){}
-  return null;
-}
+function saveLocal(){ try{ localStorage.setItem(PLANNING_KEY, JSON.stringify(planningData)); }catch(e){ console.warn(e); } }
+function loadLocal(){ try{ let raw = localStorage.getItem(PLANNING_KEY); if(raw) return JSON.parse(raw); }catch(e){} return null; }
 
 /* -----------------------------
    BOUTONS / IMPORT / EXPORT JSON
@@ -213,12 +211,9 @@ importFile.addEventListener("change", async ev=>{
 if(presidentInput){
   presidentInput.addEventListener("input", (ev)=>{
     const val = ev.target.value.trim();
-    // Met à jour la semaine courante
     if(planningData && planningData.weeks && planningData.weeks[currentWeekIndex]){
       planningData.weeks[currentWeekIndex].chairman = val;
-      // Met à jour l'affichage
       dateDisplay.textContent = `${planningData.weeks[currentWeekIndex].date} — ${planningData.weeks[currentWeekIndex].scripture} — Председатель : ${val}`;
-      // Met à jour l'option select
       const opt = weekSelect.querySelector(`option[value="${currentWeekIndex}"]`);
       if(opt) opt.textContent = `${planningData.weeks[currentWeekIndex].date} | ${planningData.weeks[currentWeekIndex].scripture} | ${val}`;
       saveLocal();
@@ -227,34 +222,65 @@ if(presidentInput){
 }
 
 /* -----------------------------
-   EXPORT PDF (génération + ouverture dans nouvel onglet)
+   DATE MERCREDI: format russe
+--------------------------------*/
+function formatDateRussian(date){
+  const months = ["января","февраля","марта","апреля","мая","июня",
+                  "июля","августа","сентября","октября","ноября","декабря"];
+  const d = new Date(date);
+  if(isNaN(d)) return "";
+  const dayName = "Среда"; // toujours mercredi
+  const day = d.getDate();
+  const month = months[d.getMonth()];
+  const year = d.getFullYear();
+  return `${dayName}, ${day} ${month} ${year} г.`;
+}
+
+setWeekDateBtn.addEventListener("click", ()=>{
+  if(!planningData || !planningData.weeks[currentWeekIndex]) return;
+  const selectedDate = weekDateInput.value;
+  if(!selectedDate) return;
+  planningData.weeks[currentWeekIndex].date = formatDateRussian(selectedDate);
+  renderWeek(currentWeekIndex);
+  saveLocal();
+});
+
+function setWeekDateInput(){
+  if(!planningData || !planningData.weeks[currentWeekIndex]) return;
+  const week = planningData.weeks[currentWeekIndex];
+  const parts = week.date.match(/(\d{1,2})\s([а-яё]+)\s(\d{4})/i);
+  if(!parts) return;
+  const day = parts[1], monthName = parts[2], year = parts[3];
+  const months = ["января","февраля","марта","апреля","мая","июня",
+                  "июля","августа","сентября","октября","ноября","декабря"];
+  const monthIndex = months.indexOf(monthName.toLowerCase());
+  if(monthIndex<0) return;
+  const d = new Date(year, monthIndex, day);
+  weekDateInput.valueAsDate = d;
+}
+
+/* -----------------------------
+   EXPORT PDF
 --------------------------------*/
 function exportPDF(){
   if(!planningData) return;
-
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({unit:"pt", format:"a4"});
 
-  // Variables PDF
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-
   const marginLeft = 32;
   const marginTop = 40;
   const colGap = 18;
-
   const colWidth = (pageWidth - marginLeft*2 - colGap)/2;
   const lineHeight = 12;
-
   const timeWidth = 50;
   const durWidth = 40;
   const themeWidth = colWidth - timeWidth - durWidth - 12;
-
   const sectionColors = ["#e6f7f5","#fff7e6","#fff1f2"];
 
-  function renderWeek(xStart, yStart, week){
+  function renderWeekPDF(xStart, yStart, week){
     let y = yStart;
-
     doc.setFont("Helvetica","bold"); doc.setFontSize(11);
     const titleLines = doc.splitTextToSize(planningData.title||"", colWidth);
     doc.text(titleLines, xStart, y);
@@ -272,25 +298,20 @@ function exportPDF(){
       }
 
       section.items.forEach(item=>{
-        // fond ligne
         doc.setFillColor(sectionColors[sidx % sectionColors.length]);
         doc.rect(xStart-2, y-2, colWidth, lineHeight, "F");
 
-        // heure
         doc.setFont("Helvetica","bold").setFontSize(9);
         doc.text(item.time||"", xStart, y);
 
-        // theme
         const themeText = (item.part? item.part+" " : "") + (item.theme||"");
         const themeLines = doc.splitTextToSize(themeText, themeWidth);
         doc.setFont("Helvetica","normal");
         doc.text(themeLines, xStart + timeWidth, y);
 
-        // durée
         const dtext = item.duration ? item.duration+" мин." : "";
         doc.text(dtext, xStart + timeWidth + themeWidth, y);
 
-        // personne / note
         if(item.person || item.note){
           doc.setFont("Helvetica","italic");
           const pn = [item.person||"", item.note||""].filter(Boolean).join(" — ");
@@ -305,21 +326,18 @@ function exportPDF(){
           y = marginTop;
         }
       });
-
       y += 6;
     });
-
     return y;
   }
 
   const weeks = planningData.weeks;
   for(let i=0;i<weeks.length;i+=2){
     if(i>0) doc.addPage();
-    renderWeek(marginLeft, marginTop, weeks[i]);
-    if(weeks[i+1]) renderWeek(marginLeft + colWidth + colGap, marginTop, weeks[i+1]);
+    renderWeekPDF(marginLeft, marginTop, weeks[i]);
+    if(weeks[i+1]) renderWeekPDF(marginLeft + colWidth + colGap, marginTop, weeks[i+1]);
   }
 
-  // Ouvre le PDF lisible dans un nouvel onglet
   const pdfUrl = doc.output("bloburl");
   window.open(pdfUrl, "_blank");
 }
