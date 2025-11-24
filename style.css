@@ -2,69 +2,175 @@
   --bg:#f7f7f7;
   --card:#ffffff;
   --muted:#555;
-  --accent:#4c8bf5;
-  --dark-bg:#121212;
-  --dark-card:#1f1f1f;
-  --dark-muted:#bbb;
+  --accent:#222;
+  --section1:#e6f7f5;
+  --section2:#fff7e6;
+  --section3:#fff1f2;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  color: var(--accent);
 }
 
+/* -----------------------------
+   RESET & BODY
+--------------------------------*/
+*{box-sizing:border-box;}
 body{
-  font-family: Arial, sans-serif;
-  background: var(--bg);
-  color:#333;
   margin:0;
-  padding:0;
+  background:var(--bg);
+  -webkit-font-smoothing:antialiased;
 }
 
-.header, .topbar{
+/* -----------------------------
+   TOPBAR
+--------------------------------*/
+.topbar{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:8px 16px;
-  background: var(--accent);
-  color:#fff;
+  padding:12px 16px;
+  background:#fff;
+  border-bottom:1px solid #e6e6e6;
+}
+.brand{
+  display:flex;
+  gap:12px;
+  align-items:center;
+}
+.logo{
+  width:64px;
+  height:64px;
+  object-fit:cover;
+  border-radius:6px;
+  border:1px solid #ddd;
+  padding:4px;
+  background:#fff;
+}
+.subtitle{
+  font-size:12px;
+  color:#666;
+}
+.controls{
+  display:flex;
+  gap:8px;
+  align-items:center;
   flex-wrap:wrap;
 }
 
-.brand{
+/* Président field */
+.president-container{
   display:flex;
   align-items:center;
-  gap:12px;
+  gap:8px;
+  margin-right:6px;
+}
+.president-container label{
+  font-size:13px;
+  color:var(--muted);
+}
+.president-container input{
+  padding:6px 10px;
+  border-radius:6px;
+  border:1px solid #ddd;
+  background:var(--card);
+  color:var(--accent);
+  min-width:160px;
 }
 
-.brand h1{ margin:0; font-size:1.2em;}
-.brand .subtitle{ font-size:0.8em; color:#eee;}
+/* Controls buttons/select */
+.controls select, .controls button{
+  padding:8px 10px;
+  border-radius:6px;
+  border:1px solid #ddd;
+  background:#fff;
+  cursor:pointer;
+}
 
-.controls{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-
-.planning-container{ padding:12px; display:flex; flex-direction:column; gap:2px; }
-
-.row{
+/* -----------------------------
+   MAIN
+--------------------------------*/
+main{
+  max-width:1100px;
+  margin:18px auto;
+  padding:0 16px;
+}
+#meta{
   display:flex;
-  gap:4px;
-  padding:2px;
-  border-bottom:1px solid #ccc;
-  align-items:flex-start;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:8px;
+}
+.dateDisplay{
+  font-weight:700;
+}
+#planning{
+  border-radius:8px;
+  overflow:hidden;
 }
 
-.time{ width:50px; flex-shrink:0; }
-.duration{ width:40px; flex-shrink:0; }
-.theme{ flex:1; }
-.person{ width:100px; flex-shrink:0; }
-.note{ font-size:0.75em; color:#555; }
+/* -----------------------------
+   LIGNES & SECTIONS
+--------------------------------*/
+.row{
+  display:grid;
+  grid-template-columns:90px 1fr 80px 280px;
+  gap:10px;
+  padding:10px;
+  border-bottom:1px solid #eee;
+  background:var(--card);
+  align-items:start;
+}
+.row.section-1{background:linear-gradient(90deg,#f5fffb,#ffffff);}
+.row.section-2{background:linear-gradient(90deg,#fffaf0,#ffffff);}
+.row.section-3{background:linear-gradient(90deg,#fff6f7,#ffffff);}
+.time{font-weight:700;color:var(--muted);}
+.theme,.duration,.person,.note{
+  padding:6px;
+  border-radius:6px;
+  min-height:20px;
+}
+.duration{
+  min-width:48px;
+  text-align:center;
+  background:#fafafa;
+}
+.editable{cursor:text;}
+.editable:focus{
+  outline:2px solid rgba(0,0,0,0.08);
+  background:#fff;
+}
+.sectionTitle{
+  padding:10px 8px;
+  font-weight:700;
+  background:#f0f0f0;
+  border-bottom:1px solid #e6e6e6;
+}
 
-.editable{ background:rgba(255,255,255,0.2); padding:2px; border-radius:2px; }
+/* -----------------------------
+   RESPONSIVE
+--------------------------------*/
+@media (max-width:900px){
+  .row{grid-template-columns:70px 1fr 60px 160px;}
+  .controls{flex-wrap:wrap;}
+}
 
-.sectionTitle{ background:#eee; font-weight:bold; padding:2px 4px; margin-top:4px; }
-.section-1{ background:#fdfdfd; }
-.section-2{ background:#f7f7ff; }
-.section-3{ background:#fff7f7; }
-.section-4{ background:#f7fff7; }
-
-.date-display{ font-weight:bold; margin-right:8px; }
-
-input, select, button{ padding:4px 6px; border-radius:2px; border:1px solid #ccc; }
-
-body.dark{ background: var(--dark-bg); color:#ddd; }
-body.dark .topbar{ background: var(--dark-card); color:var(--dark-muted); }
-body.dark .row{ border-bottom:1px solid #555; }
+/* -----------------------------
+   THEME SOMBRE AUTOMATIQUE
+--------------------------------*/
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#1a1d21;
+    --card:#2b2f36;
+    --muted:#e5e5e5;
+    --accent:#fff;
+    --section1:#2b2f36;
+    --section2:#333;
+    --section3:#444;
+  }
+  body{color:var(--accent);}
+  .topbar{background:#2b2f36;border-bottom:1px solid #444;}
+  .controls select, .controls button{background:#3a3f4b;border:1px solid #555;color:#e5e5e5;}
+  .row{background:var(--card);border-bottom:1px solid #444;}
+  .sectionTitle{background:#333;border-bottom:1px solid #444;}
+  .editable:focus{background:#444;}
+  .president-container input{background:#2b2f36;color:var(--accent);border:1px solid #444;}
+}
