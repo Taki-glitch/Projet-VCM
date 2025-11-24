@@ -4,68 +4,43 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#ffffff">
-  <title>Программа встречи — editable</title>
+  <title>Planning TPL</title>
 
-  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="tpl-logo.png" />
   <link rel="stylesheet" href="style.css" />
+
+  <!-- FullCalendar CSS si utilisé -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <img src="logo.jpeg" alt="logo" class="logo" id="siteLogo"/>
-      <div>
-        <h1>Программа встречи</h1>
-        <div id="subtitle" class="subtitle">Редактируй одну неделю, exporte deux semaines en PDF</div>
-      </div>
+  <header>
+    <div class="header-left">
+      <label for="weekSelect">Выбрать неделю :</label>
+      <select id="weekSelect"></select>
     </div>
-
-    <div class="controls">
-      <div class="president-container">
-        <label for="presidentName">Président :</label>
-        <input id="presidentName" type="text" placeholder="Nom du président"/>
-      </div>
-
-      <select id="weekSelect" title="Sélectionner une semaine"></select>
-
-      <div class="weekDateContainer">
-        <label for="weekDate">Дата (среда) :</label>
-        <input type="date" id="weekDate" />
-      </div>
-
-      <button id="resetBtn">Reset → server</button>
-      <button id="saveBtn">Sauvegarder (local)</button>
-      <button id="pdfBtn">Exporter PDF</button>
+    <div class="header-center">
+      <span id="dateDisplay">Дата</span>
+    </div>
+    <div class="header-right">
+      <input id="presidentName" type="text" placeholder="Председатель">
+      <button id="saveBtn">Сохранить (локально)</button>
+      <button id="resetBtn">Сбросить</button>
+      <button id="pdfBtn">Экспорт PDF</button>
     </div>
   </header>
 
   <main>
-    <section id="meta">
-      <div id="dateDisplay" class="dateDisplay"></div>
-      <div id="infoText">Cliquez sur un champ pour éditer (thème, durée, personne, note). Les modifications sont locales.</div>
-    </section>
-
-    <section id="planning" aria-live="polite"></section>
-
-    <section id="pdfPreviewContainer" style="display:none;margin-top:16px;">
-      <h2>Prévisualisation PDF</h2>
-      <iframe id="pdfPreview" style="width:100%; height:600px; border:1px solid #ccc;"></iframe>
-    </section>
+    <div id="planning"></div>
   </main>
 
   <footer>
-    <small>Version A4 — Export PDF 2 semaines par page. Basé sur ton modèle PDF.</small>
+    <p>© 2025 Planning TPL</p>
   </footer>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-  <script src="script.js"></script>
+  <!-- JS Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
-  <script>
-    const img = document.getElementById('siteLogo');
-    if(img) img.addEventListener('error', ()=> {
-      console.warn("Logo non trouvé, fallback appliqué");
-      img.src='logo.jpeg';
-    });
-  </script>
+  <!-- Script principal -->
+  <script src="script.js"></script>
 </body>
 </html>
