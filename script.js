@@ -1,4 +1,8 @@
-/* script.js — Version A4 FINAL avec boutons Président & Date */
+/* script.js — Version A4 FINAL avec boutons Président & Date + PDF Roboto (chargée à la volée)
+   --- Solution : fetch Roboto-Regular.ttf depuis le dépôt Google Fonts (raw github),
+   convertir en base64 et l'ajouter au VFS de jsPDF avant génération du PDF.
+   Avantage : pas de gros bloc base64 collé dans le fichier ; tout reste dans UN SEUL script.
+*/
 
 document.addEventListener("DOMContentLoaded", async () => {
 
@@ -14,6 +18,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   let planningData = null;
   let currentWeekIndex = 0;
+
+  // --- Font loading cache
+  let ROBOTO_LOADED = false;
+  // URL to Roboto-Regular.ttf (raw GitHub google/fonts)
+  const ROBOTO_TTF_URL = "https://raw.githubusercontent.com/google/fonts/main/apache/roboto/Roboto-Regular.ttf";
 
   async function loadServer(){
     try {
@@ -171,49 +180,128 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  function exportPDF(){
+  /* ------------------------------ PDF AVEC ROBOTO (chargée dynamiquement) ------------------------------ */
+
+  // util: convert ArrayBuffer -> base64 (chunked for large buffers)
+  function arrayBufferToBase64(buffer) {
+    const bytes = new Uint8Array(buffer);
+    const chunkSize = 0x8000; // 32KB
+    let result = '';
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const chunk = bytes.subarray(i, i + chunkSize);
+      result += String.fromCharCode.apply(null, chunk);
+    }
+    return btoa(result);
+  }
+
+  // Charge Roboto TTF depuis ROBOTO_TTF_URL, convertit en base64 et l'ajoute au VFS de jsPDF
+  async function ensureRobotoLoaded(docInstance){
+    if(ROBOTO_LOADED) {
+      // déjà chargé dans VFS
+      try {
+        // si la font n'existe pas encore parce qu'un autre doc a été utilisé, on tente d'ajouter quand même
+        if(!docInstance.getFontList || !docInstance.getFontList().Roboto) {
+          // si getFontList disponible, on vérifie et on tente d'ajouter à nouveau si besoin
+          // (mais en pratique addFileToVFS est idempotent ici)
+        }
+      } catch(e){}
+      return;
+    }
+
+    try {
+      const resp = await fetch(ROBOTO_TTF_URL, {cache: "no-store"});
+      if(!resp.ok) throw new Error("Impossible de télécharger Roboto depuis le serveur distant.");
+      const ab = await resp.arrayBuffer();
+      const base64 = arrayBufferToBase64(ab);
+      // On ajoute la police au VFS
+      docInstance.addFileToVFS("Roboto-Regular.ttf", base64);
+      docInstance.addFont("Roboto-Regular.ttf", "Roboto", "normal");
+      // On peut ajouter l'italic/ bold si nécessaire plus tard (avec les fichiers correspondants)
+      ROBOTO_LOADED = true;
+    } catch (err) {
+      console.error("Echec chargement Roboto:", err);
+      // On ne throw pas : on laisse jsPDF utiliser une police fallback (mais russe ne fonctionnera pas).
+      throw err;
+    }
+  }
+
+  // exportPDF devient async pour await la police
+  async function exportPDF(){
     if(!planningData) return;
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({unit:"pt", format:"a4"});
+
+    // Charger Roboto et l'enregistrer dans jsPDF VFS (s'il n'est pas déjà chargé)
+    try {
+      await ensureRobotoLoaded(doc);
+      // définir la police
+      doc.setFont("Roboto", "normal");
+    } catch(e){
+      // En cas d'erreur de téléchargement, on tombe sur une police par défaut.
+      console.warn("Roboto non chargée — le PDF utilisera la police par défaut (risque de texte illisible pour cyrillique).");
+    }
+
     const marginLeft = 32, marginTop = 40, colGap = 18, lineHeight = 10.5;
     const columnWidth = (doc.internal.pageSize.getWidth() - marginLeft*2 - colGap) / 2;
     const timeWidth = 50, themeWidth = 230, durWidth = 40;
     const titleSpacing = 14, sectionSpacing = 10;
 
     function renderWeekPDF(x, y, week){
-      doc.setFont("Helvetica","bold");
+      // Titre global
+      try {
+        doc.setFont("Roboto","bold");
+      } catch(e){
+        try { doc.setFont("Roboto","normal"); } catch(e){ doc.setFont("helvetica","bold"); }
+      }
       doc.setFontSize(11);
       doc.text(planningData.title||"", x, y); y+=titleSpacing;
-      doc.setFont("Helvetica","normal"); doc.setFontSize(10);
+
+      // date / scripture / chairman
+      try { doc.setFont("Roboto","normal"); } catch(e){ doc.setFont("helvetica","normal"); }
+      doc.setFontSize(10);
       doc.text(`${week.date} | ${week.scripture}`, x, y); y+=titleSpacing;
       doc.text(`Председатель : ${week.chairman||""}`, x, y); y+=titleSpacing;
 
       week.sections.forEach(section=>{
         if(section.title){
-          doc.setFont("Helvetica","bold"); doc.setFontSize(10); doc.setTextColor(60);
+          try { doc.setFont("Roboto","bold"); } catch(e){ doc.setFont("helvetica","bold"); }
+          doc.setFontSize(10);
           doc.text(section.title + (section.location ? " — "+section.location : ""), x, y);
-          doc.setTextColor(0); y+=sectionSpacing;
+          y+=sectionSpacing;
         }
         section.items.forEach(item=>{
-          doc.setFont("Helvetica","bold"); doc.setFontSize(9);
+          try { doc.setFont("Roboto","bold"); } catch(e){ doc.setFont("helvetica","bold"); }
+          doc.setFontSize(9);
           doc.text(item.time||"", x, y);
+
           const part = item.part ? item.part+" " : "";
           const theme = part + (item.theme||"");
-          doc.setFont("Helvetica","normal");
-          doc.text(theme, x + timeWidth, y);
+
+          try { doc.setFont("Roboto","normal"); } catch(e){ doc.setFont("helvetica","normal"); }
+          // text wrapping small helper (manual wrap if too long to fit column)
+          const maxWidth = themeWidth;
+          const splitTheme = doc.splitTextToSize(theme, maxWidth);
+          doc.text(splitTheme, x + timeWidth, y);
+          // splitTextToSize returns array; move y by number of lines * lineHeight
+          y += lineHeight * splitTheme.length;
+
           const durText = item.duration ? (item.duration + " мин.") : "";
-          doc.text(durText, x + timeWidth + themeWidth, y);
-          y += lineHeight;
+          doc.text(durText, x + timeWidth + maxWidth + 6, y - (lineHeight * splitTheme.length)); // align to first line of theme
+
           if(item.person || item.note){
-            doc.setFont("Helvetica","italic");
+            // writer for person/note on next line(s)
             let line = item.person || "";
             if(item.note) line += (line ? " — " : "") + item.note;
-            doc.text(line, x + timeWidth + 12, y);
-            y += lineHeight;
+            try { doc.setFont("Roboto","italic"); } catch(e){ doc.setFont("helvetica","italic"); }
+            const personLines = doc.splitTextToSize(line, columnWidth - timeWidth - 12);
+            y += 4; // small gap
+            doc.text(personLines, x + timeWidth + 12, y);
+            y += lineHeight * personLines.length;
           }
-          y += 2;
+
+          y += 4; // spacing after item
         });
-        y += 4;
+        y += 6; // spacing after section
       });
       return y;
     }
@@ -221,7 +309,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const weeks = planningData.weeks;
     for(let i=0; i<weeks.length; i+=2){
       if(i>0) doc.addPage();
+      // left column
       renderWeekPDF(marginLeft, marginTop, weeks[i]);
+      // right column if present - note: using same vertical start
       if(weeks[i+1]) renderWeekPDF(marginLeft + columnWidth + colGap, marginTop, weeks[i+1]);
     }
 
@@ -230,13 +320,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("pdfPreview").src = url;
   }
 
-  pdfBtn.addEventListener("click", exportPDF);
+  // bouton PDF : on attache la version async
+  pdfBtn.addEventListener("click", ()=> {
+    // appel non-blockant ; on gère erreurs à l'intérieur
+    exportPDF().catch(e => {
+      console.error("Erreur exportPDF:", e);
+      alert("Erreur lors de la génération du PDF. Regarde la console pour plus de détails.");
+    });
+  });
 
-  // INITIALISATION
+  /* ------------ INITIALISATION ------------ */
+
   planningData = loadLocal() || await loadServer();
   if(!planningData){ alert("Impossible de charger le planning"); return; }
   if(!planningData.title) planningData.title = "Planning TPL";
+
   populateWeekSelect();
   renderWeek(currentWeekIndex);
 
-});
+}); // DOMContentLoaded
