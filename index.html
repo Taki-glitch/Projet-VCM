@@ -26,7 +26,17 @@
         <input id="presidentName" type="text" placeholder="Nom du président"/>
       </div>
 
+      <!-- Sélection de la semaine -->
       <select id="weekSelect" title="Sélectionner une semaine"></select>
+
+      <!-- Nouveau champ date -->
+      <div class="weekDateContainer">
+        <label for="weekDate">Дата (среда) :</label>
+        <input type="date" id="weekDate" />
+        <button id="setWeekDateBtn">Применить</button>
+      </div>
+
+      <!-- Boutons actions -->
       <button id="resetBtn">Reset → server</button>
       <button id="saveBtn">Sauvegarder (local)</button>
       <button id="exportBtn">Exporter JSON</button>
