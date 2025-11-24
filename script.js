@@ -164,6 +164,7 @@ function loadLocal(){ try{ let raw = localStorage.getItem(PLANNING_KEY); if(raw)
 /* -----------------------------
    BOUTONS / IMPORT / EXPORT JSON
 --------------------------------*/
+/*
 saveBtn.addEventListener("click", ()=>{
   saveLocal();
   saveBtn.textContent = "Saved ✅";
@@ -204,7 +205,7 @@ importFile.addEventListener("change", async ev=>{
     saveLocal();
   }catch(e){ alert(e.message); }
 });
-
+*/
 /* -----------------------------
    PRÉSIDENT: liaison champ <-> données
 --------------------------------*/
