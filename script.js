@@ -1,9 +1,8 @@
-/* script.js — Version A4 FINAL — PDF identique au modèle
-   - Édition complète par semaine
-   - Sauvegarde localStorage
-   - Recalcul automatique des horaires
-   - Import / export JSON
-   - Export PDF 2 semaines par page (layout identique au PDF modèle)
+/* script.js — Version A4 FINAL avec modifications
+   - Boutons changer président et date
+   - Suppression import/export JSON
+   - Édition complète par semaine, sauvegarde localStorage, recalcul automatique horaires
+   - Export PDF 2 semaines par page (layout identique au modèle)
 */
 
 const PLANNING_KEY = "planning_tpl_full_v1";
@@ -12,12 +11,11 @@ const planningContainer = document.getElementById("planning");
 const dateDisplay = document.getElementById("dateDisplay");
 const saveBtn = document.getElementById("saveBtn");
 const resetBtn = document.getElementById("resetBtn");
-const exportBtn = document.getElementById("exportBtn");
-const importBtn = document.getElementById("importBtn");
-const importFile = document.getElementById("importFile");
 const pdfBtn = document.getElementById("pdfBtn");
 const pdfPreviewContainer = document.getElementById("pdfPreviewContainer");
 const pdfPreviewIframe = document.getElementById("pdfPreview");
+const changeChairmanBtn = document.getElementById("changeChairmanBtn");
+const changeDateBtn = document.getElementById("changeDateBtn");
 
 let planningData = null;
 let currentWeekIndex = 0;
@@ -179,32 +177,26 @@ resetBtn.addEventListener("click", async ()=>{
   } else alert("Impossible de recharger planning.json");
 });
 
-exportBtn.addEventListener("click", ()=>{
-  const blob = new Blob([JSON.stringify(planningData,null,2)],{type:"application/json"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "planning-export.json";
-  a.click();
-  URL.revokeObjectURL(url);
+// Bouton Modifier Président
+changeChairmanBtn.addEventListener("click", () => {
+  const week = planningData.weeks[currentWeekIndex];
+  const newChairman = prompt("Nom du président :", week.chairman || "");
+  if(newChairman !== null){
+    week.chairman = newChairman.trim();
+    renderWeek(currentWeekIndex);
+    saveLocal();
+  }
 });
 
-importBtn.addEventListener("click", ()=> importFile.click());
-importFile.addEventListener("change", async (ev)=>{
-  const f = ev.target.files[0];
-  if(!f) return;
-  try{
-    const text = await f.text();
-    const obj = JSON.parse(text);
-    if(!obj.weeks) throw new Error("Format JSON invalide");
-    planningData = obj;
+// Bouton Modifier Date
+changeDateBtn.addEventListener("click", () => {
+  const week = planningData.weeks[currentWeekIndex];
+  const newDate = prompt("Nouvelle date :", week.date || "");
+  if(newDate !== null){
+    week.date = newDate.trim();
     populateWeekSelect();
-    currentWeekIndex = 0;
-    renderWeek(0);
+    renderWeek(currentWeekIndex);
     saveLocal();
-    alert("Planning importé.");
-  }catch(e){
-    alert("Erreur : " + e.message);
   }
 });
 
@@ -222,7 +214,7 @@ function exportPDF(){
   const timeWidth = 50, themeWidth = 230, durWidth = 40;
   const titleSpacing = 14, sectionSpacing = 10;
 
-  function renderWeek(x, y, week){
+  function renderWeekPDF(x, y, week){
     doc.setFont("Helvetica","bold");
     doc.setFontSize(11);
     doc.text(planningData.title||"", x, y); y+=titleSpacing;
@@ -273,8 +265,8 @@ function exportPDF(){
 
   for(let i=0; i<weeks.length; i+=2){
     if(i>0) doc.addPage();
-    renderWeek(marginLeft, marginTop, weeks[i]);
-    if(weeks[i+1]) renderWeek(marginLeft + columnWidth + colGap, marginTop, weeks[i+1]);
+    renderWeekPDF(marginLeft, marginTop, weeks[i]);
+    if(weeks[i+1]) renderWeekPDF(marginLeft + columnWidth + colGap, marginTop, weeks[i+1]);
   }
 
   const url = doc.output("bloburl");
