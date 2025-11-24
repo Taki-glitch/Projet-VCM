@@ -214,81 +214,93 @@ document.addEventListener("DOMContentLoaded", async () => {
     ROBOTO_LOADED = true;
   }
 
-  async function exportPDF(){
-    if(!planningData) return;
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({unit:"pt", format:"a4"});
+  function exportPDF() {
+  if (!planningData) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
 
-    try {
-      await ensureRobotoLoaded(doc);
-      doc.setFont("Roboto","normal");
-    } catch(e){
-      console.warn("Roboto non chargée, police fallback utilisée");
-    }
+  const marginLeft = 32, marginTop = 40, colGap = 18, lineHeight = 12;
+  const columnWidth = (doc.internal.pageSize.getWidth() - marginLeft * 2 - colGap) / 2;
+  const timeWidth = 50, themeWidth = 230, durWidth = 40;
+  const titleSpacing = 16, sectionSpacing = 12;
 
-    const marginLeft = 32, marginTop = 40, colGap = 18, lineHeight = 10.5;
-    const columnWidth = (doc.internal.pageSize.getWidth() - marginLeft*2 - colGap) / 2;
-    const timeWidth = 50, themeWidth = 230, durWidth = 40;
-    const titleSpacing = 14, sectionSpacing = 10;
+  // Charge la police Roboto (via vfs) pour jsPDF
+  doc.addFileToVFS("Roboto-Regular.ttf", window.RobotoRegularBase64);
+  doc.addFileToVFS("Roboto-Bold.ttf", window.RobotoBoldBase64);
+  doc.addFileToVFS("Roboto-Italic.ttf", window.RobotoItalicBase64);
+  doc.addFont("Roboto-Regular.ttf", "Roboto", "normal");
+  doc.addFont("Roboto-Bold.ttf", "Roboto", "bold");
+  doc.addFont("Roboto-Italic.ttf", "Roboto", "italic");
 
-    function renderWeekPDF(x, y, week){
-      doc.setFont("Roboto","bold"); doc.setFontSize(11);
-      doc.text(planningData.title||"", x, y); y+=titleSpacing;
-      doc.setFont("Roboto","normal"); doc.setFontSize(10);
-      doc.text(`${week.date} | ${week.scripture}`, x, y); y+=titleSpacing;
-      doc.text(`Председатель : ${week.chairman||""}`, x, y); y+=titleSpacing;
+  function renderWeekPDF(x, y, week) {
+    doc.setFont("Roboto", "bold");
+    doc.setFontSize(11);
+    doc.text(planningData.title || "Planning TPL", x, y); y += titleSpacing;
 
-      week.sections.forEach(section=>{
-        if(section.title){
-          doc.setFont("Roboto","bold"); doc.setFontSize(10); doc.setTextColor(60);
-          doc.text(section.title + (section.location ? " — "+section.location : ""), x, y);
-          doc.setTextColor(0); y+=sectionSpacing;
+    doc.setFont("Roboto", "normal");
+    doc.setFontSize(10);
+    doc.text(`${week.date} | ${week.scripture}`, x, y); y += titleSpacing;
+    doc.text(`Председатель : ${week.chairman || ""}`, x, y); y += titleSpacing;
+
+    week.sections.forEach(section => {
+      if (section.title) {
+        doc.setFont("Roboto", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(60);
+        doc.text(section.title + (section.location ? " — " + section.location : ""), x, y);
+        y += sectionSpacing;
+        doc.setTextColor(0);
+      }
+
+      section.items.forEach(item => {
+        doc.setFont("Roboto", "bold");
+        doc.setFontSize(9);
+        doc.text(item.time || "", x, y);
+
+        const part = item.part ? item.part + " " : "";
+        const theme = part + (item.theme || "");
+        doc.setFont("Roboto", "normal");
+        doc.text(theme, x + timeWidth, y);
+
+        const durText = item.duration ? item.duration + " мин." : "";
+        doc.text(durText, x + timeWidth + themeWidth, y);
+
+        y += lineHeight;
+
+        if (item.person || item.note) {
+          doc.setFont("Roboto", "italic");
+          let line = item.person || "";
+          if (item.note) line += (line ? " — " : "") + item.note;
+          doc.text(line, x + timeWidth + 12, y);
+          y += lineHeight;
         }
-        section.items.forEach(item=>{
-          doc.setFont("Roboto","bold"); doc.setFontSize(9);
-          doc.text(item.time||"", x, y);
-          const part = item.part ? item.part+" " : "";
-          const theme = part + (item.theme||"");
-          doc.setFont("Roboto","normal");
-          const splitTheme = doc.splitTextToSize(theme, themeWidth);
-          doc.text(splitTheme, x + timeWidth, y);
-          y += lineHeight * splitTheme.length;
-          const durText = item.duration ? (item.duration + " мин.") : "";
-          doc.text(durText, x + timeWidth + themeWidth + 6, y - (lineHeight * splitTheme.length));
-          if(item.person || item.note){
-            let line = item.person || "";
-            if(item.note) line += (line ? " — " : "") + item.note;
-            doc.setFont("Roboto","italic");
-            const personLines = doc.splitTextToSize(line, columnWidth - timeWidth - 12);
-            y += 4;
-            doc.text(personLines, x + timeWidth + 12, y);
-            y += lineHeight * personLines.length;
-          }
-          y += 4;
-        });
-        y += 6;
+
+        y += 2;
       });
-      return y;
-    }
-
-    const weeks = planningData.weeks;
-    for(let i=0; i<weeks.length; i+=2){
-      if(i>0) doc.addPage();
-      renderWeekPDF(marginLeft, marginTop, weeks[i]);
-      if(weeks[i+1]) renderWeekPDF(marginLeft + columnWidth + colGap, marginTop, weeks[i+1]);
-    }
-
-    const url = doc.output("bloburl");
-    document.getElementById("pdfPreviewContainer").style.display = "block";
-    document.getElementById("pdfPreview").src = url;
+      y += 4;
+    });
+    return y;
   }
 
-  pdfBtn.addEventListener("click", ()=> {
-    exportPDF().catch(e => {
-      console.error("Erreur exportPDF:", e);
-      alert("Erreur lors de la génération du PDF. Regarde la console.");
-    });
-  });
+  const weeks = planningData.weeks;
+  let yPos = marginTop;
+
+  for (let i = 0; i < weeks.length; i += 2) {
+    if (i > 0) doc.addPage();
+    renderWeekPDF(marginLeft, yPos, weeks[i]);
+    if (weeks[i + 1]) renderWeekPDF(marginLeft + columnWidth + colGap, yPos, weeks[i + 1]);
+  }
+
+  // Affichage dans l'iframe
+  const url = doc.output("bloburl");
+  const previewContainer = document.getElementById("pdfPreviewContainer");
+  const previewIframe = document.getElementById("pdfPreview");
+  previewContainer.style.display = "block";
+  previewIframe.src = url;
+
+  // Téléchargement direct
+  doc.save(`Planning_${planningData.title || "TPL"}.pdf`);
+}
 
   /* ------------ INITIALISATION ------------ */
   planningData = loadLocal() || await loadServer();
