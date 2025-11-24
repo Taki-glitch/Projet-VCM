@@ -1,4 +1,10 @@
-/* script.js — Version A4 FINAL — PDF identique au modèle (avec champ Président éditable) */
+/* script.js — Version A4 FINAL — PDF identique au modèle
+   - Édition complète par semaine
+   - Sauvegarde localStorage
+   - Recalcul automatique des horaires
+   - Import / export JSON
+   - Export PDF 2 semaines par page (layout identique au PDF modèle)
+*/
 
 const PLANNING_KEY = "planning_tpl_full_v1";
 const weekSelect = document.getElementById("weekSelect");
@@ -10,7 +16,6 @@ const exportBtn = document.getElementById("exportBtn");
 const importBtn = document.getElementById("importBtn");
 const importFile = document.getElementById("importFile");
 const pdfBtn = document.getElementById("pdfBtn");
-const presidentInput = document.getElementById("presidentName");
 const pdfPreviewContainer = document.getElementById("pdfPreviewContainer");
 const pdfPreviewIframe = document.getElementById("pdfPreview");
 
@@ -31,8 +36,8 @@ async function loadServer(){
   }
 }
 
-function escapeHtml(str){
-  return (str||"").toString()
+function escapeHtml(s){
+  return (s||"").toString()
     .replace(/&/g,"&amp;")
     .replace(/</g,"&lt;")
     .replace(/>/g,"&gt;");
@@ -46,10 +51,10 @@ function populateWeekSelect(){
   planningData.weeks.forEach((w,i)=>{
     const opt = document.createElement("option");
     opt.value = i;
-    opt.textContent = `${w.date} | ${w.scripture} | ${w.chairman || ""}`;
+    opt.textContent = `${w.date} | ${w.scripture} | ${w.chairman}`;
     weekSelect.appendChild(opt);
   });
-  weekSelect.value = currentWeekIndex;
+  weekSelect.value = currentWeekIndex || 0;
 }
 
 /* -----------------------------
@@ -59,77 +64,64 @@ function renderWeek(idx){
   const week = planningData.weeks[idx];
   if(!week) return;
 
-  // Affiche la date + info
   dateDisplay.textContent =
-    `${week.date} — ${week.scripture} — Председатель : ${week.chairman || ""}`;
-
-  // Met à jour le champ Président avec la valeur actuelle pour cette semaine
-  if(presidentInput) presidentInput.value = week.chairman || "";
+    `${week.date} — ${week.scripture} — Председатель : ${week.chairman}`;
 
   let html = "";
 
-  week.sections.forEach((sec,sidx)=>{
+  week.sections.forEach((sec, sidx)=>{
     if(sec.title){
       html += `<div class="sectionTitle">${escapeHtml(sec.title)}${sec.location? " — "+escapeHtml(sec.location):""}</div>`;
     }
 
     html += sec.items.map((it, itidx)=>{
+      const part = it.part ? `<span class="part">${escapeHtml(it.part)} </span>` : "";
       const noteHtml = `<div class="note editable" contenteditable="true" data-field="note" data-section="${sidx}" data-item="${itidx}">${escapeHtml(it.note||"")}</div>`;
 
-      return `
-      <div class="row section-${(sidx%4)+1}" data-section="${sidx}" data-item="${itidx}">
+      return `<div class="row section-${(sidx%4)+1}" data-section="${sidx}" data-item="${itidx}">
         <div class="time">${escapeHtml(it.time)}</div>
-        <div class="theme editable" contenteditable="true" data-field="theme" data-section="${sidx}" data-item="${itidx}">
-          ${it.part ? `<span class="part">${escapeHtml(it.part)} </span>` : ""}${escapeHtml(it.theme)}
-        </div>
-        <div class="duration editable" contenteditable="true" data-field="duration" data-section="${sidx}" data-item="${itidx}">
-          ${escapeHtml(it.duration)}
-        </div>
-        <div class="person editable" contenteditable="true" data-field="person" data-section="${sidx}" data-item="${itidx}">
-          ${escapeHtml(it.person)}${noteHtml}
-        </div>
+        <div class="theme editable" contenteditable="true" data-field="theme" data-section="${sidx}" data-item="${itidx}">${part}${escapeHtml(it.theme)}</div>
+        <div class="duration editable" contenteditable="true" data-field="duration" data-section="${sidx}" data-item="${itidx}">${escapeHtml(it.duration)}</div>
+        <div class="person editable" contenteditable="true" data-field="person" data-section="${sidx}" data-item="${itidx}">${escapeHtml(it.person)}${noteHtml}</div>
       </div>`;
     }).join("");
   });
 
   planningContainer.innerHTML = html;
 
-  // Attache les listeners d'édition
   planningContainer.querySelectorAll(".editable").forEach(el=>{
     el.addEventListener("input", onEdit);
     el.addEventListener("blur", saveLocal);
   });
-
-  // Met à jour l'option correspondante dans la select (pour refléter un changement manuel du chairman)
-  const opt = weekSelect.querySelector(`option[value="${idx}"]`);
-  if(opt) opt.textContent = `${week.date} | ${week.scripture} | ${week.chairman || ""}`;
 }
 
 /* -----------------------------
-   EDITION
+   MODIFICATION CHAMP
 --------------------------------*/
 function onEdit(e){
   const el = e.target;
-  const week = planningData.weeks[currentWeekIndex];
-  const section = Number(el.dataset.section);
-  const item = Number(el.dataset.item);
   const field = el.dataset.field;
+  const sec = Number(el.dataset.section);
+  const idx = Number(el.dataset.item);
+
+  const week = planningData.weeks[currentWeekIndex];
+  const item = week.sections[sec].items[idx];
 
   let value = el.textContent.trim();
 
   if(field === "duration"){
     const num = value.match(/(\d+)/);
-    week.sections[section].items[item].duration = num ? Number(num[1]) : 0;
+    item.duration = num ? Number(num[1]) : 0;
     recalcTimesForWeek(currentWeekIndex);
     renderWeek(currentWeekIndex);
     return;
   }
 
-  week.sections[section].items[item][field] = value;
+  item[field] = value;
 }
 
 /* -----------------------------
-   RECALCUL HEURES
+   RECALCUL DES HEURES
 --------------------------------*/
 function recalcTimesForWeek(weekIndex){
   const week = planningData.weeks[weekIndex];
@@ -137,18 +129,21 @@ function recalcTimesForWeek(weekIndex){
 
   let flat = [];
   week.sections.forEach((sec,s)=>{
-    sec.items.forEach((it,i)=> flat.push(it));
+    sec.items.forEach((it,i)=> flat.push({sec:s, idx:i, it}));
   });
 
   for(let i=1; i<flat.length; i++){
-    const prev = flat[i-1];
-    const cur  = flat[i];
+    const prev = flat[i-1].it;
+    const cur  = flat[i].it;
 
     let [h,m] = (prev.time||"00:00").split(":").map(Number);
     let dur = Number(prev.duration)||0;
 
     let total = h*60 + m + dur;
-    cur.time = `${String(Math.floor(total/60)).padStart(2,"0")}:${String(total%60).padStart(2,"0")}`;
+    let nh = String(Math.floor(total/60)).padStart(2,"0");
+    let nm = String(total%60).padStart(2,"0");
+
+    cur.time = `${nh}:${nm}`;
   }
 }
 
@@ -164,7 +159,7 @@ function loadLocal(){
 }
 
 /* -----------------------------
-   BOUTONS / IMPORT / EXPORT JSON
+   BOUTONS
 --------------------------------*/
 saveBtn.addEventListener("click", ()=>{
   saveLocal();
@@ -186,42 +181,32 @@ resetBtn.addEventListener("click", async ()=>{
 
 exportBtn.addEventListener("click", ()=>{
   const blob = new Blob([JSON.stringify(planningData,null,2)],{type:"application/json"});
+  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "planning.json";
+  a.href = url;
+  a.download = "planning-export.json";
   a.click();
+  URL.revokeObjectURL(url);
 });
 
 importBtn.addEventListener("click", ()=> importFile.click());
-importFile.addEventListener("change", async ev=>{
+importFile.addEventListener("change", async (ev)=>{
   const f = ev.target.files[0];
   if(!f) return;
   try{
-    const txt = await f.text();
-    const obj = JSON.parse(txt);
-    if(!obj.weeks) throw new Error("Format invalide");
+    const text = await f.text();
+    const obj = JSON.parse(text);
+    if(!obj.weeks) throw new Error("Format JSON invalide");
     planningData = obj;
     populateWeekSelect();
+    currentWeekIndex = 0;
     renderWeek(0);
     saveLocal();
-  }catch(e){ alert(e.message); }
+    alert("Planning importé.");
+  }catch(e){
+    alert("Erreur : " + e.message);
+  }
 });
-
-/* -----------------------------
-   PRÉSIDENT: liaison champ <-> données
---------------------------------*/
-if(presidentInput){
-  presidentInput.addEventListener("input", (ev)=>{
-    const val = ev.target.value.trim();
-    if(planningData && planningData.weeks && planningData.weeks[currentWeekIndex]){
-      planningData.weeks[currentWeekIndex].chairman = val;
-      dateDisplay.textContent = `${planningData.weeks[currentWeekIndex].date} — ${planningData.weeks[currentWeekIndex].scripture} — Председатель : ${val}`;
-      const opt = weekSelect.querySelector(`option[value="${currentWeekIndex}"]`);
-      if(opt) opt.textContent = `${planningData.weeks[currentWeekIndex].date} | ${planningData.weeks[currentWeekIndex].scripture} | ${val}`;
-      saveLocal();
-    }
-  });
-}
 
 /* -----------------------------
    EXPORT PDF
@@ -231,78 +216,76 @@ function exportPDF(){
 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({unit:"pt", format:"a4"});
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-  const marginLeft = 32;
-  const marginTop = 40;
-  const colGap = 18;
-  const colWidth = (pageWidth - marginLeft*2 - colGap)/2;
-  const lineHeight = 12;
-  const timeWidth = 50;
-  const durWidth = 40;
-  const themeWidth = colWidth - timeWidth - durWidth - 12;
-  const sectionColors = ["#e6f7f5","#fff7e6","#fff1f2"];
 
-  function renderWeek(xStart, yStart, week){
-    let y = yStart;
-    doc.setFont("Helvetica","bold"); doc.setFontSize(11);
-    const titleLines = doc.splitTextToSize(planningData.title||"", colWidth);
-    doc.text(titleLines, xStart, y);
-    y += lineHeight*titleLines.length + 4;
+  const marginLeft = 32, marginTop = 40, colGap = 18, lineHeight = 10.5;
+  const columnWidth = (doc.internal.pageSize.getWidth() - marginLeft*2 - colGap) / 2;
+  const timeWidth = 50, themeWidth = 230, durWidth = 40;
+  const titleSpacing = 14, sectionSpacing = 10;
+
+  function renderWeek(x, y, week){
+    doc.setFont("Helvetica","bold");
+    doc.setFontSize(11);
+    doc.text(planningData.title||"", x, y); y+=titleSpacing;
+
     doc.setFont("Helvetica","normal"); doc.setFontSize(10);
-    doc.text(`${week.date} | ${week.scripture}`, xStart, y); y+=lineHeight;
-    doc.text(`Председатель : ${week.chairman||""}`, xStart, y); y+=lineHeight+4;
+    doc.text(`${week.date} | ${week.scripture}`, x, y); y+=titleSpacing;
+    doc.text(`Председатель : ${week.chairman||""}`, x, y); y+=titleSpacing;
 
-    week.sections.forEach((section,sidx)=>{
+    week.sections.forEach(section=>{
       if(section.title){
-        doc.setFont("Helvetica","bold").setFontSize(10);
-        doc.text(section.title + (section.location? " — "+section.location:""), xStart, y);
-        y += lineHeight;
+        doc.setFont("Helvetica","bold"); doc.setFontSize(10); doc.setTextColor(60);
+        doc.text(section.title + (section.location ? " — "+section.location : ""), x, y);
+        doc.setTextColor(0); y+=sectionSpacing;
       }
+
       section.items.forEach(item=>{
-        doc.setFillColor(sectionColors[sidx % sectionColors.length]);
-        doc.rect(xStart-2, y-2, colWidth, lineHeight, "F");
-        doc.setFont("Helvetica","bold").setFontSize(9);
-        doc.text(item.time||"", xStart, y);
-        const themeText = (item.part? item.part+" " : "") + (item.theme||"");
-        const themeLines = doc.splitTextToSize(themeText, themeWidth);
+        doc.setFont("Helvetica","bold"); doc.setFontSize(9);
+        doc.text(item.time||"", x, y);
+
+        const part = item.part ? item.part+" " : "";
+        const theme = part + (item.theme||"");
         doc.setFont("Helvetica","normal");
-        doc.text(themeLines, xStart + timeWidth, y);
-        const dtext = item.duration ? item.duration+" мин." : "";
-        doc.text(dtext, xStart + timeWidth + themeWidth, y);
+        doc.text(theme, x + timeWidth, y);
+
+        const durText = item.duration ? (item.duration + " мин.") : "";
+        doc.text(durText, x + timeWidth + themeWidth, y);
+
+        y += lineHeight;
+
         if(item.person || item.note){
           doc.setFont("Helvetica","italic");
-          const pn = [item.person||"", item.note||""].filter(Boolean).join(" — ");
-          const pnLines = doc.splitTextToSize(pn, themeWidth+durWidth);
-          doc.text(pnLines, xStart + timeWidth, y + lineHeight);
-          y += lineHeight * pnLines.length;
+          let line = item.person || "";
+          if(item.note) line += (line ? " — " : "") + item.note;
+          doc.text(line, x + timeWidth + 12, y);
+          y += lineHeight;
         }
-        y += lineHeight;
-        if(y > pageHeight - marginTop){
-          doc.addPage();
-          y = marginTop;
-        }
+
+        y += 2;
       });
-      y += 6;
+
+      y += 4;
     });
+
     return y;
   }
 
   const weeks = planningData.weeks;
-  for(let i=0;i<weeks.length;i+=2){
+
+  for(let i=0; i<weeks.length; i+=2){
     if(i>0) doc.addPage();
     renderWeek(marginLeft, marginTop, weeks[i]);
-    if(weeks[i+1]) renderWeek(marginLeft + colWidth + colGap, marginTop, weeks[i+1]);
+    if(weeks[i+1]) renderWeek(marginLeft + columnWidth + colGap, marginTop, weeks[i+1]);
   }
 
-  const pdfUrl = doc.output("bloburl");
-  window.open(pdfUrl, "_blank");
+  const url = doc.output("bloburl");
+  pdfPreviewContainer.style.display = "block";
+  pdfPreviewIframe.src = url;
 }
 
 pdfBtn.addEventListener("click", exportPDF);
 
 /* -----------------------------
-   CHANGEMENT DE SEMAINE
+   SÉLECTION SEMAINE
 --------------------------------*/
 weekSelect.addEventListener("change", e=>{
   currentWeekIndex = Number(e.target.value);
@@ -315,6 +298,7 @@ weekSelect.addEventListener("change", e=>{
 (async function init(){
   planningData = loadLocal() || await loadServer();
   if(!planningData){ alert("Impossible de charger le planning"); return; }
+
   if(!planningData.title) planningData.title = "Planning TPL";
   populateWeekSelect();
   renderWeek(currentWeekIndex);
