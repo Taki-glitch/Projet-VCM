@@ -1,4 +1,4 @@
-/* script.js — Version A4 FINAL — PDF identique au modèle */
+/* script.js — Version A4 FINAL — PDF identique au modèle (avec champ Président éditable) */
 
 const PLANNING_KEY = "planning_tpl_full_v1";
 const weekSelect = document.getElementById("weekSelect");
@@ -10,6 +10,9 @@ const exportBtn = document.getElementById("exportBtn");
 const importBtn = document.getElementById("importBtn");
 const importFile = document.getElementById("importFile");
 const pdfBtn = document.getElementById("pdfBtn");
+const presidentInput = document.getElementById("presidentName");
+const pdfPreviewContainer = document.getElementById("pdfPreviewContainer");
+const pdfPreviewIframe = document.getElementById("pdfPreview");
 
 let planningData = null;
 let currentWeekIndex = 0;
@@ -43,7 +46,7 @@ function populateWeekSelect(){
   planningData.weeks.forEach((w,i)=>{
     const opt = document.createElement("option");
     opt.value = i;
-    opt.textContent = `${w.date} | ${w.scripture} | ${w.chairman}`;
+    opt.textContent = `${w.date} | ${w.scripture} | ${w.chairman || ""}`;
     weekSelect.appendChild(opt);
   });
   weekSelect.value = currentWeekIndex;
@@ -56,8 +59,12 @@ function renderWeek(idx){
   const week = planningData.weeks[idx];
   if(!week) return;
 
+  // Affiche la date + info
   dateDisplay.textContent =
-    `${week.date} — ${week.scripture} — Председатель : ${week.chairman}`;
+    `${week.date} — ${week.scripture} — Председатель : ${week.chairman || ""}`;
+
+  // Met à jour le champ Président avec la valeur actuelle pour cette semaine
+  if(presidentInput) presidentInput.value = week.chairman || "";
 
   let html = "";
 
@@ -87,10 +94,15 @@ function renderWeek(idx){
 
   planningContainer.innerHTML = html;
 
+  // Attache les listeners d'édition
   planningContainer.querySelectorAll(".editable").forEach(el=>{
     el.addEventListener("input", onEdit);
     el.addEventListener("blur", saveLocal);
   });
+
+  // Met à jour l'option correspondante dans la select (pour refléter un changement manuel du chairman)
+  const opt = weekSelect.querySelector(`option[value="${idx}"]`);
+  if(opt) opt.textContent = `${week.date} | ${week.scripture} | ${week.chairman || ""}`;
 }
 
 /* -----------------------------
@@ -144,7 +156,7 @@ function recalcTimesForWeek(weekIndex){
    LOCAL STORAGE
 --------------------------------*/
 function saveLocal(){
-  try{ localStorage.setItem(PLANNING_KEY, JSON.stringify(planningData)); }catch(e){}
+  try{ localStorage.setItem(PLANNING_KEY, JSON.stringify(planningData)); }catch(e){ console.warn(e); }
 }
 function loadLocal(){
   try{ let raw = localStorage.getItem(PLANNING_KEY); if(raw) return JSON.parse(raw); }catch(e){}
@@ -152,8 +164,26 @@ function loadLocal(){
 }
 
 /* -----------------------------
-   EXPORT JSON
+   BOUTONS / IMPORT / EXPORT JSON
 --------------------------------*/
+saveBtn.addEventListener("click", ()=>{
+  saveLocal();
+  saveBtn.textContent = "Saved ✅";
+  setTimeout(()=> saveBtn.textContent="Sauvegarder (local)", 1200);
+});
+
+resetBtn.addEventListener("click", async ()=>{
+  const server = await loadServer();
+  if(server){
+    planningData = server;
+    localStorage.removeItem(PLANNING_KEY);
+    populateWeekSelect();
+    currentWeekIndex = 0;
+    renderWeek(0);
+    alert("Planning réinitialisé depuis le serveur.");
+  } else alert("Impossible de recharger planning.json");
+});
+
 exportBtn.addEventListener("click", ()=>{
   const blob = new Blob([JSON.stringify(planningData,null,2)],{type:"application/json"});
   const a = document.createElement("a");
@@ -162,9 +192,6 @@ exportBtn.addEventListener("click", ()=>{
   a.click();
 });
 
-/* -----------------------------
-   IMPORT JSON
---------------------------------*/
 importBtn.addEventListener("click", ()=> importFile.click());
 importFile.addEventListener("change", async ev=>{
   const f = ev.target.files[0];
@@ -181,7 +208,26 @@ importFile.addEventListener("change", async ev=>{
 });
 
 /* -----------------------------
-   EXPORT PDF (CORRIGÉ)
+   PRÉSIDENT: liaison champ <-> données
+--------------------------------*/
+if(presidentInput){
+  presidentInput.addEventListener("input", (ev)=>{
+    const val = ev.target.value.trim();
+    // Met à jour la semaine courante
+    if(planningData && planningData.weeks && planningData.weeks[currentWeekIndex]){
+      planningData.weeks[currentWeekIndex].chairman = val;
+      // Met à jour l'affichage
+      dateDisplay.textContent = `${planningData.weeks[currentWeekIndex].date} — ${planningData.weeks[currentWeekIndex].scripture} — Председатель : ${val}`;
+      // Met à jour l'option select
+      const opt = weekSelect.querySelector(`option[value="${currentWeekIndex}"]`);
+      if(opt) opt.textContent = `${planningData.weeks[currentWeekIndex].date} | ${planningData.weeks[currentWeekIndex].scripture} | ${val}`;
+      saveLocal();
+    }
+  });
+}
+
+/* -----------------------------
+   EXPORT PDF (génération + ouverture dans nouvel onglet)
 --------------------------------*/
 function exportPDF(){
   if(!planningData) return;
@@ -189,7 +235,7 @@ function exportPDF(){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({unit:"pt", format:"a4"});
 
-  // --- VARIABLES PDF CORRECTEMENT DÉFINIES AVANT USAGE ---
+  // Variables PDF
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
@@ -202,7 +248,7 @@ function exportPDF(){
 
   const timeWidth = 50;
   const durWidth = 40;
-  const themeWidth = colWidth - timeWidth - durWidth - 12;  // <- **ICI définie**
+  const themeWidth = colWidth - timeWidth - durWidth - 12;
 
   const sectionColors = ["#e6f7f5","#fff7e6","#fff1f2"];
 
@@ -226,21 +272,25 @@ function exportPDF(){
       }
 
       section.items.forEach(item=>{
+        // fond ligne
         doc.setFillColor(sectionColors[sidx % sectionColors.length]);
         doc.rect(xStart-2, y-2, colWidth, lineHeight, "F");
 
+        // heure
         doc.setFont("Helvetica","bold").setFontSize(9);
         doc.text(item.time||"", xStart, y);
 
+        // theme
         const themeText = (item.part? item.part+" " : "") + (item.theme||"");
         const themeLines = doc.splitTextToSize(themeText, themeWidth);
-
         doc.setFont("Helvetica","normal");
         doc.text(themeLines, xStart + timeWidth, y);
 
+        // durée
         const dtext = item.duration ? item.duration+" мин." : "";
         doc.text(dtext, xStart + timeWidth + themeWidth, y);
 
+        // personne / note
         if(item.person || item.note){
           doc.setFont("Helvetica","italic");
           const pn = [item.person||"", item.note||""].filter(Boolean).join(" — ");
@@ -269,7 +319,9 @@ function exportPDF(){
     if(weeks[i+1]) renderWeek(marginLeft + colWidth + colGap, marginTop, weeks[i+1]);
   }
 
-  window.open(doc.output("bloburl"), "_blank");
+  // Ouvre le PDF lisible dans un nouvel onglet
+  const pdfUrl = doc.output("bloburl");
+  window.open(pdfUrl, "_blank");
 }
 
 pdfBtn.addEventListener("click", exportPDF);
