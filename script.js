@@ -1,12 +1,8 @@
-/* script.js — Version A4 FINAL avec boutons Président & Date + PDF Roboto (cached offline)
-   --- Roboto est téléchargée la première fois, convertie en base64, et stockée dans localStorage.
-   --- Les exports PDF suivants utilisent la police depuis localStorage, même offline.
-*/
+/* script.js — Version A4 FINAL avec boutons Président & Date + PDF Helvetica propre */
 
 document.addEventListener("DOMContentLoaded", async () => {
 
   const PLANNING_KEY = "planning_tpl_full_v1";
-  const FONT_KEY = "roboto_base64_v1";
   const weekSelect = document.getElementById("weekSelect");
   const planningContainer = document.getElementById("planning");
   const dateDisplay = document.getElementById("dateDisplay");
@@ -18,10 +14,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   let planningData = null;
   let currentWeekIndex = 0;
-
-  const ROBOTO_TTF_URL = "https://raw.githubusercontent.com/google/fonts/main/apache/roboto/Roboto-Regular.ttf";
-
-  let ROBOTO_LOADED = false;
 
   async function loadServer(){
     try {
@@ -179,128 +171,84 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  /* ------------------------------ PDF AVEC ROBOTO (cached) ------------------------------ */
+  /* ------------------------------ PDF HELVETICA (PROPRE) ------------------------------ */
 
-  function arrayBufferToBase64(buffer) {
-    const bytes = new Uint8Array(buffer);
-    const chunkSize = 0x8000;
-    let result = '';
-    for (let i = 0; i < bytes.length; i += chunkSize) {
-      const chunk = bytes.subarray(i, i + chunkSize);
-      result += String.fromCharCode.apply(null, chunk);
-    }
-    return btoa(result);
-  }
+  function generatePDF() {
+    const { jsPDF } = window.jspdf;
 
-  async function ensureRobotoLoaded(docInstance){
-    if(ROBOTO_LOADED) return;
+    const doc = new jsPDF({
+      unit: "pt",
+      format: "a4"
+    });
 
-    let base64 = localStorage.getItem(FONT_KEY);
-    if(!base64){
-      try {
-        const resp = await fetch(ROBOTO_TTF_URL, {cache:"no-store"});
-        if(!resp.ok) throw new Error("Impossible de télécharger Roboto");
-        const ab = await resp.arrayBuffer();
-        base64 = arrayBufferToBase64(ab);
-        localStorage.setItem(FONT_KEY, base64);
-      } catch(e){
-        console.error("Echec téléchargement Roboto:", e);
-        throw e;
-      }
-    }
+    doc.setFont("helvetica", "normal");
 
-    docInstance.addFileToVFS("Roboto-Regular.ttf", base64);
-    docInstance.addFont("Roboto-Regular.ttf", "Roboto", "normal");
-    ROBOTO_LOADED = true;
-  }
+    const marginLeft = 40;
+    let cursorY = 40;
 
-  function exportPDF() {
-  if (!planningData) return;
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const weekIndex = weekSelect.value;
+    const week = planningData.weeks[weekIndex];
 
-  const marginLeft = 32, marginTop = 40, colGap = 18, lineHeight = 12;
-  const columnWidth = (doc.internal.pageSize.getWidth() - marginLeft * 2 - colGap) / 2;
-  const timeWidth = 50, themeWidth = 230, durWidth = 40;
-  const titleSpacing = 16, sectionSpacing = 12;
+    // TITRE SEMAINE
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text(week.date, marginLeft, cursorY);
+    cursorY += 22;
 
-  // Charge la police Roboto (via vfs) pour jsPDF
-  doc.addFileToVFS("Roboto-Regular.ttf", window.RobotoRegularBase64);
-  doc.addFileToVFS("Roboto-Bold.ttf", window.RobotoBoldBase64);
-  doc.addFileToVFS("Roboto-Italic.ttf", window.RobotoItalicBase64);
-  doc.addFont("Roboto-Regular.ttf", "Roboto", "normal");
-  doc.addFont("Roboto-Bold.ttf", "Roboto", "bold");
-  doc.addFont("Roboto-Italic.ttf", "Roboto", "italic");
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    doc.text("Чтение: " + week.scripture, marginLeft, cursorY);
+    cursorY += 18;
 
-  function renderWeekPDF(x, y, week) {
-    doc.setFont("Roboto", "bold");
-    doc.setFontSize(11);
-    doc.text(planningData.title || "Planning TPL", x, y); y += titleSpacing;
-
-    doc.setFont("Roboto", "normal");
-    doc.setFontSize(10);
-    doc.text(`${week.date} | ${week.scripture}`, x, y); y += titleSpacing;
-    doc.text(`Председатель : ${week.chairman || ""}`, x, y); y += titleSpacing;
+    doc.text("Председатель: " + week.chairman, marginLeft, cursorY);
+    cursorY += 20;
 
     week.sections.forEach(section => {
+
       if (section.title) {
-        doc.setFont("Roboto", "bold");
-        doc.setFontSize(10);
-        doc.setTextColor(60);
-        doc.text(section.title + (section.location ? " — " + section.location : ""), x, y);
-        y += sectionSpacing;
-        doc.setTextColor(0);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.text(section.title + (section.location ? " — " + section.location : ""), marginLeft, cursorY);
+        cursorY += 18;
       }
 
-      section.items.forEach(item => {
-        doc.setFont("Roboto", "bold");
-        doc.setFontSize(9);
-        doc.text(item.time || "", x, y);
+      const rows = section.items.map(item => [
+        item.time || "",
+        item.part || "",
+        item.theme || "",
+        item.duration || "",
+        item.person || "",
+        item.note || ""
+      ]);
 
-        const part = item.part ? item.part + " " : "";
-        const theme = part + (item.theme || "");
-        doc.setFont("Roboto", "normal");
-        doc.text(theme, x + timeWidth, y);
-
-        const durText = item.duration ? item.duration + " мин." : "";
-        doc.text(durText, x + timeWidth + themeWidth, y);
-
-        y += lineHeight;
-
-        if (item.person || item.note) {
-          doc.setFont("Roboto", "italic");
-          let line = item.person || "";
-          if (item.note) line += (line ? " — " : "") + item.note;
-          doc.text(line, x + timeWidth + 12, y);
-          y += lineHeight;
+      doc.autoTable({
+        startY: cursorY,
+        margin: { left: marginLeft, right: marginLeft },
+        styles: {
+          font: "helvetica",
+          fontSize: 10,
+          cellPadding: 4,
+        },
+        head: [[ "Heure", "№", "Thème", "Durée", "Personne", "Note" ]],
+        body: rows,
+        theme: "grid",
+        headStyles: {
+          fillColor: [230, 230, 230],
+          textColor: 20,
+          fontStyle: "bold"
         }
-
-        y += 2;
       });
-      y += 4;
+
+      cursorY = doc.lastAutoTable.finalY + 20;
     });
-    return y;
+
+    // Export final
+    const pdfBlob = doc.output("blob");
+    const url = URL.createObjectURL(pdfBlob);
+    window.open(url, "_blank"); // Compatible partout
   }
 
-  const weeks = planningData.weeks;
-  let yPos = marginTop;
-
-  for (let i = 0; i < weeks.length; i += 2) {
-    if (i > 0) doc.addPage();
-    renderWeekPDF(marginLeft, yPos, weeks[i]);
-    if (weeks[i + 1]) renderWeekPDF(marginLeft + columnWidth + colGap, yPos, weeks[i + 1]);
-  }
-
-  // Affichage dans l'iframe
-  const url = doc.output("bloburl");
-  const previewContainer = document.getElementById("pdfPreviewContainer");
-  const previewIframe = document.getElementById("pdfPreview");
-  previewContainer.style.display = "block";
-  previewIframe.src = url;
-
-  // Téléchargement direct
-  doc.save(`Planning_${planningData.title || "TPL"}.pdf`);
-}
+  pdfBtn.addEventListener("click", generatePDF);
 
   /* ------------ INITIALISATION ------------ */
   planningData = loadLocal() || await loadServer();
