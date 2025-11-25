@@ -1,8 +1,13 @@
-/* script.js — Version A4 FINAL avec boutons Président & Date + PDF Helvetica propre */
+/* script.js — Version A4 avec Noto Sans (cyrillique), boutons Président/Date, édition locale, PDF propre */
 
 document.addEventListener("DOMContentLoaded", async () => {
 
   const PLANNING_KEY = "planning_tpl_full_v1";
+
+  // Police Noto Sans (avec cyrillique)
+  const NOTO_FONT_KEY = "noto_sans_base64_v1";
+  const NOTO_TTF_URL = "https://fonts.gstatic.com/s/notosans/v27/o-0NIpQlx3QUlC5A4PNr4A.ttf";
+
   const weekSelect = document.getElementById("weekSelect");
   const planningContainer = document.getElementById("planning");
   const dateDisplay = document.getElementById("dateDisplay");
@@ -14,6 +19,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   let planningData = null;
   let currentWeekIndex = 0;
+
+  /* ------------------------------ FONCTIONS UTILITAIRES ------------------------------ */
 
   async function loadServer(){
     try {
@@ -43,6 +50,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     weekSelect.value = currentWeekIndex || 0;
   }
+
+  /* ------------------------------ RENDU DU PLANNING ------------------------------ */
 
   function renderWeek(idx){
     const week = planningData.weeks[idx];
@@ -78,6 +87,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       el.addEventListener("blur", saveLocal);
     });
   }
+
+  /* ------------------------------ ÉDITION ET CALCULS ------------------------------ */
 
   function onEdit(e){
     const el = e.target;
@@ -120,13 +131,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+  /* ------------------------------ SAUVEGARDE LOCALE ------------------------------ */
+
   function saveLocal(){
     try{ localStorage.setItem(PLANNING_KEY, JSON.stringify(planningData)); }catch(e){ console.warn(e); }
   }
+
   function loadLocal(){
     try{ let raw = localStorage.getItem(PLANNING_KEY); if(raw) return JSON.parse(raw); }catch(e){}
     return null;
   }
+
+  /* ------------------------------ BOUTONS ------------------------------ */
 
   saveBtn.addEventListener("click", ()=>{
     saveLocal();
@@ -171,9 +187,40 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  /* ------------------------------ PDF HELVETICA (PROPRE) ------------------------------ */
+  /* ------------------------------ NOTO SANS (CYRILLIQUE) ------------------------------ */
 
-  function generatePDF() {
+  function arrayBufferToBase64(buffer) {
+    let binary = "";
+    const bytes = new Uint8Array(buffer);
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) binary += String.fromCharCode(bytes[i]);
+    return btoa(binary);
+  }
+
+  async function ensureNotoLoaded(doc){
+    let base64 = localStorage.getItem(NOTO_FONT_KEY);
+
+    if(!base64){
+      try {
+        const resp = await fetch(NOTO_TTF_URL,{cache:"no-store"});
+        const ab = await resp.arrayBuffer();
+        base64 = arrayBufferToBase64(ab);
+        localStorage.setItem(NOTO_FONT_KEY, base64);
+      } catch(e){
+        console.error("Erreur chargement Noto Sans", e);
+        alert("Impossible de charger la police Noto Sans.");
+        return false;
+      }
+    }
+
+    doc.addFileToVFS("NotoSans-Regular.ttf", base64);
+    doc.addFont("NotoSans-Regular.ttf", "NotoSans", "normal");
+    return true;
+  }
+
+  /* ------------------------------ PDF CYRILLIQUE ------------------------------ */
+
+  async function generatePDF() {
     const { jsPDF } = window.jspdf;
 
     const doc = new jsPDF({
@@ -181,21 +228,20 @@ document.addEventListener("DOMContentLoaded", async () => {
       format: "a4"
     });
 
-    doc.setFont("helvetica", "normal");
+    const ok = await ensureNotoLoaded(doc);
+    if(!ok) return;
+
+    doc.setFont("NotoSans", "normal");
 
     const marginLeft = 40;
     let cursorY = 40;
 
-    const weekIndex = weekSelect.value;
-    const week = planningData.weeks[weekIndex];
+    const week = planningData.weeks[weekSelect.value];
 
-    // TITRE SEMAINE
-    doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
     doc.text(week.date, marginLeft, cursorY);
     cursorY += 22;
 
-    doc.setFont("helvetica", "normal");
     doc.setFontSize(12);
     doc.text("Чтение: " + week.scripture, marginLeft, cursorY);
     cursorY += 18;
@@ -205,10 +251,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     week.sections.forEach(section => {
 
-      if (section.title) {
-        doc.setFont("helvetica", "bold");
+      if(section.title){
         doc.setFontSize(14);
-        doc.text(section.title + (section.location ? " — " + section.location : ""), marginLeft, cursorY);
+        doc.text(section.title + (section.location?" — "+section.location:""), marginLeft, cursorY);
         cursorY += 18;
       }
 
@@ -225,35 +270,39 @@ document.addEventListener("DOMContentLoaded", async () => {
         startY: cursorY,
         margin: { left: marginLeft, right: marginLeft },
         styles: {
-          font: "helvetica",
+          font: "NotoSans",
           fontSize: 10,
           cellPadding: 4,
         },
-        head: [[ "Heure", "№", "Thème", "Durée", "Personne", "Note" ]],
+        head: [["Heure","№","Thème","Durée","Personne","Note"]],
         body: rows,
         theme: "grid",
         headStyles: {
-          fillColor: [230, 230, 230],
+          fillColor: [230,230,230],
           textColor: 20,
-          fontStyle: "bold"
         }
       });
 
       cursorY = doc.lastAutoTable.finalY + 20;
     });
 
-    // Export final
-    const pdfBlob = doc.output("blob");
-    const url = URL.createObjectURL(pdfBlob);
-    window.open(url, "_blank"); // Compatible partout
+    const blob = doc.output("blob");
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank");
   }
 
   pdfBtn.addEventListener("click", generatePDF);
 
-  /* ------------ INITIALISATION ------------ */
+  /* ------------------------------ INITIALISATION ------------------------------ */
+
   planningData = loadLocal() || await loadServer();
-  if(!planningData){ alert("Impossible de charger le planning"); return; }
+  if(!planningData){
+    alert("Impossible de charger le planning");
+    return;
+  }
+
   if(!planningData.title) planningData.title = "Planning TPL";
+
   populateWeekSelect();
   renderWeek(currentWeekIndex);
 
