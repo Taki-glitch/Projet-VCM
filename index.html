@@ -15,7 +15,7 @@
       <img src="logo.jpeg" alt="logo" class="logo" id="siteLogo"/>
       <div>
         <h1>Программа встречи</h1>
-        <div id="subtitle" class="subtitle">Редактируй одну неделю, exporte deux semaines en PDF</div>
+        <div id="subtitle" class="subtitle">Редактируй одну неделю, exporte две недели en PDF</div>
       </div>
     </div>
 
@@ -52,6 +52,7 @@
   <script src="script.js"></script>
   
   <script>
+    // Correction du script de gestion d'erreur du logo
     document.getElementById('siteLogo').addEventListener('error', (e) => {
         e.target.style.display = 'none';
         console.warn("Logo (logo.jpeg) non trouvé, masqué.");
