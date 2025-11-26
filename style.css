@@ -103,7 +103,7 @@ main{
 .row.section-3{background:linear-gradient(90deg,var(--section3),#ffffff);}
 .time{font-weight:700;color:var(--muted);}
 
-/* NOUVEAU CONTENEUR POUR EMPILER PERSONNE ET NOTE */
+/* Conteneur pour empiler Personne et Note */
 .personNoteContainer{
   display:flex;
   flex-direction:column;
@@ -117,7 +117,7 @@ main{
   line-height:1.4;
 }
 .person {
-  font-weight: bold; /* Mise en évidence du nom de la personne */
+  font-weight: bold; 
 }
 .note{
     font-size:13px;
