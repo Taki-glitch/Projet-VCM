@@ -1,4 +1,4 @@
-/* script.js — Version Révisée FINALE (Erreur Roboto Corrigée) */
+/* script.js — Version Finale & Fonctionnelle */
 
 document.addEventListener("DOMContentLoaded", async () => {
 
@@ -73,7 +73,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       html += sec.items.map((it, itidx)=>{
         const part = it.part ? `<span class="part">${escapeHtml(it.part)} </span>` : "";
         
-        // CORRECTION: Séparation claire des champs "person" et "note" dans la structure HTML
         return `<div class="row section-${(sidx%4)+1}" data-section="${sidx}" data-item="${itidx}">
           <div class="time">${escapeHtml(it.time)}</div>
           <div class="theme editable" contenteditable="true" data-field="theme" data-section="${sidx}" data-item="${itidx}">${part}${escapeHtml(it.theme)}</div>
@@ -101,17 +100,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     const field = el.dataset.field;
     const sec = Number(el.dataset.section);
     const idx = Number(el.dataset.item);
-    const week = planningData.weeks[currentWeekIndex];
-    const item = week.sections[sec].items[idx];
+    const item = planningData.weeks[currentWeekIndex].sections[sec].items[idx];
     let value = el.textContent.trim();
 
     if(field === "duration"){
       const num = value.match(/(\d+)/);
       item.duration = num ? Number(num[1]) : 0;
-      // Mise à jour du modèle et du DOM uniquement pour les heures affectées
       recalcTimesForWeek(currentWeekIndex);
       updateTimesInDOM(currentWeekIndex);
-      // On ne fait PAS de renderWeek pour préserver le focus
       return;
     }
 
@@ -122,7 +118,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const week = planningData.weeks[weekIndex];
     if(!week) return;
 
-    // Itérer sur tous les éléments et mettre à jour leur affichage d'heure
     week.sections.forEach((sec, sidx) => {
         sec.items.forEach((item, itidx) => {
             const rowEl = planningContainer.querySelector(`.row[data-section="${sidx}"][data-item="${itidx}"]`);
@@ -177,7 +172,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       localStorage.removeItem(PLANNING_KEY);
       populateWeekSelect();
       currentWeekIndex = 0;
-      recalcTimesForWeek(0); // Recalcule les heures après le reset
+      recalcTimesForWeek(0); 
       renderWeek(0);
       alert("Planning réinitialisé depuis le serveur.");
     } else alert("Impossible de recharger planning.json");
@@ -238,14 +233,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.log("Roboto téléchargée et mise en cache.");
       } catch(e){
         console.error("Échec téléchargement Roboto. Utilisation de la police par défaut.", e);
-        // Lance une erreur pour bloquer le PDF si la police n'est pas disponible (cause de l'alerte)
         throw e; 
       }
     }
     
-    // Ajoutez uniquement Roboto-Regular
+    // Ajout de Roboto-Regular
     docInstance.addFileToVFS("Roboto-Regular.ttf", ROBOTO_BASE64);
     docInstance.addFont("Roboto-Regular.ttf", "Roboto", "normal");
+    
+    // Ajout d'alias pour les styles Bold et Italic pointant vers la police Regular
+    // Cela permet à jspdf de ne pas planter lorsqu'il tente d'utiliser ces styles.
+    docInstance.addFont("Roboto-Regular.ttf", "Roboto", "bold");
+    docInstance.addFont("Roboto-Regular.ttf", "Roboto", "italic");
+    
     ROBOTO_LOADED = true;
   }
   
@@ -253,19 +253,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       pdfBtn.textContent = "Génération PDF...";
       try {
           const { jsPDF } = window.jspdf;
-          // Crée une instance temporaire de jspdf si ce n'est pas déjà fait
-          if (!jsPDF.prototype.hasOwnProperty('vfs')) {
-              new jsPDF(); 
-          }
-          // ÉTAPE 1: Assurer le chargement de la police (ou provoquer une erreur si échec)
-          // La méthode addFont doit être appelée sur le prototype de jspdf (ou une instance)
+          // Initialisation du VFS et ajout des polices au prototype.
           await ensureRobotoLoaded(jsPDF.prototype);
 
-          // ÉTAPE 2: Générer le PDF
+          // Génération du PDF
           exportPDF();
       } catch (e) {
           console.error("Erreur lors de la génération PDF:", e);
-          alert("Erreur lors de la préparation du PDF. Réessayez, ou vérifiez la connexion pour le téléchargement de la police.");
+          alert("Erreur lors de la préparation du PDF. Vérifiez la connexion ou le cache (F12 > Application > Local Storage > Effacer l'entrée 'roboto_base64_v1').");
       }
       pdfBtn.textContent = "Exporter PDF";
   });
@@ -285,34 +280,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     const lineHeight = 12; 
     const titleSpacing = 16, sectionSpacing = 12, itemSpacing = 2;
     
-    // Si Roboto est chargé, on l'utilise, sinon 'helvetica' (par défaut de jspdf)
     const fontName = ROBOTO_LOADED ? "Roboto" : "helvetica";
     
-    // CORRECTION CRITIQUE: Supprimer les références aux polices Bold/Italic non gérées ici
-    // doc.addFileToVFS("Roboto-Regular.ttf", window.RobotoRegularBase64); // SUPPRIMÉ
-    // doc.addFileToVFS("Roboto-Bold.ttf", window.RobotoBoldBase64); // SUPPRIMÉ
-    // doc.addFileToVFS("Roboto-Italic.ttf", window.RobotoItalicBase64); // SUPPRIMÉ
-    // doc.addFont("Roboto-Bold.ttf", "Roboto", "bold"); // SUPPRIMÉ
-    // doc.addFont("Roboto-Italic.ttf", "Roboto", "italic"); // SUPPRIMÉ
-
-
     // Fonction d'affichage d'une seule semaine
     function renderWeekPDF(x, y, week) {
         let currentY = y;
         
         // --- Entête de la semaine ---
         
-        // Titre de l'assemblée (en haut)
+        // Titre de l'assemblée
         doc.setFont(fontName, "bold");
         doc.setFontSize(11);
-        doc.setTextColor(0); // Noir
+        doc.setTextColor(0); 
         doc.text(planningData.title || "Planning TPL", x, currentY); 
         currentY += titleSpacing;
 
         // Date et Écriture
         doc.setFont(fontName, "normal");
         doc.setFontSize(9);
-        doc.setTextColor(50); // Gris foncé
+        doc.setTextColor(50); 
         doc.text(`${week.date} | ${week.scripture}`, x, currentY); 
         currentY += 10;
         
@@ -334,13 +320,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             doc.text(`${item.theme} (${item.duration} мин.)`, x + timeWidth, currentY);
             currentY += lineHeight;
             
-            // Personne/Rôle (au lieu de la note dans le PDF)
+            // Rôle et Personne
             doc.setFont(fontName, "normal");
             doc.text(item.role === "Молитва" ? "Молитва:" : "", x, currentY);
             doc.setFont(fontName, "bold");
             doc.text(item.person || "", x + timeWidth, currentY);
             currentY += lineHeight;
-            currentY += 4; // Espace entre prière et intro
+            currentY += 4; 
         }
         
         if(week.sections[0] && week.sections[0].items[1]) {
@@ -357,7 +343,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // --- Sections suivantes ---
         
-        // Commencer à 1 car la section 0 a les items d'intro
+        // On commence à la section 1 (pour sauter les deux premiers éléments introductifs)
         week.sections.forEach((section, sIdx) => { 
             if (sIdx < 1) return; 
             
@@ -372,7 +358,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
             
             section.items.forEach(item => {
-                // Vérifie si on a besoin de passer à la page suivante
+                // Saut de page
                 if (currentY + lineHeight * 3 > doc.internal.pageSize.getHeight() - 20) {
                     doc.addPage();
                     currentY = marginTop;
@@ -388,11 +374,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                 const part = item.part ? item.part + " " : "";
                 let themeText = part + (item.theme || "");
                 
-                // Si le thème est trop long, on utilise splitTextToSize pour gérer la rupture de ligne
                 let themeLines = doc.splitTextToSize(themeText, themeWidth);
                 doc.text(themeLines, x + timeWidth, currentY);
                 
-                // Durée (à droite du thème, seule la première ligne si le thème est multiligne)
+                // Durée 
                 const durText = item.duration ? `(${item.duration} мин.)` : "";
                 doc.setFont(fontName, "normal"); 
                 doc.text(durText, x + timeWidth + themeWidth + 4, currentY, {align: 'right'});
@@ -401,9 +386,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 // Personne et Note
                 if (item.person || item.note) {
-                    // Pour simuler l'italique et le gras dans un seul fichier de police "normal",
-                    // on utilise simplement "normal" mais on peut jouer sur la position/couleur
-                    doc.setFont(fontName, "normal"); 
+                    doc.setFont(fontName, "normal"); // Utiliser normal pour éviter le crash
                     doc.setFontSize(9);
                     
                     let roleText = "";
@@ -419,12 +402,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                             personText = noteCleaned.replace("Ведущий/Чтец :", "").trim();
                         } else if (noteCleaned.includes("Учащийся")) {
                             roleText = "Учащийся:";
-                            personText = item.person || ""; // La personne est l'élève
+                            personText = item.person || ""; 
                         } else if (item.role === "Молитва") {
                             roleText = "Молитва:";
                             personText = item.person || "";
                         } else {
-                             // Si c'est juste une note non structurée
+                             // Note simple
                              personText += (personText ? " — " : "") + item.note;
                         }
                     } else if (item.role === "Молитва") {
@@ -433,10 +416,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                     
                     // Rendu de la ligne Personne/Rôle
                     if(roleText) {
-                         // Affiche le rôle à gauche (colonne du temps)
                         doc.text(roleText, x, currentY); 
                     }
-                    // Affiche la personne (colonne du thème)
                     doc.text(personText, x + timeWidth, currentY); 
                     
                     currentY += lineHeight;
@@ -479,7 +460,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   if(!planningData){ alert("Impossible de charger le planning"); return; }
   if(!planningData.title) planningData.title = "Planning TPL";
   
-  // Recalcule les heures au chargement pour s'assurer que les données locales sont cohérentes
   planningData.weeks.forEach((w, i) => recalcTimesForWeek(i)); 
   
   populateWeekSelect();
