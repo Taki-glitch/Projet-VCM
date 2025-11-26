@@ -44,18 +44,17 @@
   </main>
 
   <footer>
-    <small>Version A4 — Export PDF 2 semaines par page. Basé sur ton modèle PDF.</small>
+    <small>Version A4 — Export PDF 2 semaines par page. Mise en page calquée sur le modèle Programme VCM.</small>
   </footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
   <script src="script.js"></script>
-
+  
   <script>
-    const img = document.getElementById('siteLogo');
-    if(img) img.addEventListener('error', ()=> {
-      console.warn("Logo non trouvé, fallback appliqué");
-      img.src='logo.jpeg';
+    document.getElementById('siteLogo').addEventListener('error', (e) => {
+        e.target.style.display = 'none';
+        console.warn("Logo (logo.jpeg) non trouvé, masqué.");
     });
   </script>
 </body>
