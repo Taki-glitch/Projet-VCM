@@ -1,4 +1,4 @@
-/* script.js — Version Révisée FINALE */
+/* script.js — Version Révisée FINALE (Erreur Roboto Corrigée) */
 
 document.addEventListener("DOMContentLoaded", async () => {
 
@@ -93,7 +93,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       el.addEventListener("blur", saveLocal);
     });
     
-    // Rendu spécifique de l'heure après recalcul pour éviter le flash
     updateTimesInDOM(currentWeekIndex);
   }
 
@@ -116,7 +115,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    // CORRECTION: Si le champ édité est 'person' ou 'note', on le met à jour
     item[field] = value;
   }
 
@@ -127,9 +125,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Itérer sur tous les éléments et mettre à jour leur affichage d'heure
     week.sections.forEach((sec, sidx) => {
         sec.items.forEach((item, itidx) => {
-            const timeEl = planningContainer.querySelector(`.row[data-section="${sidx}"][data-item="${itidx}"] .time`);
-            if (timeEl) {
-                timeEl.textContent = escapeHtml(item.time);
+            const rowEl = planningContainer.querySelector(`.row[data-section="${sidx}"][data-item="${itidx}"]`);
+            if (rowEl) {
+                rowEl.querySelector(".time").textContent = escapeHtml(item.time);
             }
         });
     });
@@ -245,7 +243,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
     
-    // Ajoutez uniquement Roboto-Regular (pas Bold ni Italic car pas gérés)
+    // Ajoutez uniquement Roboto-Regular
     docInstance.addFileToVFS("Roboto-Regular.ttf", ROBOTO_BASE64);
     docInstance.addFont("Roboto-Regular.ttf", "Roboto", "normal");
     ROBOTO_LOADED = true;
@@ -254,12 +252,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   pdfBtn.addEventListener("click", async () => {
       pdfBtn.textContent = "Génération PDF...";
       try {
+          const { jsPDF } = window.jspdf;
+          // Crée une instance temporaire de jspdf si ce n'est pas déjà fait
+          if (!jsPDF.prototype.hasOwnProperty('vfs')) {
+              new jsPDF(); 
+          }
           // ÉTAPE 1: Assurer le chargement de la police (ou provoquer une erreur si échec)
-          await ensureRobotoLoaded(window.jspdf.jsPDF.prototype);
+          // La méthode addFont doit être appelée sur le prototype de jspdf (ou une instance)
+          await ensureRobotoLoaded(jsPDF.prototype);
+
           // ÉTAPE 2: Générer le PDF
           exportPDF();
       } catch (e) {
-          // L'alerte se produit si ensureRobotoLoaded échoue
           console.error("Erreur lors de la génération PDF:", e);
           alert("Erreur lors de la préparation du PDF. Réessayez, ou vérifiez la connexion pour le téléchargement de la police.");
       }
@@ -281,14 +285,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     const lineHeight = 12; 
     const titleSpacing = 16, sectionSpacing = 12, itemSpacing = 2;
     
-    // Si Roboto est chargé, on l'utilise
+    // Si Roboto est chargé, on l'utilise, sinon 'helvetica' (par défaut de jspdf)
     const fontName = ROBOTO_LOADED ? "Roboto" : "helvetica";
     
-    // CORRECTION: Supprimer les lignes qui référencent des variables non définies (Bold/Italic)
+    // CORRECTION CRITIQUE: Supprimer les références aux polices Bold/Italic non gérées ici
+    // doc.addFileToVFS("Roboto-Regular.ttf", window.RobotoRegularBase64); // SUPPRIMÉ
     // doc.addFileToVFS("Roboto-Bold.ttf", window.RobotoBoldBase64); // SUPPRIMÉ
     // doc.addFileToVFS("Roboto-Italic.ttf", window.RobotoItalicBase64); // SUPPRIMÉ
     // doc.addFont("Roboto-Bold.ttf", "Roboto", "bold"); // SUPPRIMÉ
     // doc.addFont("Roboto-Italic.ttf", "Roboto", "italic"); // SUPPRIMÉ
+
 
     // Fonction d'affichage d'une seule semaine
     function renderWeekPDF(x, y, week) {
@@ -317,7 +323,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         currentY += 10;
         
         // --- Prière/Chant/Intro (Première section) ---
-        // On traite les deux premiers éléments de la première section comme dans le PDF source
 
         if(week.sections[0] && week.sections[0].items[0]) {
             const item = week.sections[0].items[0];
@@ -352,8 +357,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // --- Sections suivantes ---
         
-        week.sections.forEach((section, sIdx) => {
-            if (sIdx < 2) return; // On a déjà géré la première section (et la deuxième est la première section titrée)
+        // Commencer à 1 car la section 0 a les items d'intro
+        week.sections.forEach((section, sIdx) => { 
+            if (sIdx < 1) return; 
             
             // Titre de la section
             if (section.title) {
@@ -366,7 +372,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
             
             section.items.forEach(item => {
-                // Vérifie si on a besoin de passer à la page suivante (pour éviter que la ligne soit coupée en bas)
+                // Vérifie si on a besoin de passer à la page suivante
                 if (currentY + lineHeight * 3 > doc.internal.pageSize.getHeight() - 20) {
                     doc.addPage();
                     currentY = marginTop;
@@ -388,42 +394,50 @@ document.addEventListener("DOMContentLoaded", async () => {
                 
                 // Durée (à droite du thème, seule la première ligne si le thème est multiligne)
                 const durText = item.duration ? `(${item.duration} мин.)` : "";
-                doc.setFont(fontName, "bold"); 
+                doc.setFont(fontName, "normal"); 
                 doc.text(durText, x + timeWidth + themeWidth + 4, currentY, {align: 'right'});
                 
                 currentY += lineHeight * themeLines.length;
 
-                // Personne et Note (en italique ou juste personne)
+                // Personne et Note
                 if (item.person || item.note) {
-                    doc.setFont(fontName, "italic");
+                    // Pour simuler l'italique et le gras dans un seul fichier de police "normal",
+                    // on utilise simplement "normal" mais on peut jouer sur la position/couleur
+                    doc.setFont(fontName, "normal"); 
                     doc.setFontSize(9);
                     
-                    let personText = item.person || "";
                     let roleText = "";
-                    
+                    let personText = item.person || "";
+
                     if (item.note) {
-                        // Logique pour extraire les rôles ou la note
-                        if (item.note.includes("Помощник :")) {
-                            roleText = "Помощник:";
-                            personText = item.note.replace("Помощник :", "").trim();
-                            // Si la personne est vide dans le modèle, elle était l'élève
-                            if (item.person === "") {
-                                roleText = "Учащийся \nПомощник:"; // comme dans le PDF source
-                            }
-                        } else if (item.note.includes("Ведущий/Чтец :")) {
-                             roleText = "Ведущий/Чтец:";
-                             personText = item.note.replace("Ведущий/Чтец :", "").trim();
-                        } else if (item.note.includes("Учащийся")) {
+                        const noteCleaned = item.note.trim();
+                        if (noteCleaned.includes("Помощник :")) {
+                            roleText = "Учащийся \nПомощник:"; 
+                            personText = noteCleaned.replace("Помощник :", "").trim();
+                        } else if (noteCleaned.includes("Ведущий/Чтец :")) {
+                            roleText = "Ведущий/Чтец:";
+                            personText = noteCleaned.replace("Ведущий/Чтец :", "").trim();
+                        } else if (noteCleaned.includes("Учащийся")) {
                             roleText = "Учащийся:";
+                            personText = item.person || ""; // La personne est l'élève
+                        } else if (item.role === "Молитва") {
+                            roleText = "Молитва:";
+                            personText = item.person || "";
                         } else {
-                            personText += (personText ? " — " : "") + item.note; // Note simple
+                             // Si c'est juste une note non structurée
+                             personText += (personText ? " — " : "") + item.note;
                         }
                     } else if (item.role === "Молитва") {
                         roleText = "Молитва:";
                     }
                     
-                    if(roleText) doc.text(roleText, x, currentY);
-                    doc.text(personText, x + timeWidth, currentY); // Affiche la personne
+                    // Rendu de la ligne Personne/Rôle
+                    if(roleText) {
+                         // Affiche le rôle à gauche (colonne du temps)
+                        doc.text(roleText, x, currentY); 
+                    }
+                    // Affiche la personne (colonne du thème)
+                    doc.text(personText, x + timeWidth, currentY); 
                     
                     currentY += lineHeight;
                 }
