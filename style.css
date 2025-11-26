@@ -60,7 +60,7 @@ body{
   border:1px solid #ddd;
   background:#fff;
   cursor:pointer;
-  white-space: nowrap; /* Empêche les boutons de wraps sur le même bouton */
+  white-space: nowrap; 
 }
 
 /* -----------------------------
@@ -103,18 +103,21 @@ main{
 .row.section-3{background:linear-gradient(90deg,var(--section3),#ffffff);}
 .time{font-weight:700;color:var(--muted);}
 
-/* Conteneur pour Personne et Note */
+/* NOUVEAU CONTENEUR POUR EMPILER PERSONNE ET NOTE */
 .personNoteContainer{
   display:flex;
   flex-direction:column;
   gap:4px;
 }
 
-.theme,.duration,.person,.note{
+.theme, .duration, .person, .note{
   padding:6px;
   border-radius:6px;
   min-height:20px;
   line-height:1.4;
+}
+.person {
+  font-weight: bold; /* Mise en évidence du nom de la personne */
 }
 .note{
     font-size:13px;
@@ -156,7 +159,7 @@ main{
     --card:#2b2f36;
     --muted:#e5e5e5;
     --accent:#fff;
-    --section1:#303640; /* Teintes sombres pour les dégradés */
+    --section1:#303640; 
     --section2:#333;
     --section3:#444;
   }
