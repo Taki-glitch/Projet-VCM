@@ -219,16 +219,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     return btoa(binary);
   }
 
-  async function ensureRobotoLoaded(docInstance){
+  // Renommée : ne s'occupe plus que du chargement/caching de la police
+  async function loadRobotoBase64(){ 
     if(ROBOTO_LOADED) return;
     if(ROBOTO_BASE64 === null) ROBOTO_BASE64 = localStorage.getItem(FONT_KEY);
 
     if(!ROBOTO_BASE64){
       try {
         console.log("Téléchargement de Roboto...");
-        // La police est maintenant recherchée en local
         const resp = await fetch(ROBOTO_TTF_URL, {cache:"no-store"});
-        // Si le fichier local n'existe pas, cela renverra un 404
         if(!resp.ok) throw new Error("Impossible de télécharger Roboto (Vérifiez la présence du fichier Roboto-Regular.ttf sur GitHub)");
         const ab = await resp.arrayBuffer();
         ROBOTO_BASE64 = arrayBufferToBase64(ab);
@@ -236,27 +235,21 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.log("Roboto téléchargée et mise en cache.");
       } catch(e){
         console.error("Échec téléchargement Roboto. Utilisation de la police par défaut.", e);
-        throw e; // Lance l'erreur pour que l'alerte utilisateur soit affichée
+        throw e; 
       }
     }
     
-    // Ajout de Roboto-Regular
-    docInstance.addFileToVFS("Roboto-Regular.ttf", ROBOTO_BASE64);
-    docInstance.addFont("Roboto-Regular.ttf", "Roboto", "normal");
-    
-    // Ajout d'alias pour les styles Bold et Italic pointant vers la police Regular
-    docInstance.addFont("Roboto-Regular.ttf", "Roboto", "bold");
-    docInstance.addFont("Roboto-Regular.ttf", "Roboto", "italic");
-    
-    ROBOTO_LOADED = true;
+    // Marque la police comme chargée (la Base64 est prête à être utilisée)
+    ROBOTO_LOADED = true; 
   }
   
   pdfBtn.addEventListener("click", async () => {
       pdfBtn.textContent = "Génération PDF...";
       try {
-          const { jsPDF } = window.jspdf;
-          await ensureRobotoLoaded(jsPDF.prototype);
+          // Étape 1 : S'assurer que les données Base64 de la police sont chargées ou en cache
+          await loadRobotoBase64(); 
 
+          // Étape 2 : Générer le PDF
           exportPDF();
       } catch (e) {
           console.error("Erreur lors de la préparation du PDF:", e);
@@ -271,6 +264,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!planningData) return;
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ unit: "pt", format: "a4" });
+
+    // NOUVEAU : Enregistrement de la police sur l'instance 'doc' (si la Base64 est disponible)
+    if(ROBOTO_LOADED && ROBOTO_BASE64){
+        // Ajout de Roboto-Regular
+        doc.addFileToVFS("Roboto-Regular.ttf", ROBOTO_BASE64);
+        doc.addFont("Roboto-Regular.ttf", "Roboto", "normal");
+        
+        // Ajout d'alias pour les styles Bold et Italic pointant vers la police Regular
+        doc.addFont("Roboto-Regular.ttf", "Roboto", "bold");
+        doc.addFont("Roboto-Regular.ttf", "Roboto", "italic");
+    }
 
     // Paramètres de mise en page (A4: 595 x 842 pt)
     const pageW = doc.internal.pageSize.getWidth(); // 595
