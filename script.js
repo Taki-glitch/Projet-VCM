@@ -1,4 +1,4 @@
-/* script.js — Version Finale : PDF 1 semaine/page, prévisualisation seule, Roboto local et style du modèle VCM */
+/* script.js — Version Définitive : PDF 1 semaine/page, toutes les semaines, style VCM */
 
 document.addEventListener("DOMContentLoaded", async () => {
 
@@ -278,7 +278,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const pageW = doc.internal.pageSize.getWidth(); // 595
     const marginLeft = 32, marginTop = 40;
     
-    // NOUVEAU: Utilise la largeur de la page entière (simple colonne)
+    // Utilise la largeur de la page entière (simple colonne)
     const columnWidth = (pageW - marginLeft * 2); // Nouvelle largeur de colonne (~531) 
     
     const timeWidth = 40, durWidth = 36;
@@ -492,14 +492,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         return currentY; // Retourne la position Y finale
     }
 
+    // --- LOGIQUE DE GÉNÉRATION PDF : 1 SEMAINE PAR PAGE ---
     const weeks = planningData.weeks;
     let yPos = marginTop;
-    const pageX = marginLeft; // Utilise la marge de gauche comme position X
+    const pageX = marginLeft; 
 
-    // NOUVEAU: Boucle 1 semaine par page
+    // Cette boucle va parcourir *toutes* les semaines disponibles
     for (let i = 0; i < weeks.length; i++) {
         
-        // Ajoute une nouvelle page si ce n'est pas la toute première semaine
+        // Ajoute une nouvelle page si ce n'est PAS la toute première semaine (i > 0)
         if (i > 0) doc.addPage();
         
         // Rendu de la semaine
