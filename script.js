@@ -1,4 +1,4 @@
-/* script.js — Version Finale et Fonctionnelle */
+/* script.js — Version Finale : PDF en 2 colonnes, prévisualisation seule, Roboto local et style du modèle VCM */
 
 document.addEventListener("DOMContentLoaded", async () => {
 
@@ -16,8 +16,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   let planningData = null;
   let currentWeekIndex = 0;
 
-  // L'URL de la police Roboto-Regular pour le caching
-  // CORRECTION DÉFINITIVE : Utilisation d'un chemin local.
+  // Chemin local vers le fichier Roboto-Regular.ttf
   const ROBOTO_TTF_URL = "./Roboto-Regular.ttf"; 
 
   let ROBOTO_LOADED = false;
@@ -219,7 +218,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     return btoa(binary);
   }
 
-  // Renommée : ne s'occupe plus que du chargement/caching de la police
   async function loadRobotoBase64(){ 
     if(ROBOTO_LOADED) return;
     if(ROBOTO_BASE64 === null) ROBOTO_BASE64 = localStorage.getItem(FONT_KEY);
@@ -254,7 +252,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       } catch (e) {
           console.error("Erreur lors de la préparation du PDF:", e);
           pdfBtn.textContent = "Erreur PDF";
-          alert("Erreur lors de la préparation du PDF. Assurez-vous d'avoir ajouté le fichier 'Roboto-Regular.ttf' à votre projet GitHub.\n\nSi le problème persiste, videz le cache Local Storage: (F12 > Application > Local Storage > Effacer l'entrée 'roboto_base64_v1').");
+          alert("Erreur lors de la préparation du PDF. Si le problème persiste, videz le cache Local Storage: (F12 > Application > Local Storage > Effacer l'entrée 'roboto_base64_v1').");
       }
       pdfBtn.textContent = "Exporter PDF";
   });
@@ -265,7 +263,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ unit: "pt", format: "a4" });
 
-    // NOUVEAU : Enregistrement de la police sur l'instance 'doc' (si la Base64 est disponible)
+    // Enregistrement de la police sur l'instance 'doc' (si la Base64 est disponible)
     if(ROBOTO_LOADED && ROBOTO_BASE64){
         // Ajout de Roboto-Regular
         doc.addFileToVFS("Roboto-Regular.ttf", ROBOTO_BASE64);
@@ -287,6 +285,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     const fontName = ROBOTO_LOADED ? "Roboto" : "helvetica";
     
+    // NOUVEAU: Couleurs pour les sections (basé sur le modèle)
+    const SECTION_COLORS = [
+        [230, 247, 245], // Section 1: СОКРОВИЩА (Light Cyan/Green)
+        [255, 247, 230], // Section 2: ОТТАЧИВАЕМ (Light Yellow/Orange)
+        [255, 241, 242]  // Section 3: ХРИСТИАНСКАЯ ЖИЗНЬ (Light Pink/Red)
+    ];
+    const MUTE_COLOR = [120, 120, 120]; // Gris foncé pour les sous-textes
+    
     // Fonction d'affichage d'une seule semaine
     function renderWeekPDF(x, y, week) {
         let currentY = y;
@@ -307,10 +313,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         doc.text(`${week.date} | ${week.scripture}`, x, currentY); 
         currentY += 10;
         
-        // Président
+        // Président (Aligné à droite)
         doc.setFont(fontName, "bold");
         doc.setTextColor(0);
-        doc.text(`Председатель: ${week.chairman || ""}`, x, currentY); 
+        doc.text(`Председатель:`, x, currentY);
+        doc.text(week.chairman || "", x + columnWidth, currentY, {align: 'right'}); 
         currentY += 10;
         
         // --- Prière/Chant/Intro (Première section) ---
@@ -326,13 +333,15 @@ document.addEventListener("DOMContentLoaded", async () => {
             doc.text(`${item.theme} (${item.duration} мин.)`, x + timeWidth, currentY);
             currentY += lineHeight;
             
-            // Rôle et Personne
-            doc.setFont(fontName, "normal");
-            doc.text(item.role === "Молитва" ? "Молитва:" : "", x, currentY);
-            doc.setFont(fontName, "bold");
-            doc.text(item.person || "", x + timeWidth, currentY);
-            currentY += lineHeight;
-            currentY += 4; 
+            // Rôle et Personne (aligné à droite)
+            if(item.person || item.role === "Молитва"){
+                doc.setFont(fontName, "normal");
+                doc.text(item.role === "Молитва" ? "Молитва:" : "", x, currentY);
+                doc.setFont(fontName, "bold");
+                doc.text(item.person || "", x + columnWidth, currentY, {align: 'right'});
+                currentY += lineHeight;
+                currentY += 4; 
+            }
         }
         
         if(introItems[1] && introItems[1].time && introItems[1].theme) {
@@ -347,7 +356,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             currentY += sectionSpacing;
         }
 
-        // --- Sections suivantes ---
+        // --- Sections suivantes (avec fond coloré) ---
         
         // On commence à la section 1 
         week.sections.forEach((section, sIdx) => { 
@@ -355,15 +364,42 @@ document.addEventListener("DOMContentLoaded", async () => {
             
             // Titre de la section
             if (section.title) {
+                // Gestion du saut de page avant une nouvelle section
+                if (currentY + 30 > doc.internal.pageSize.getHeight() - 20) {
+                    doc.addPage();
+                    currentY = marginTop;
+                }
+                
+                // Définir la couleur de fond
+                const colorIndex = (sIdx - 1) % SECTION_COLORS.length;
+                const bgColor = SECTION_COLORS[colorIndex];
+                
+                // Dessiner le fond coloré
+                const boxHeight = 16; 
+                doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
+                doc.rect(x, currentY, columnWidth, boxHeight, 'F');
+                
+                // Afficher le titre
                 doc.setFont(fontName, "bold");
                 doc.setFontSize(10);
                 doc.setTextColor(60); 
-                doc.text(section.title + (section.location ? ` — ${section.location}` : ""), x, currentY);
+                doc.text(section.title, x + 4, currentY + 11); // Légère indentation et ajustement Y
+                
+                // Afficher la localisation (petit, aligné à droite)
+                if(section.location) {
+                    doc.setFont(fontName, "normal");
+                    doc.setFontSize(8);
+                    doc.setTextColor(MUTE_COLOR[0], MUTE_COLOR[1], MUTE_COLOR[2]);
+                    doc.text(`${section.location}`, x + columnWidth - 4, currentY + 11, {align: 'right'});
+                }
+                
+                currentY += boxHeight;
                 currentY += sectionSpacing;
-                doc.setTextColor(0);
+                doc.setTextColor(0); // Reset couleur texte principal
             }
             
             section.items.forEach(item => {
+                
                 // Saut de page
                 if (currentY + lineHeight * 3 > doc.internal.pageSize.getHeight() - 20) {
                     doc.addPage();
@@ -383,25 +419,28 @@ document.addEventListener("DOMContentLoaded", async () => {
                 let themeLines = doc.splitTextToSize(themeText, themeWidth);
                 doc.text(themeLines, x + timeWidth, currentY);
                 
-                // Durée 
+                // Durée (Alignée à droite de la colonne de durée)
                 const durText = item.duration ? `(${item.duration} мин.)` : "";
                 doc.setFont(fontName, "normal"); 
-                doc.text(durText, x + timeWidth + themeWidth + 4, currentY, {align: 'right'});
+                doc.text(durText, x + timeWidth + themeWidth + durWidth - 6, currentY, {align: 'right'});
                 
                 currentY += lineHeight * themeLines.length;
-
-                // Personne et Note
-                if (item.person || item.note) {
-                    doc.setFont(fontName, "normal"); 
+                
+                let lineY = currentY; // Position Y de la ligne Rôle/Personne
+                
+                // Personne et Note (Ajustement pour ressembler au modèle : Rôle à gauche, Nom à droite)
+                if (item.person || item.note || item.role) {
                     doc.setFontSize(9);
                     
-                    let roleText = "";
+                    let roleText = item.role || "";
                     let personText = item.person || "";
+                    let noteText = "";
 
                     if (item.note) {
                         const noteCleaned = item.note.trim();
                         if (noteCleaned.includes("Помощник :")) {
-                            roleText = "Учащийся\nПомощник:"; 
+                            roleText = "Учащийся:"; 
+                            noteText = "Помощник:";
                             personText = noteCleaned.replace("Помощник :", "").trim();
                             
                         } else if (noteCleaned.includes("Ведущий/Чтец :")) {
@@ -413,23 +452,35 @@ document.addEventListener("DOMContentLoaded", async () => {
                             roleText = "Молитва:";
                             personText = item.person || noteCleaned.replace("Молитва :", "").trim();
                         } else {
-                             // Note simple
-                             personText += (personText ? " — " : "") + item.note;
+                            // Si c'est une note simple, on l'ajoute à la personne pour l'alignement
+                            personText = (item.person || "") + (item.note ? ` — ${item.note}` : "");
                         }
-                    } else if (item.role === "Молитва") {
-                        roleText = "Молитва:";
+                    } else if (item.role) {
+                         roleText = item.role + ":";
                     }
                     
-                    // Rendu de la ligne Personne/Rôle
+                    // Rendu du Rôle (aligné à gauche)
                     if(roleText) {
-                        doc.text(roleText, x, currentY); 
+                        doc.setFont(fontName, "normal"); 
+                        doc.text(roleText, x, lineY); 
                     }
-                    doc.setFont(fontName, "bold"); // Mise en gras de la personne
-                    doc.text(personText, x + timeWidth, currentY); 
-                    doc.setFont(fontName, "normal"); // Reset pour le reste
                     
-                    // Ajuste l'avancement si le rôle est sur deux lignes
-                    currentY += lineHeight * (roleText.includes('\n') ? 2 : 1); 
+                    // Rendu de la Personne (aligné à droite de la colonne)
+                    if (personText) {
+                        doc.setFont(fontName, "bold"); 
+                        doc.text(personText, x + columnWidth, lineY, {align: 'right'}); 
+                    }
+                    
+                    lineY += lineHeight;
+                    
+                    // Rendu de l'Assistant (s'il existe)
+                    if(noteText === "Помощник:"){
+                         doc.setFont(fontName, "normal");
+                         doc.text("Помощник:", x + timeWidth, lineY);
+                         lineY += lineHeight;
+                    }
+
+                    currentY = lineY; 
                 }
                 currentY += itemSpacing;
             });
@@ -460,8 +511,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     previewContainer.style.display = "block";
     previewIframe.src = url;
 
-    // Téléchargement direct
-    //doc.save(`Planning_${planningData.title.replace(/\s/g, '_') || "TPL"}.pdf`);
+    // Téléchargement direct (COMMENTÉ POUR NE FAIRE QUE LA PRÉVISUALISATION)
+    // doc.save(`Planning_${planningData.title.replace(/\s/g, '_') || "TPL"}.pdf`);
   }
 
   /* ------------ INITIALISATION ------------ */
