@@ -1,4 +1,4 @@
-/* script.js — Version Définitive : PDF 1 semaine/page, toutes les semaines, style VCM (Alignement Tableur) */
+/* script.js — Version Définitive : PDF 1 semaine/page, toutes les semaines, style VCM (Alignement Tableur - Champs séparés pour Учащийся/Помощник) */
 
 document.addEventListener("DOMContentLoaded", async () => {
 
@@ -69,17 +69,30 @@ document.addEventListener("DOMContentLoaded", async () => {
         html += `<div class="sectionTitle">${escapeHtml(sec.title)}${sec.location? " — "+escapeHtml(sec.location):""}</div>`;
       }
 
+      // Détecter si c'est la section "ОТТАЧИВАЕМ НАВЫКИ СЛУЖЕНИЯ"
+      const isServingSkills = sec.title && sec.title.includes("ОТТАЧИВАЕМ"); 
+      
       html += sec.items.map((it, itidx)=>{
         const part = it.part ? `<span class="part">${escapeHtml(it.part)} </span>` : "";
         
+        let personContent = escapeHtml(it.person);
+        let noteContent = escapeHtml(it.note||"");
+
+        // Si c'est la section "ОТТАЧИВАЕМ", on retire le préfixe "Помощник :" pour l'affichage,
+        // car on le gère à la sauvegarde.
+        if (isServingSkills) {
+            noteContent = noteContent.replace(/^Помощник :/, '').trim();
+        }
+
         // Nouvelle structure HTML pour le conteneur Personne/Note
+        // Ajout de l'attribut data-role pour identifier les champs dans cette section
         return `<div class="row section-${(sidx%4)+1}" data-section="${sidx}" data-item="${itidx}">
           <div class="time">${escapeHtml(it.time)}</div>
           <div class="theme editable" contenteditable="true" data-field="theme" data-section="${sidx}" data-item="${itidx}">${part}${escapeHtml(it.theme)}</div>
           <div class="duration editable" contenteditable="true" data-field="duration" data-section="${sidx}" data-item="${itidx}">${escapeHtml(it.duration)}</div>
           <div class="personNoteContainer">
-            <div class="person editable" contenteditable="true" data-field="person" data-section="${sidx}" data-item="${itidx}">${escapeHtml(it.person)}</div>
-            <div class="note editable" contenteditable="true" data-field="note" data-section="${sidx}" data-item="${itidx}">${escapeHtml(it.note||"")}</div>
+            <div class="person editable" contenteditable="true" data-field="person" data-section="${sidx}" data-item="${itidx}" data-role="${isServingSkills ? 'student' : ''}">${personContent}</div>
+            <div class="note editable" contenteditable="true" data-field="note" data-section="${sidx}" data-item="${itidx}" data-role="${isServingSkills ? 'assistant' : ''}">${noteContent}</div>
           </div>
         </div>`;
       }).join("");
@@ -110,8 +123,19 @@ document.addEventListener("DOMContentLoaded", async () => {
       updateTimesInDOM(currentWeekIndex);
       return;
     }
+    
+    // Vérifier si la section est "ОТТАЧИВАЕМ" pour la gestion du champ "note" (Помощник)
+    const section = planningData.weeks[currentWeekIndex].sections[sec];
+    const isServingSkills = section.title && section.title.includes("ОТТАЧИВАЕМ");
 
-    item[field] = value;
+    if (field === "note" && isServingSkills) {
+        // Si c'est le champ du Помощник et qu'il y a une valeur, on ajoute le préfixe 
+        // requis par la logique PDF. Sinon, on enregistre une chaîne vide.
+        item[field] = value ? `Помощник : ${value}` : "";
+    } else {
+        // Pour tous les autres champs (theme, duration, person), on enregistre la valeur telle quelle.
+        item[field] = value;
+    }
   }
   
   function updateTimesInDOM(weekIndex){
@@ -430,6 +454,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 let lineY = currentY; // Position Y de la ligne Rôle/Personne
                 
                 // LOGIQUE POUR GÉRER LES RÔLES/ASSISTANTS (Aligné sur les colonnes F, G, H)
+                // Note : Cette logique fonctionne car on s'assure que item.note pour l'Assistant 
+                // contient toujours le préfixe "Помощник :" (géré par onEdit).
                 if (item.person || item.note || item.role) {
                     doc.setFontSize(9);
                     
@@ -504,7 +530,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         return currentY; // Retourne la position Y finale
     }
 
-    // --- LOGIQUE DE GÉNÉRATION PDF : 1 SEMAINE PAR PAGE (MODIFICATION ICI) ---
+    // --- LOGIQUE DE GÉNÉRATION PDF : 1 SEMAINE PAR PAGE ---
     const weeks = planningData.weeks;
     const pageX = marginLeft; 
 
