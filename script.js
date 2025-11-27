@@ -1,4 +1,4 @@
-/* script.js — Version Définitive : PDF 2 semaines/page, toutes les semaines, style VCM */
+/* script.js — Version Définitive : PDF 2 semaines/page, toutes les semaines, style VCM (Alignement Tableur) */
 
 document.addEventListener("DOMContentLoaded", async () => {
 
@@ -278,12 +278,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     const pageW = doc.internal.pageSize.getWidth(); // 595
     const marginLeft = 32, marginTop = 40;
     
-    // Utilise la largeur de la page entière (simple colonne) pour correspondre au modèle aéré
-    const columnWidth = (pageW - marginLeft * 2); // Largeur de colonne (~531) 
-    
-    // Découpage interne de la zone de texte du planning
-    const timeWidth = 40, durWidth = 36;
-    const themeWidth = columnWidth - timeWidth - durWidth - 6; 
+    // NOUVELLES LARGEURS DE COLONNES pour calquer l'alignement du tableur:
+    // Largeur totale utilisable: 531pt (Approximation des colonnes A->H)
+    const timeWidth = 40;     // Colonne A (Heure)
+    const themeWidth = 260;   // Colonne C (Thème/Part)
+    const roleWidth = 80;     // Colonne F/G (Rôle/Sous-rôle)
+    const personWidth = 151;  // Colonne G/H (Personne)
+    const totalContentWidth = timeWidth + themeWidth + roleWidth + personWidth; // 531
+
     const lineHeight = 12; 
     const titleSpacing = 16, sectionSpacing = 12, itemSpacing = 2;
     
@@ -291,9 +293,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     // Couleurs pour les sections (basé sur le modèle)
     const SECTION_COLORS = [
-        [230, 247, 245], // Section 1: СОКРОВИЩА (Light Cyan/Green) - COULEURS DU MODÈLE
-        [255, 247, 230], // Section 2: ОТТАЧИВАЕМ (Light Yellow/Orange) - COULEURS DU MODÈLE
-        [255, 241, 242]  // Section 3: ХРИСТИАНСКАЯ ЖИЗНЬ (Light Pink/Red) - COULEURS DU MODÈLE
+        [230, 247, 245], // Section 1: СОКРОВИЩА (Light Cyan/Green) 
+        [255, 247, 230], // Section 2: ОТТАЧИВАЕМ (Light Yellow/Orange)
+        [255, 241, 242]  // Section 3: ХРИСТИАНСКАЯ ЖИЗНЬ (Light Pink/Red)
     ];
     const MUTE_COLOR = [120, 120, 120]; // Gris foncé pour les sous-textes
     
@@ -301,7 +303,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     function renderWeekPDF(x, y, week) {
         let currentY = y;
         
-        // --- Entête de la semaine ---
+        // --- Entête de la semaine (Aligné avec les colonnes du tableur) ---
         
         // Titre de l'assemblée
         doc.setFont(fontName, "bold");
@@ -315,13 +317,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         doc.setFontSize(9);
         doc.setTextColor(50); 
         doc.text(`${week.date} | ${week.scripture}`, x, currentY); 
-        currentY += 10;
         
-        // Président (Aligné à droite de la colonne)
+        // Président (Aligné à droite de la ligne du titre, sur la colonne Rôle/Personne)
         doc.setFont(fontName, "bold");
         doc.setTextColor(0);
-        doc.text(`Председатель:`, x, currentY);
-        doc.text(week.chairman || "", x + columnWidth, currentY, {align: 'right'}); 
+        doc.text(`Председатель:`, x + timeWidth + themeWidth, currentY); 
+        doc.text(week.chairman || "", x + totalContentWidth, currentY, {align: 'right'}); 
         currentY += 10;
         
         // --- Prière/Chant/Intro (Première section) ---
@@ -331,19 +332,22 @@ document.addEventListener("DOMContentLoaded", async () => {
             const item = introItems[0];
             doc.setFont(fontName, "bold");
             doc.setFontSize(9);
+            // Colonne Heure
             doc.text(item.time, x, currentY);
             
+            // Colonne Thème
             doc.setFont(fontName, "normal");
-            // CHANGEMENT: Retirer la durée du thème du Chant pour correspondre au modèle PDF
+            // Retirer la durée du Chant (première ligne) pour correspondre au modèle tableur
             doc.text(`${item.theme}`, x + timeWidth, currentY);
             
-            // Rôle et Personne (aligné à droite) - Affiché sur la ligne suivante pour la prière
+            // Rôle et Personne (Priére, aligné sur les colonnes Rôle/Personne)
             if(item.person || item.role === "Молитва"){
-                currentY += lineHeight; // Nouvelle ligne pour la personne
                 doc.setFont(fontName, "normal");
-                doc.text(item.role === "Молитва" ? "Молитва:" : "", x, currentY);
+                // Colonne Rôle
+                doc.text(item.role === "Молитва" ? "Молитва:" : "", x + timeWidth + themeWidth, currentY); 
+                // Colonne Personne
                 doc.setFont(fontName, "bold");
-                doc.text(item.person || "", x + columnWidth, currentY, {align: 'right'});
+                doc.text(item.person || "", x + totalContentWidth, currentY, {align: 'right'}); 
                 currentY += lineHeight;
                 currentY += 4; 
             } else {
@@ -356,8 +360,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             const item = introItems[1];
             doc.setFont(fontName, "bold");
             doc.setFontSize(9);
+            // Colonne Heure
             doc.text(item.time, x, currentY);
             
+            // Colonne Thème + Durée
             doc.setFont(fontName, "normal");
             doc.text(`${item.theme} (${item.duration} мин.)`, x + timeWidth, currentY);
             currentY += lineHeight;
@@ -372,27 +378,29 @@ document.addEventListener("DOMContentLoaded", async () => {
             
             // Titre de la section
             if (section.title) {
+                
                 // Définir la couleur de fond
                 const colorIndex = (sIdx - 1) % SECTION_COLORS.length;
                 const bgColor = SECTION_COLORS[colorIndex];
                 
-                // Dessiner le fond coloré (COUPE LA ZONE DE TEXTE)
+                // Dessiner le fond coloré
                 const boxHeight = 16; 
                 doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
-                doc.rect(x, currentY, columnWidth, boxHeight, 'F');
+                doc.rect(x, currentY, totalContentWidth, boxHeight, 'F');
                 
                 // Afficher le titre
                 doc.setFont(fontName, "bold");
                 doc.setFontSize(10);
                 doc.setTextColor(60); 
-                doc.text(section.title, x + 4, currentY + 11); // Légère indentation et ajustement Y
+                // Aligné avec la colonne Thème
+                doc.text(section.title, x + timeWidth + 4, currentY + 11); 
                 
                 // Afficher la localisation (petit, aligné à droite de la zone)
                 if(section.location) {
                     doc.setFont(fontName, "normal");
                     doc.setFontSize(8);
                     doc.setTextColor(MUTE_COLOR[0], MUTE_COLOR[1], MUTE_COLOR[2]);
-                    doc.text(`${section.location}`, x + columnWidth - 4, currentY + 11, {align: 'right'});
+                    doc.text(`${section.location}`, x + totalContentWidth - 4, currentY + 11, {align: 'right'});
                 }
                 
                 currentY += boxHeight;
@@ -402,29 +410,26 @@ document.addEventListener("DOMContentLoaded", async () => {
             
             section.items.forEach(item => {
                 
-                // Heure
+                // Heure (Colonne A)
                 doc.setFont(fontName, "bold");
                 doc.setFontSize(9);
                 doc.text(item.time || "", x, currentY);
 
-                // Thème
+                // Thème (Colonne C)
                 doc.setFont(fontName, "normal");
                 const part = item.part ? item.part + " " : "";
-                let themeText = part + (item.theme || "");
+                // Le thème inclut la durée entre parenthèses
+                let themeText = part + (item.theme || "") + (item.duration ? ` (${item.duration} мин.)` : "");
                 
                 let themeLines = doc.splitTextToSize(themeText, themeWidth);
+                // Le texte du thème ne doit pas déborder sur la colonne Rôle/Personne
                 doc.text(themeLines, x + timeWidth, currentY);
-                
-                // Durée (Alignée à droite de la colonne de durée)
-                const durText = item.duration ? `(${item.duration} мин.)` : "";
-                doc.setFont(fontName, "normal"); 
-                doc.text(durText, x + timeWidth + themeWidth + durWidth - 6, currentY, {align: 'right'});
                 
                 currentY += lineHeight * themeLines.length;
                 
                 let lineY = currentY; // Position Y de la ligne Rôle/Personne
                 
-                // NOUVELLE LOGIQUE POUR GÉRER LES RÔLES/ASSISTANTS (pour correspondre au modèle)
+                // LOGIQUE POUR GÉRER LES RÔLES/ASSISTANTS (Aligné sur les colonnes F, G, H)
                 if (item.person || item.note || item.role) {
                     doc.setFontSize(9);
                     
@@ -437,54 +442,56 @@ document.addEventListener("DOMContentLoaded", async () => {
                         const noteCleaned = item.note.trim();
                         
                         if (noteCleaned.includes("Помощник :")) {
-                            // Case 1: Serving Skills talk with an assistant (2 lines output)
+                            // Cas 1: Discours élève avec assistant (2 lignes)
                             primaryRole = "Учащийся:"; 
                             primaryPerson = item.person; 
                             secondaryRole = "Помощник:";
                             secondaryPerson = noteCleaned.replace("Помощник :", "").trim();
                             
                         } else if (noteCleaned.includes("Ведущий/Чтец :")) {
-                            // Case 2: Congregation Bible Study (1 combined line output)
+                            // Cas 2: Étude biblique de l'assemblée (1 ligne combinée)
                             primaryRole = "Ведущий/Чтец:"; 
                             primaryPerson = noteCleaned.replace("Ведущий/Чтец :", "").trim(); 
                             
                         } else if (item.role === "Молитва" || noteCleaned.includes("Молитва :")) {
-                            // Case 3: Prayer (1 line output)
+                            // Cas 3: Prière (1 ligne)
                             primaryRole = "Молитва:";
                             primaryPerson = item.person || noteCleaned.replace("Молитва :", "").trim();
                             
                         } else if (noteCleaned.includes("Учащийся")) {
                             primaryRole = "Учащийся:";
                         } else {
-                            // Simple note: combine it with person for right alignment (1 line output)
+                            // Simple note: combinée avec la personne pour alignement à droite (1 ligne)
                             primaryPerson = (item.person || "") + (item.note ? ` — ${item.note}` : "");
                         }
                     } else if (primaryRole) {
                          primaryRole = primaryRole + ":";
                     }
                     
-                    // --- RENDER PRIMARY LINE (Student/Conductor/Main Person) ---
+                    // --- RENDU DE LA LIGNE PRIMAIRE (Élève/Conducteur/Personne principale) ---
                     if(primaryRole || primaryPerson) {
-                        // Rendu du Rôle (aligné à gauche)
+                        // Rendu du Rôle (Aligné sur la colonne F/G)
                         if(primaryRole) {
                             doc.setFont(fontName, "normal"); 
-                            doc.text(primaryRole, x, lineY); 
+                            doc.text(primaryRole, x + timeWidth + themeWidth, lineY); 
                         }
                         
-                        // Rendu de la Personne (aligné à droite de la colonne)
+                        // Rendu de la Personne (Aligné sur la colonne H)
                         if (primaryPerson) {
                             doc.setFont(fontName, "bold"); 
-                            doc.text(primaryPerson, x + columnWidth, lineY, {align: 'right'}); 
+                            doc.text(primaryPerson, x + totalContentWidth, lineY, {align: 'right'}); 
                         }
                         lineY += lineHeight;
                     }
                     
-                    // --- RENDER SECONDARY LINE (Assistant) ---
+                    // --- RENDU DE LA LIGNE SECONDAIRE (Assistant) ---
                     if(secondaryRole === "Помощник:"){
+                         // Rendu du Rôle Secondaire (Aligné sur la colonne F/G)
                          doc.setFont(fontName, "normal");
-                         doc.text(secondaryRole, x, lineY); 
+                         doc.text(secondaryRole, x + timeWidth + themeWidth, lineY); 
+                         // Rendu de la Personne Secondaire (Aligné sur la colonne H)
                          doc.setFont(fontName, "bold"); 
-                         doc.text(secondaryPerson, x + columnWidth, lineY, {align: 'right'}); 
+                         doc.text(secondaryPerson, x + totalContentWidth, lineY, {align: 'right'}); 
                          lineY += lineHeight;
                     }
 
