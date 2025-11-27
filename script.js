@@ -17,8 +17,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   let currentWeekIndex = 0;
 
   // L'URL de la police Roboto-Regular pour le caching
-  // CORRECTION: Changement de l'URL pour une version stable (résout l'erreur 404)
-  const ROBOTO_TTF_URL = "https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Me5WZouyY.ttf";
+  // CORRECTION DÉFINITIVE : Utilisation d'un chemin local.
+  const ROBOTO_TTF_URL = "./Roboto-Regular.ttf"; 
 
   let ROBOTO_LOADED = false;
   let ROBOTO_BASE64 = null; // Variable pour stocker la base64
@@ -226,8 +226,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     if(!ROBOTO_BASE64){
       try {
         console.log("Téléchargement de Roboto...");
+        // La police est maintenant recherchée en local
         const resp = await fetch(ROBOTO_TTF_URL, {cache:"no-store"});
-        if(!resp.ok) throw new Error("Impossible de télécharger Roboto");
+        // Si le fichier local n'existe pas, cela renverra un 404
+        if(!resp.ok) throw new Error("Impossible de télécharger Roboto (Vérifiez la présence du fichier Roboto-Regular.ttf sur GitHub)");
         const ab = await resp.arrayBuffer();
         ROBOTO_BASE64 = arrayBufferToBase64(ab);
         localStorage.setItem(FONT_KEY, ROBOTO_BASE64);
@@ -259,7 +261,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       } catch (e) {
           console.error("Erreur lors de la préparation du PDF:", e);
           pdfBtn.textContent = "Erreur PDF";
-          alert("Erreur lors de la préparation du PDF. Réessayez, ou vérifiez la connexion pour le téléchargement de la police.\n\nSi le problème persiste, videz le cache Local Storage: (F12 > Application > Local Storage > Effacer l'entrée 'roboto_base64_v1').");
+          alert("Erreur lors de la préparation du PDF. Assurez-vous d'avoir ajouté le fichier 'Roboto-Regular.ttf' à votre projet GitHub.\n\nSi le problème persiste, videz le cache Local Storage: (F12 > Application > Local Storage > Effacer l'entrée 'roboto_base64_v1').");
       }
       pdfBtn.textContent = "Exporter PDF";
   });
