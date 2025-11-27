@@ -17,7 +17,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   let currentWeekIndex = 0;
 
   // L'URL de la police Roboto-Regular pour le caching
-  const ROBOTO_TTF_URL = "https://raw.githubusercontent.com/google/fonts/main/apache/roboto/Roboto-Regular.ttf";
+  // CORRECTION: Changement de l'URL pour une version stable (résout l'erreur 404)
+  const ROBOTO_TTF_URL = "https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Me5WZouyY.ttf";
 
   let ROBOTO_LOADED = false;
   let ROBOTO_BASE64 = null; // Variable pour stocker la base64
@@ -53,7 +54,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     weekSelect.value = currentWeekIndex || 0;
   }
 
-  // --- Rendu et édition (simplifié pour la robustesse) ---
+  // --- Rendu et édition ---
 
   function renderWeek(idx){
     const week = planningData.weeks[idx];
@@ -233,7 +234,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.log("Roboto téléchargée et mise en cache.");
       } catch(e){
         console.error("Échec téléchargement Roboto. Utilisation de la police par défaut.", e);
-        throw e; 
+        throw e; // Lance l'erreur pour que l'alerte utilisateur soit affichée
       }
     }
     
@@ -242,7 +243,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     docInstance.addFont("Roboto-Regular.ttf", "Roboto", "normal");
     
     // Ajout d'alias pour les styles Bold et Italic pointant vers la police Regular
-    // C'est ce qui évite le crash même si on ne charge qu'un seul fichier TTF.
     docInstance.addFont("Roboto-Regular.ttf", "Roboto", "bold");
     docInstance.addFont("Roboto-Regular.ttf", "Roboto", "italic");
     
@@ -253,16 +253,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       pdfBtn.textContent = "Génération PDF...";
       try {
           const { jsPDF } = window.jspdf;
-          // Initialisation du VFS et ajout des polices au prototype.
-          // C'est ici que l'échec de chargement génère l'alerte.
           await ensureRobotoLoaded(jsPDF.prototype);
 
-          // Génération du PDF
           exportPDF();
       } catch (e) {
           console.error("Erreur lors de la préparation du PDF:", e);
           pdfBtn.textContent = "Erreur PDF";
-          alert("Erreur lors de la préparation du PDF. Réessayez, ou vérifiez la connexion pour le téléchargement de la police.\n\n(F12 > Application > Local Storage > Effacer l'entrée 'roboto_base64_v1').");
+          alert("Erreur lors de la préparation du PDF. Réessayez, ou vérifiez la connexion pour le téléchargement de la police.\n\nSi le problème persiste, videz le cache Local Storage: (F12 > Application > Local Storage > Effacer l'entrée 'roboto_base64_v1').");
       }
       pdfBtn.textContent = "Exporter PDF";
   });
@@ -282,7 +279,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const lineHeight = 12; 
     const titleSpacing = 16, sectionSpacing = 12, itemSpacing = 2;
     
-    // Si Roboto a été chargée, on l'utilise. Sinon, on utilise la police par défaut (helvetica).
     const fontName = ROBOTO_LOADED ? "Roboto" : "helvetica";
     
     // Fonction d'affichage d'une seule semaine
@@ -347,7 +343,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // --- Sections suivantes ---
         
-        // On commence à la section 1 (pour sauter les deux premiers éléments introductifs)
+        // On commence à la section 1 
         week.sections.forEach((section, sIdx) => { 
             if (sIdx < 1) return; 
             
@@ -407,7 +403,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                             personText = noteCleaned.replace("Ведущий/Чтец :", "").trim();
                         } else if (noteCleaned.includes("Учащийся")) {
                             roleText = "Учащийся:";
-                            // La personne est déjà dans item.person
                         } else if (item.role === "Молитва" || noteCleaned.includes("Молитва :")) {
                             roleText = "Молитва:";
                             personText = item.person || noteCleaned.replace("Молитва :", "").trim();
@@ -427,6 +422,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     doc.text(personText, x + timeWidth, currentY); 
                     doc.setFont(fontName, "normal"); // Reset pour le reste
                     
+                    // Ajuste l'avancement si le rôle est sur deux lignes
                     currentY += lineHeight * (roleText.includes('\n') ? 2 : 1); 
                 }
                 currentY += itemSpacing;
