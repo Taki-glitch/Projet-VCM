@@ -143,6 +143,26 @@ main{
 }
 
 /* -----------------------------
+   AJOUTS POUR Учащийся / Помощник
+--------------------------------*/
+.person[data-role="student"]::before {
+    content: "Учащийся: ";
+    color: var(--muted);
+    font-weight: bold;
+    margin-right: 4px;
+    user-select: none;
+}
+
+.note[data-role="assistant"]::before {
+    content: "Помощник: ";
+    color: var(--muted);
+    font-weight: bold;
+    font-style: normal; /* Annule l'italic de .note pour le label */
+    margin-right: 4px;
+    user-select: none;
+}
+
+/* -----------------------------
    RESPONSIVE
 --------------------------------*/
 @media (max-width:900px){
@@ -174,4 +194,11 @@ main{
   .note{background:#3a3f4b;color:#ddd;}
   .duration{background:#3a3f4b;}
   .editable:focus{background:#444;outline:2px solid rgba(255,255,255,0.15);}
+  /* Ajustements pour le thème sombre */
+  .person[data-role="student"]::before {
+      color: var(--muted);
+  }
+  .note[data-role="assistant"]::before {
+      color: var(--muted);
+  }
 }
