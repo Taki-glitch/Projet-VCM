@@ -1,4 +1,4 @@
-/* script.js — Version Finale : PDF en 2 colonnes, prévisualisation seule, Roboto local et style du modèle VCM */
+/* script.js — Version Finale : PDF 1 semaine/page, prévisualisation seule, Roboto local et style du modèle VCM */
 
 document.addEventListener("DOMContentLoaded", async () => {
 
@@ -276,8 +276,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Paramètres de mise en page (A4: 595 x 842 pt)
     const pageW = doc.internal.pageSize.getWidth(); // 595
-    const marginLeft = 32, marginTop = 40, colGap = 16;
-    const columnWidth = (pageW - marginLeft * 2 - colGap) / 2; // ~254.5
+    const marginLeft = 32, marginTop = 40;
+    
+    // NOUVEAU: Utilise la largeur de la page entière (simple colonne)
+    const columnWidth = (pageW - marginLeft * 2); // Nouvelle largeur de colonne (~531) 
+    
     const timeWidth = 40, durWidth = 36;
     const themeWidth = columnWidth - timeWidth - durWidth - 6; 
     const lineHeight = 12; 
@@ -285,7 +288,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     const fontName = ROBOTO_LOADED ? "Roboto" : "helvetica";
     
-    // NOUVEAU: Couleurs pour les sections (basé sur le modèle)
+    // Couleurs pour les sections (basé sur le modèle)
     const SECTION_COLORS = [
         [230, 247, 245], // Section 1: СОКРОВИЩА (Light Cyan/Green)
         [255, 247, 230], // Section 2: ОТТАЧИВАЕМ (Light Yellow/Orange)
@@ -313,7 +316,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         doc.text(`${week.date} | ${week.scripture}`, x, currentY); 
         currentY += 10;
         
-        // Président (Aligné à droite)
+        // Président (Aligné à droite de la nouvelle grande colonne)
         doc.setFont(fontName, "bold");
         doc.setTextColor(0);
         doc.text(`Председатель:`, x, currentY);
@@ -491,17 +494,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const weeks = planningData.weeks;
     let yPos = marginTop;
+    const pageX = marginLeft; // Utilise la marge de gauche comme position X
 
-    for (let i = 0; i < weeks.length; i += 2) {
+    // NOUVEAU: Boucle 1 semaine par page
+    for (let i = 0; i < weeks.length; i++) {
+        
+        // Ajoute une nouvelle page si ce n'est pas la toute première semaine
         if (i > 0) doc.addPage();
         
-        // Rendu de la semaine 1 (colonne de gauche)
-        renderWeekPDF(marginLeft, yPos, weeks[i]);
-        
-        // Rendu de la semaine 2 (colonne de droite)
-        if (weeks[i + 1]) {
-            renderWeekPDF(marginLeft + columnWidth + colGap, yPos, weeks[i + 1]);
-        }
+        // Rendu de la semaine
+        renderWeekPDF(pageX, yPos, weeks[i]); 
     }
 
     // Affichage dans l'iframe
