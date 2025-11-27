@@ -278,9 +278,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const pageW = doc.internal.pageSize.getWidth(); // 595
     const marginLeft = 32, marginTop = 40;
     
-    // Utilise la largeur de la page entière (simple colonne)
-    const columnWidth = (pageW - marginLeft * 2); // Nouvelle largeur de colonne (~531) 
+    // Utilise la largeur de la page entière (simple colonne) pour correspondre au modèle aéré
+    const columnWidth = (pageW - marginLeft * 2); // Largeur de colonne (~531) 
     
+    // Découpage interne de la zone de texte du planning
     const timeWidth = 40, durWidth = 36;
     const themeWidth = columnWidth - timeWidth - durWidth - 6; 
     const lineHeight = 12; 
@@ -290,9 +291,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     // Couleurs pour les sections (basé sur le modèle)
     const SECTION_COLORS = [
-        [230, 247, 245], // Section 1: СОКРОВИЩА (Light Cyan/Green)
-        [255, 247, 230], // Section 2: ОТТАЧИВАЕМ (Light Yellow/Orange)
-        [255, 241, 242]  // Section 3: ХРИСТИАНСКАЯ ЖИЗНЬ (Light Pink/Red)
+        [230, 247, 245], // Section 1: СОКРОВИЩА (Light Cyan/Green) - COULEURS DU MODÈLE
+        [255, 247, 230], // Section 2: ОТТАЧИВАЕМ (Light Yellow/Orange) - COULEURS DU MODÈLE
+        [255, 241, 242]  // Section 3: ХРИСТИАНСКАЯ ЖИЗНЬ (Light Pink/Red) - COULEURS DU MODÈLE
     ];
     const MUTE_COLOR = [120, 120, 120]; // Gris foncé pour les sous-textes
     
@@ -316,7 +317,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         doc.text(`${week.date} | ${week.scripture}`, x, currentY); 
         currentY += 10;
         
-        // Président (Aligné à droite de la nouvelle grande colonne)
+        // Président (Aligné à droite de la colonne)
         doc.setFont(fontName, "bold");
         doc.setTextColor(0);
         doc.text(`Председатель:`, x, currentY);
@@ -377,7 +378,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 const colorIndex = (sIdx - 1) % SECTION_COLORS.length;
                 const bgColor = SECTION_COLORS[colorIndex];
                 
-                // Dessiner le fond coloré
+                // Dessiner le fond coloré (COUPE LA ZONE DE TEXTE)
                 const boxHeight = 16; 
                 doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
                 doc.rect(x, currentY, columnWidth, boxHeight, 'F');
@@ -388,7 +389,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 doc.setTextColor(60); 
                 doc.text(section.title, x + 4, currentY + 11); // Légère indentation et ajustement Y
                 
-                // Afficher la localisation (petit, aligné à droite)
+                // Afficher la localisation (petit, aligné à droite de la zone)
                 if(section.location) {
                     doc.setFont(fontName, "normal");
                     doc.setFontSize(8);
@@ -431,7 +432,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 
                 let lineY = currentY; // Position Y de la ligne Rôle/Personne
                 
-                // Personne et Note (Ajustement pour ressembler au modèle : Rôle à gauche, Nom à droite)
+                // Personne et Note (Structure de la zone de texte rôle à gauche, nom à droite)
                 if (item.person || item.note || item.role) {
                     doc.setFontSize(9);
                     
@@ -468,7 +469,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                         doc.text(roleText, x, lineY); 
                     }
                     
-                    // Rendu de la Personne (aligné à droite de la colonne)
+                    // Rendu de la Personne (aligné à droite de la colonne pour former la zone de texte)
                     if (personText) {
                         doc.setFont(fontName, "bold"); 
                         doc.text(personText, x + columnWidth, lineY, {align: 'right'}); 
@@ -492,7 +493,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         return currentY; // Retourne la position Y finale
     }
 
-    // --- LOGIQUE DE GÉNÉRATION PDF : 1 SEMAINE PAR PAGE ---
+    // --- LOGIQUE DE GÉNÉRATION PDF : 1 SEMAINE PAR PAGE (TOUTES LES SEMAINES) ---
     const weeks = planningData.weeks;
     let yPos = marginTop;
     const pageX = marginLeft; 
