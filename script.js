@@ -1,4 +1,4 @@
-/* script.js — Version Définitive : PDF 2 semaines/page, toutes les semaines, style VCM (Alignement Tableur) */
+/* script.js — Version Définitive : PDF 1 semaine/page, toutes les semaines, style VCM (Alignement Tableur) */
 
 document.addEventListener("DOMContentLoaded", async () => {
 
@@ -504,24 +504,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         return currentY; // Retourne la position Y finale
     }
 
-    // --- LOGIQUE DE GÉNÉRATION PDF : 2 SEMAINES PAR PAGE (selon le modèle PDF) ---
+    // --- LOGIQUE DE GÉNÉRATION PDF : 1 SEMAINE PAR PAGE (MODIFICATION ICI) ---
     const weeks = planningData.weeks;
     const pageX = marginLeft; 
-    const secondWeekY = 430; // Position Y pour la deuxième semaine (pour A4)
 
-    // Cette boucle va parcourir *toutes* les semaines disponibles par paires
-    for (let i = 0; i < weeks.length; i += 2) { 
+    // Cette boucle va parcourir *toutes* les semaines disponibles, une par page
+    for (let i = 0; i < weeks.length; i++) { 
         
         // Ajoute une nouvelle page si ce n'est PAS la toute première itération
         if (i > 0) doc.addPage();
         
-        // Rendu de la PREMIÈRE semaine (Haut de page, y=marginTop)
+        // Rendu de la semaine courante (en haut de la page, y=marginTop)
         renderWeekPDF(pageX, marginTop, weeks[i]); 
-        
-        // Rendu de la DEUXIÈME semaine (Bas de page, y=secondWeekY) si elle existe
-        if (weeks[i + 1]) {
-            renderWeekPDF(pageX, secondWeekY, weeks[i + 1]); 
-        }
     }
 
     // Affichage dans l'iframe
