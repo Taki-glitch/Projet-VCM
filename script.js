@@ -461,7 +461,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     previewIframe.src = url;
 
     // Téléchargement direct
-    doc.save(`Planning_${planningData.title.replace(/\s/g, '_') || "TPL"}.pdf`);
+    //doc.save(`Planning_${planningData.title.replace(/\s/g, '_') || "TPL"}.pdf`);
   }
 
   /* ------------ INITIALISATION ------------ */
