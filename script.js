@@ -1,4 +1,4 @@
-/* script.js — Version Définitive : PDF 1 semaine/page, toutes les semaines, style VCM */
+/* script.js — Version Définitive : PDF 2 semaines/page, toutes les semaines, style VCM */
 
 document.addEventListener("DOMContentLoaded", async () => {
 
@@ -334,17 +334,21 @@ document.addEventListener("DOMContentLoaded", async () => {
             doc.text(item.time, x, currentY);
             
             doc.setFont(fontName, "normal");
-            doc.text(`${item.theme} (${item.duration} мин.)`, x + timeWidth, currentY);
-            currentY += lineHeight;
+            // CHANGEMENT: Retirer la durée du thème du Chant pour correspondre au modèle PDF
+            doc.text(`${item.theme}`, x + timeWidth, currentY);
             
-            // Rôle et Personne (aligné à droite)
+            // Rôle et Personne (aligné à droite) - Affiché sur la ligne suivante pour la prière
             if(item.person || item.role === "Молитва"){
+                currentY += lineHeight; // Nouvelle ligne pour la personne
                 doc.setFont(fontName, "normal");
                 doc.text(item.role === "Молитва" ? "Молитва:" : "", x, currentY);
                 doc.setFont(fontName, "bold");
                 doc.text(item.person || "", x + columnWidth, currentY, {align: 'right'});
                 currentY += lineHeight;
                 currentY += 4; 
+            } else {
+                currentY += lineHeight;
+                currentY += 4;
             }
         }
         
@@ -368,12 +372,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             
             // Titre de la section
             if (section.title) {
-                // Gestion du saut de page avant une nouvelle section
-                if (currentY + 30 > doc.internal.pageSize.getHeight() - 20) {
-                    doc.addPage();
-                    currentY = marginTop;
-                }
-                
                 // Définir la couleur de fond
                 const colorIndex = (sIdx - 1) % SECTION_COLORS.length;
                 const bgColor = SECTION_COLORS[colorIndex];
@@ -404,12 +402,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             
             section.items.forEach(item => {
                 
-                // Saut de page
-                if (currentY + lineHeight * 3 > doc.internal.pageSize.getHeight() - 20) {
-                    doc.addPage();
-                    currentY = marginTop;
-                }
-                
                 // Heure
                 doc.setFont(fontName, "bold");
                 doc.setFontSize(9);
@@ -432,55 +424,67 @@ document.addEventListener("DOMContentLoaded", async () => {
                 
                 let lineY = currentY; // Position Y de la ligne Rôle/Personne
                 
-                // Personne et Note (Structure de la zone de texte rôle à gauche, nom à droite)
+                // NOUVELLE LOGIQUE POUR GÉRER LES RÔLES/ASSISTANTS (pour correspondre au modèle)
                 if (item.person || item.note || item.role) {
                     doc.setFontSize(9);
                     
-                    let roleText = item.role || "";
-                    let personText = item.person || "";
-                    let noteText = "";
+                    let primaryRole = item.role || "";
+                    let primaryPerson = item.person || "";
+                    let secondaryRole = "";
+                    let secondaryPerson = "";
 
                     if (item.note) {
                         const noteCleaned = item.note.trim();
+                        
                         if (noteCleaned.includes("Помощник :")) {
-                            roleText = "Учащийся:"; 
-                            noteText = "Помощник:";
-                            personText = noteCleaned.replace("Помощник :", "").trim();
+                            // Case 1: Serving Skills talk with an assistant (2 lines output)
+                            primaryRole = "Учащийся:"; 
+                            primaryPerson = item.person; 
+                            secondaryRole = "Помощник:";
+                            secondaryPerson = noteCleaned.replace("Помощник :", "").trim();
                             
                         } else if (noteCleaned.includes("Ведущий/Чтец :")) {
-                            roleText = "Ведущий/Чтец:";
-                            personText = noteCleaned.replace("Ведущий/Чтец :", "").trim();
-                        } else if (noteCleaned.includes("Учащийся")) {
-                            roleText = "Учащийся:";
+                            // Case 2: Congregation Bible Study (1 combined line output)
+                            primaryRole = "Ведущий/Чтец:"; 
+                            primaryPerson = noteCleaned.replace("Ведущий/Чтец :", "").trim(); 
+                            
                         } else if (item.role === "Молитва" || noteCleaned.includes("Молитва :")) {
-                            roleText = "Молитва:";
-                            personText = item.person || noteCleaned.replace("Молитва :", "").trim();
+                            // Case 3: Prayer (1 line output)
+                            primaryRole = "Молитва:";
+                            primaryPerson = item.person || noteCleaned.replace("Молитва :", "").trim();
+                            
+                        } else if (noteCleaned.includes("Учащийся")) {
+                            primaryRole = "Учащийся:";
                         } else {
-                            // Si c'est une note simple, on l'ajoute à la personne pour l'alignement
-                            personText = (item.person || "") + (item.note ? ` — ${item.note}` : "");
+                            // Simple note: combine it with person for right alignment (1 line output)
+                            primaryPerson = (item.person || "") + (item.note ? ` — ${item.note}` : "");
                         }
-                    } else if (item.role) {
-                         roleText = item.role + ":";
+                    } else if (primaryRole) {
+                         primaryRole = primaryRole + ":";
                     }
                     
-                    // Rendu du Rôle (aligné à gauche)
-                    if(roleText) {
-                        doc.setFont(fontName, "normal"); 
-                        doc.text(roleText, x, lineY); 
+                    // --- RENDER PRIMARY LINE (Student/Conductor/Main Person) ---
+                    if(primaryRole || primaryPerson) {
+                        // Rendu du Rôle (aligné à gauche)
+                        if(primaryRole) {
+                            doc.setFont(fontName, "normal"); 
+                            doc.text(primaryRole, x, lineY); 
+                        }
+                        
+                        // Rendu de la Personne (aligné à droite de la colonne)
+                        if (primaryPerson) {
+                            doc.setFont(fontName, "bold"); 
+                            doc.text(primaryPerson, x + columnWidth, lineY, {align: 'right'}); 
+                        }
+                        lineY += lineHeight;
                     }
                     
-                    // Rendu de la Personne (aligné à droite de la colonne pour former la zone de texte)
-                    if (personText) {
-                        doc.setFont(fontName, "bold"); 
-                        doc.text(personText, x + columnWidth, lineY, {align: 'right'}); 
-                    }
-                    
-                    lineY += lineHeight;
-                    
-                    // Rendu de l'Assistant (s'il existe)
-                    if(noteText === "Помощник:"){
+                    // --- RENDER SECONDARY LINE (Assistant) ---
+                    if(secondaryRole === "Помощник:"){
                          doc.setFont(fontName, "normal");
-                         doc.text("Помощник:", x + timeWidth, lineY);
+                         doc.text(secondaryRole, x, lineY); 
+                         doc.setFont(fontName, "bold"); 
+                         doc.text(secondaryPerson, x + columnWidth, lineY, {align: 'right'}); 
                          lineY += lineHeight;
                     }
 
@@ -493,19 +497,24 @@ document.addEventListener("DOMContentLoaded", async () => {
         return currentY; // Retourne la position Y finale
     }
 
-    // --- LOGIQUE DE GÉNÉRATION PDF : 1 SEMAINE PAR PAGE (TOUTES LES SEMAINES) ---
+    // --- LOGIQUE DE GÉNÉRATION PDF : 2 SEMAINES PAR PAGE (selon le modèle PDF) ---
     const weeks = planningData.weeks;
-    let yPos = marginTop;
     const pageX = marginLeft; 
+    const secondWeekY = 430; // Position Y pour la deuxième semaine (pour A4)
 
-    // Cette boucle va parcourir *toutes* les semaines disponibles
-    for (let i = 0; i < weeks.length; i++) {
+    // Cette boucle va parcourir *toutes* les semaines disponibles par paires
+    for (let i = 0; i < weeks.length; i += 2) { 
         
-        // Ajoute une nouvelle page si ce n'est PAS la toute première semaine (i > 0)
+        // Ajoute une nouvelle page si ce n'est PAS la toute première itération
         if (i > 0) doc.addPage();
         
-        // Rendu de la semaine
-        renderWeekPDF(pageX, yPos, weeks[i]); 
+        // Rendu de la PREMIÈRE semaine (Haut de page, y=marginTop)
+        renderWeekPDF(pageX, marginTop, weeks[i]); 
+        
+        // Rendu de la DEUXIÈME semaine (Bas de page, y=secondWeekY) si elle existe
+        if (weeks[i + 1]) {
+            renderWeekPDF(pageX, secondWeekY, weeks[i + 1]); 
+        }
     }
 
     // Affichage dans l'iframe
