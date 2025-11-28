@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const pdfBtn = document.getElementById("pdfBtn");
   const changeChairmanBtn = document.getElementById("changeChairmanBtn");
   const changeDateBtn = document.getElementById("changeDateBtn");
+  const changeScriptureBtn = document.getElementById("changeScriptureBtn"); // AJOUTÉ
 
   let planningData = null;
   let currentWeekIndex = 0;
@@ -42,12 +43,21 @@ document.addEventListener("DOMContentLoaded", async () => {
       .replace(/>/g,"&gt;");
   }
 
+  function loadLocal() {
+    try { 
+      let raw = localStorage.getItem(PLANNING_KEY); 
+      if(raw) return JSON.parse(raw); 
+    } catch(e){}
+    return null;
+  }
+  
   function populateWeekSelect(){
     weekSelect.innerHTML = "";
     planningData.weeks.forEach((w,i)=>{
       const opt = document.createElement("option");
       opt.value = i;
-      opt.textContent = `${w.date} | ${w.scripture} | ${w.chairman}`;
+      // Affichage complet dans la liste déroulante
+      opt.textContent = `${w.date} | ${w.scripture} | ${w.chairman}`; 
       weekSelect.appendChild(opt);
     });
     weekSelect.value = currentWeekIndex || 0;
@@ -56,11 +66,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   // --- Rendu et édition ---
 
   function renderWeek(idx){
+    currentWeekIndex = idx;
     const week = planningData.weeks[idx];
     if(!week) return;
 
-    dateDisplay.textContent =
-      `${week.date} — ${week.scripture} — Председатель : ${week.chairman}`;
+    // Mise à jour de l'affichage du titre avec un formatage HTML plus riche
+    let dateHtml = `<span style="font-size: 1.2em;">${escapeHtml(week.date)}</span><br>`;
+    dateHtml += `<span style="font-weight: bold;">${escapeHtml(week.scripture || 'N/D')}</span> — Председатель: <span style="font-weight: bold;">${escapeHtml(week.chairman || 'N/D')}</span>`;
+    dateDisplay.innerHTML = dateHtml;
+
 
     let html = "";
 
@@ -78,21 +92,22 @@ document.addEventListener("DOMContentLoaded", async () => {
         let personContent = escapeHtml(it.person);
         let noteContent = escapeHtml(it.note||"");
 
-        // Si c'est la section "ОТТАЧИВАЕМ", on retire le préfixe "Помощник :" pour l'affichage,
-        // car on le gère à la sauvegarde.
+        // Gérer le rôle CSS pour l'assistant
+        let noteRole = '';
         if (isServingSkills) {
-            noteContent = noteContent.replace(/^Помощник :/, '').trim();
+            if (noteContent.includes("Помощник :")) {
+                noteContent = noteContent.replace(/^Помощник :/, '').trim();
+                noteRole = 'assistant';
+            }
         }
-
-        // Nouvelle structure HTML pour le conteneur Personne/Note
-        // Ajout de l'attribut data-role pour identifier les champs dans cette section
+        
         return `<div class="row section-${(sidx%4)+1}" data-section="${sidx}" data-item="${itidx}">
           <div class="time">${escapeHtml(it.time)}</div>
           <div class="theme editable" contenteditable="true" data-field="theme" data-section="${sidx}" data-item="${itidx}">${part}${escapeHtml(it.theme)}</div>
           <div class="duration editable" contenteditable="true" data-field="duration" data-section="${sidx}" data-item="${itidx}">${escapeHtml(it.duration)}</div>
           <div class="personNoteContainer">
             <div class="person editable" contenteditable="true" data-field="person" data-section="${sidx}" data-item="${itidx}" data-role="${isServingSkills ? 'student' : ''}">${personContent}</div>
-            <div class="note editable" contenteditable="true" data-field="note" data-section="${sidx}" data-item="${itidx}" data-role="${isServingSkills ? 'assistant' : ''}">${noteContent}</div>
+            <div class="note editable" contenteditable="true" data-field="note" data-section="${sidx}" data-item="${itidx}" data-role="${noteRole}">${noteContent}</div>
           </div>
         </div>`;
       }).join("");
@@ -129,11 +144,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     const isServingSkills = section.title && section.title.includes("ОТТАЧИВАЕМ");
 
     if (field === "note" && isServingSkills) {
-        // Si c'est le champ du Помощник et qu'il y a une valeur, on ajoute le préfixe 
-        // requis par la logique PDF. Sinon, on enregistre une chaîne vide.
+        // Ajout du préfixe requis pour la logique PDF
         item[field] = value ? `Помощник : ${value}` : "";
+        // Mise à jour immédiate du data-role pour le CSS
+        el.dataset.role = value ? 'assistant' : ''; 
     } else {
-        // Pour tous les autres champs (theme, duration, person), on enregistre la valeur telle quelle.
         item[field] = value;
     }
   }
@@ -177,10 +192,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function saveLocal(){
     try{ localStorage.setItem(PLANNING_KEY, JSON.stringify(planningData)); }catch(e){ console.warn(e); }
-  }
-  function loadLocal(){
-    try{ let raw = localStorage.getItem(PLANNING_KEY); if(raw) return JSON.parse(raw); }catch(e){}
-    return null;
   }
 
   saveBtn.addEventListener("click", ()=>{
@@ -229,6 +240,20 @@ document.addEventListener("DOMContentLoaded", async () => {
       renderWeek(currentWeekIndex);
     }
   });
+  
+  // NOUVEAU: Événement pour la Lecture de la Bible
+  changeScriptureBtn.addEventListener("click", () => {
+    const week = planningData.weeks[currentWeekIndex];
+    const newScripture = prompt("Nouvelle lecture (ex: ИСАЙЯ 3—5) :", week.scripture || "");
+    
+    if (newScripture !== null) {
+      week.scripture = newScripture;
+      saveLocal();              // Sauvegarde locale
+      populateWeekSelect();     // Met à jour la liste déroulante
+      renderWeek(currentWeekIndex); // Met à jour l'affichage principal
+    }
+  });
+
 
   // --- PDF AVEC ROBOTO (cached) ---
 
@@ -261,17 +286,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
     
-    // Marque la police comme chargée (la Base64 est prête à être utilisée)
     ROBOTO_LOADED = true; 
   }
   
   pdfBtn.addEventListener("click", async () => {
       pdfBtn.textContent = "Génération PDF...";
       try {
-          // Étape 1 : S'assurer que les données Base64 de la police sont chargées ou en cache
           await loadRobotoBase64(); 
-
-          // Étape 2 : Générer le PDF
           exportPDF();
       } catch (e) {
           console.error("Erreur lors de la préparation du PDF:", e);
@@ -289,45 +310,40 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Enregistrement de la police sur l'instance 'doc' (si la Base64 est disponible)
     if(ROBOTO_LOADED && ROBOTO_BASE64){
-        // Ajout de Roboto-Regular
         doc.addFileToVFS("Roboto-Regular.ttf", ROBOTO_BASE64);
         doc.addFont("Roboto-Regular.ttf", "Roboto", "normal");
-        
-        // Ajout d'alias pour les styles Bold et Italic pointant vers la police Regular
         doc.addFont("Roboto-Regular.ttf", "Roboto", "bold");
         doc.addFont("Roboto-Regular.ttf", "Roboto", "italic");
     }
 
-    // Paramètres de mise en page (A4: 595 x 842 pt)
     const pageW = doc.internal.pageSize.getWidth(); // 595
     const marginLeft = 32, marginTop = 40;
     
-    // NOUVELLES LARGEURS DE COLONNES pour calquer l'alignement du tableur:
-    // Largeur totale utilisable: 531pt (Approximation des colonnes A->H)
-    const timeWidth = 40;     // Colonne A (Heure)
-    const themeWidth = 260;   // Colonne C (Thème/Part)
-    const roleWidth = 80;     // Colonne F/G (Rôle/Sous-rôle)
-    const personWidth = 151;  // Colonne G/H (Personne)
-    const totalContentWidth = timeWidth + themeWidth + roleWidth + personWidth; // 531
+    // Largeurs de colonnes (identiques au fichier original)
+    const timeWidth = 40;     
+    const themeWidth = 260;   
+    const roleWidth = 80;     
+    const personWidth = 151;  
+    const totalContentWidth = timeWidth + themeWidth + roleWidth + personWidth; 
 
     const lineHeight = 12; 
     const titleSpacing = 16, sectionSpacing = 12, itemSpacing = 2;
     
     const fontName = ROBOTO_LOADED ? "Roboto" : "helvetica";
     
-    // Couleurs pour les sections (basé sur le modèle)
+    // Couleurs pour les sections (identiques au fichier original)
     const SECTION_COLORS = [
-        [230, 247, 245], // Section 1: СОКРОВИЩА (Light Cyan/Green) 
-        [255, 247, 230], // Section 2: ОТТАЧИВАЕМ (Light Yellow/Orange)
-        [255, 241, 242]  // Section 3: ХРИСТИАНСКАЯ ЖИЗНЬ (Light Pink/Red)
+        [230, 247, 245], 
+        [255, 247, 230], 
+        [255, 241, 242]  
     ];
-    const MUTE_COLOR = [120, 120, 120]; // Gris foncé pour les sous-textes
+    const MUTE_COLOR = [120, 120, 120]; 
     
     // Fonction d'affichage d'une seule semaine
     function renderWeekPDF(x, y, week) {
         let currentY = y;
         
-        // --- Entête de la semaine (Aligné avec les colonnes du tableur) ---
+        // --- Entête de la semaine ---
         
         // Titre de l'assemblée
         doc.setFont(fontName, "bold");
@@ -340,36 +356,30 @@ document.addEventListener("DOMContentLoaded", async () => {
         doc.setFont(fontName, "normal");
         doc.setFontSize(9);
         doc.setTextColor(50); 
-        doc.text(`${week.date} | ${week.scripture}`, x, currentY); 
+        doc.text(`${week.date} | ${week.scripture}`, x, currentY); // Lecture de la Bible est bien là
         
-        // Président (Aligné à droite de la ligne du titre, sur la colonne Rôle/Personne)
+        // Président 
         doc.setFont(fontName, "bold");
         doc.setTextColor(0);
         doc.text(`Председатель:`, x + timeWidth + themeWidth, currentY); 
         doc.text(week.chairman || "", x + totalContentWidth, currentY, {align: 'right'}); 
         currentY += 10;
         
-        // --- Prière/Chant/Intro (Première section) ---
+        // --- Prière/Chant/Intro ---
 
         const introItems = week.sections[0] ? week.sections[0].items : [];
         if(introItems[0] && introItems[0].time && introItems[0].theme) {
             const item = introItems[0];
             doc.setFont(fontName, "bold");
             doc.setFontSize(9);
-            // Colonne Heure
             doc.text(item.time, x, currentY);
             
-            // Colonne Thème
             doc.setFont(fontName, "normal");
-            // Retirer la durée du Chant (première ligne) pour correspondre au modèle tableur
             doc.text(`${item.theme}`, x + timeWidth, currentY);
             
-            // Rôle et Personne (Priére, aligné sur les colonnes Rôle/Personne)
             if(item.person || item.role === "Молитва"){
                 doc.setFont(fontName, "normal");
-                // Colonne Rôle
                 doc.text(item.role === "Молитва" ? "Молитва:" : "", x + timeWidth + themeWidth, currentY); 
-                // Colonne Personne
                 doc.setFont(fontName, "bold");
                 doc.text(item.person || "", x + totalContentWidth, currentY, {align: 'right'}); 
                 currentY += lineHeight;
@@ -384,10 +394,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             const item = introItems[1];
             doc.setFont(fontName, "bold");
             doc.setFontSize(9);
-            // Colonne Heure
             doc.text(item.time, x, currentY);
             
-            // Colonne Thème + Durée
             doc.setFont(fontName, "normal");
             doc.text(`${item.theme} (${item.duration} мин.)`, x + timeWidth, currentY);
             currentY += lineHeight;
@@ -396,30 +404,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // --- Sections suivantes (avec fond coloré) ---
         
-        // On commence à la section 1 
         week.sections.forEach((section, sIdx) => { 
             if (sIdx < 1) return; 
             
             // Titre de la section
             if (section.title) {
-                
-                // Définir la couleur de fond
                 const colorIndex = (sIdx - 1) % SECTION_COLORS.length;
                 const bgColor = SECTION_COLORS[colorIndex];
                 
-                // Dessiner le fond coloré
                 const boxHeight = 16; 
                 doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
                 doc.rect(x, currentY, totalContentWidth, boxHeight, 'F');
                 
-                // Afficher le titre
                 doc.setFont(fontName, "bold");
                 doc.setFontSize(10);
                 doc.setTextColor(60); 
-                // Aligné avec la colonne Thème
                 doc.text(section.title, x + timeWidth + 4, currentY + 11); 
                 
-                // Afficher la localisation (petit, aligné à droite de la zone)
                 if(section.location) {
                     doc.setFont(fontName, "normal");
                     doc.setFontSize(8);
@@ -429,33 +430,29 @@ document.addEventListener("DOMContentLoaded", async () => {
                 
                 currentY += boxHeight;
                 currentY += sectionSpacing;
-                doc.setTextColor(0); // Reset couleur texte principal
+                doc.setTextColor(0); 
             }
             
             section.items.forEach(item => {
                 
-                // Heure (Colonne A)
+                // Heure
                 doc.setFont(fontName, "bold");
                 doc.setFontSize(9);
                 doc.text(item.time || "", x, currentY);
 
-                // Thème (Colonne C)
+                // Thème
                 doc.setFont(fontName, "normal");
                 const part = item.part ? item.part + " " : "";
-                // Le thème inclut la durée entre parenthèses
                 let themeText = part + (item.theme || "") + (item.duration ? ` (${item.duration} мин.)` : "");
                 
                 let themeLines = doc.splitTextToSize(themeText, themeWidth);
-                // Le texte du thème ne doit pas déborder sur la colonne Rôle/Personne
                 doc.text(themeLines, x + timeWidth, currentY);
                 
                 currentY += lineHeight * themeLines.length;
                 
-                let lineY = currentY; // Position Y de la ligne Rôle/Personne
+                let lineY = currentY; 
                 
-                // LOGIQUE POUR GÉRER LES RÔLES/ASSISTANTS (Aligné sur les colonnes F, G, H)
-                // Note : Cette logique fonctionne car on s'assure que item.note pour l'Assistant 
-                // contient toujours le préfixe "Помощник :" (géré par onEdit).
+                // LOGIQUE POUR GÉRER LES RÔLES/ASSISTANTS
                 if (item.person || item.note || item.role) {
                     doc.setFontSize(9);
                     
@@ -463,59 +460,60 @@ document.addEventListener("DOMContentLoaded", async () => {
                     let primaryPerson = item.person || "";
                     let secondaryRole = "";
                     let secondaryPerson = "";
+                    let singleNote = "";
 
                     if (item.note) {
                         const noteCleaned = item.note.trim();
                         
                         if (noteCleaned.includes("Помощник :")) {
-                            // Cas 1: Discours élève avec assistant (2 lignes)
                             primaryRole = "Учащийся:"; 
                             primaryPerson = item.person; 
                             secondaryRole = "Помощник:";
                             secondaryPerson = noteCleaned.replace("Помощник :", "").trim();
                             
                         } else if (noteCleaned.includes("Ведущий/Чтец :")) {
-                            // Cas 2: Étude biblique de l'assemblée (1 ligne combinée)
                             primaryRole = "Ведущий/Чтец:"; 
                             primaryPerson = noteCleaned.replace("Ведущий/Чтец :", "").trim(); 
                             
-                        } else if (item.role === "Молитва" || noteCleaned.includes("Молитва :")) {
-                            // Cas 3: Prière (1 ligne)
+                        } else if (noteCleaned.includes("Молитва :")) {
                             primaryRole = "Молитва:";
                             primaryPerson = item.person || noteCleaned.replace("Молитва :", "").trim();
                             
                         } else if (noteCleaned.includes("Учащийся")) {
                             primaryRole = "Учащийся:";
                         } else {
-                            // Simple note: combinée avec la personne pour alignement à droite (1 ligne)
-                            primaryPerson = (item.person || "") + (item.note ? ` — ${item.note}` : "");
+                            singleNote = (item.person || "") + (item.note ? ` — ${item.note}` : "");
                         }
                     } else if (primaryRole) {
                          primaryRole = primaryRole + ":";
+                    } else if (item.person) {
+                        singleNote = item.person; 
                     }
                     
-                    // --- RENDU DE LA LIGNE PRIMAIRE (Élève/Conducteur/Personne principale) ---
-                    if(primaryRole || primaryPerson) {
-                        // Rendu du Rôle (Aligné sur la colonne F/G)
-                        if(primaryRole) {
-                            doc.setFont(fontName, "normal"); 
-                            doc.text(primaryRole, x + timeWidth + themeWidth, lineY); 
-                        }
+                    // --- RENDU DE LA LIGNE PRIMAIRE ---
+                    if(primaryRole || primaryPerson || singleNote) {
                         
-                        // Rendu de la Personne (Aligné sur la colonne H)
-                        if (primaryPerson) {
+                        if(singleNote) {
                             doc.setFont(fontName, "bold"); 
-                            doc.text(primaryPerson, x + totalContentWidth, lineY, {align: 'right'}); 
+                            doc.text(singleNote, x + totalContentWidth, lineY, {align: 'right'});
+                        } else {
+                            if(primaryRole) {
+                                doc.setFont(fontName, "normal"); 
+                                doc.text(primaryRole, x + timeWidth + themeWidth, lineY); 
+                            }
+                            
+                            if (primaryPerson) {
+                                doc.setFont(fontName, "bold"); 
+                                doc.text(primaryPerson, x + totalContentWidth, lineY, {align: 'right'}); 
+                            }
                         }
                         lineY += lineHeight;
                     }
                     
                     // --- RENDU DE LA LIGNE SECONDAIRE (Assistant) ---
                     if(secondaryRole === "Помощник:"){
-                         // Rendu du Rôle Secondaire (Aligné sur la colonne F/G)
                          doc.setFont(fontName, "normal");
                          doc.text(secondaryRole, x + timeWidth + themeWidth, lineY); 
-                         // Rendu de la Personne Secondaire (Aligné sur la colonne H)
                          doc.setFont(fontName, "bold"); 
                          doc.text(secondaryPerson, x + totalContentWidth, lineY, {align: 'right'}); 
                          lineY += lineHeight;
@@ -525,22 +523,17 @@ document.addEventListener("DOMContentLoaded", async () => {
                 }
                 currentY += itemSpacing;
             });
-            currentY += 4; // Espacement fin de section
+            currentY += 4; 
         });
-        return currentY; // Retourne la position Y finale
+        return currentY; 
     }
 
     // --- LOGIQUE DE GÉNÉRATION PDF : 1 SEMAINE PAR PAGE ---
     const weeks = planningData.weeks;
     const pageX = marginLeft; 
 
-    // Cette boucle va parcourir *toutes* les semaines disponibles, une par page
     for (let i = 0; i < weeks.length; i++) { 
-        
-        // Ajoute une nouvelle page si ce n'est PAS la toute première itération
         if (i > 0) doc.addPage();
-        
-        // Rendu de la semaine courante (en haut de la page, y=marginTop)
         renderWeekPDF(pageX, marginTop, weeks[i]); 
     }
 
@@ -550,9 +543,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const previewIframe = document.getElementById("pdfPreview");
     previewContainer.style.display = "block";
     previewIframe.src = url;
-
-    // Téléchargement direct (COMMENTÉ POUR NE FAIRE QUE LA PRÉVISUALISATION)
-    // doc.save(`Planning_${planningData.title.replace(/\s/g, '_') || "TPL"}.pdf`);
   }
 
   /* ------------ INITIALISATION ------------ */
