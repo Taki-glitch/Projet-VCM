@@ -1,405 +1,204 @@
-/* style.css — Version Esthétique & Responsive VCM */
-
-:root {
-  --bg: #f8f9fa;
-  --card: #ffffff;
-  --text: #222;
-  --muted: #666;
-  --border: #e0e0e0;
-  
-  /* Couleurs Sections VCM */
-  --section1: #e6f7f5; /* Trésors */
-  --section2: #fff7e6; /* Ottachivaem */
-  --section3: #fff1f2; /* Vie Chrétienne */
-  
-  /* Couleurs Actions */
-  --primary: #4f46e5; /* Indigo (PDF) */
-  --success: #10b981; /* Vert (Save) */
-  --danger: #ef4444;  /* Rouge (Reset) */
-  
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  color: var(--text);
+:root{
+  --bg:#f7f7f7;
+  --card:#ffffff;
+  --muted:#555;
+  --accent:#222;
+  --section1:#e6f7f5;
+  --section2:#fff7e6;
+  --section3:#fff1f2;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  color: var(--accent);
 }
 
 /* -----------------------------
-   RESET & BODY
+   RESET & BODY
 --------------------------------*/
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  background: var(--bg);
-  -webkit-font-smoothing: antialiased;
-  padding-bottom: 40px;
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--bg);
+  -webkit-font-smoothing:antialiased;
 }
 
 /* -----------------------------
-   TOPBAR & NAVIGATION
+   TOPBAR
 --------------------------------*/
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 20px;
-  background: #fff;
-  border-bottom: 1px solid var(--border);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-  position: sticky;
-  top: 0;
-  z-index: 100;
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px 16px;
+  background:#fff;
+  border-bottom:1px solid #e6e6e6;
 }
-
-.brand {
-  display: flex;
-  gap: 12px;
-  align-items: center;
+.brand{
+  display:flex;
+  gap:12px;
+  align-items:center;
 }
-
-.logo {
-  width: 56px;
-  height: 56px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: #fff;
+.logo{
+  width:64px;
+  height:64px;
+  object-fit:cover;
+  border-radius:6px;
+  border:1px solid #ddd;
+  padding:4px;
+  background:#fff;
 }
-
-.brand h1 {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 700;
+.subtitle{
+  font-size:12px;
+  color:#666;
 }
-
-.subtitle {
-  font-size: 0.85rem;
-  color: var(--muted);
-  margin-top: 2px;
+.controls{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+.controls select, .controls button{
+  padding:8px 10px;
+  border-radius:6px;
+  border:1px solid #ddd;
+  background:#fff;
+  cursor:pointer;
+  white-space: nowrap; 
 }
 
 /* -----------------------------
-   CONTROLES (BOUTONS)
+   MAIN
 --------------------------------*/
-.controls {
-  display: flex;
-  gap: 10px;
-  align-items: center;
+main{
+  max-width:1100px;
+  margin:18px auto;
+  padding:0 16px;
 }
-
-/* Style de base des boutons et selects */
-.controls select, 
-.controls button {
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-  white-space: nowrap;
+#meta{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:8px;
 }
-
-/* Effet clic */
-.controls button:active { transform: scale(0.97); }
-
-/* Selecteur de semaine */
-.controls select {
-  background-color: #f0f4f8;
-  border-color: #dbe2e8;
-  color: #333;
-  max-width: 250px;
+.dateDisplay{
+  font-weight:700;
 }
-
-/* Boutons Standards (Gris) */
-.controls button {
-  background: #fff;
-  border: 1px solid var(--border);
-  color: #444;
+#planning{
+  border-radius:8px;
+  overflow:hidden;
 }
-.controls button:hover { background: #f9f9f9; border-color: #ccc; }
-
-/* Bouton PDF (Principal) */
-#pdfBtn {
-  background-color: var(--primary);
-  color: white;
-  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
-}
-#pdfBtn:hover { background-color: #4338ca; }
-
-/* Bouton Save (Succès) */
-#saveBtn {
-  background-color: var(--success);
-  color: white;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
-}
-#saveBtn:hover { background-color: #059669; }
-
-/* Bouton Reset (Danger léger) */
-#resetBtn {
-  color: var(--danger);
-  border-color: #fee2e2;
-  background: #fef2f2;
-}
-#resetBtn:hover { background: #fee2e2; }
-
 
 /* -----------------------------
-   MAIN CONTENT
+   LIGNES & SECTIONS
 --------------------------------*/
-main {
-  max-width: 1100px;
-  margin: 24px auto;
-  padding: 0 16px;
+.row{
+  display:grid;
+  /* Grille: Heure(90px) | Thème(1fr) | Durée(80px) | Personne/Note(280px) */
+  grid-template-columns:90px 1fr 80px 280px;
+  gap:10px;
+  padding:10px;
+  border-bottom:1px solid #eee;
+  background:var(--card);
+  align-items:start;
+}
+.row.section-1{background:linear-gradient(90deg,var(--section1),#ffffff);}
+.row.section-2{background:linear-gradient(90deg,var(--section2),#ffffff);}
+.row.section-3{background:linear-gradient(90deg,var(--section3),#ffffff);}
+.time{font-weight:700;color:var(--muted);}
+
+/* Conteneur pour empiler Personne et Note */
+.personNoteContainer{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
 }
 
-#meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-  gap: 8px;
+.theme, .duration, .person, .note{
+  padding:6px;
+  border-radius:6px;
+  min-height:20px;
+  line-height:1.4;
 }
-
-.dateDisplay {
-  font-weight: 700;
-  font-size: 1.1rem;
+.person {
+  font-weight: bold; 
 }
-
-#infoText {
-  font-size: 0.85rem;
-  color: var(--muted);
+.note{
+    font-size:13px;
+    font-style:italic;
+    color:#777;
+    background:#fafafa;
 }
-
-#planning {
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-  border: 1px solid var(--border);
-  background: var(--card);
+.duration{
+  min-width:48px;
+  text-align:center;
+  background:#fafafa;
 }
-
-/* -----------------------------
-   LIGNES & GRID (Alignement Tableur)
---------------------------------*/
-.row {
-  display: grid;
-  /* Grille Desktop: Heure | Thème | Durée | Pers/Note */
-  grid-template-columns: 80px 1fr 70px 280px; 
-  gap: 12px;
-  /* MODIFICATION: Réduction du padding pour un affichage plus compact (comme 16:30) */
-  padding: 6px 16px; 
-  border-bottom: 1px solid var(--border);
-  background: var(--card);
-  /* MODIFICATION: Centrer verticalement pour améliorer la compacité */
-  align-items: center; 
+.editable{cursor:text;}
+.editable:focus{
+  outline:2px solid rgba(0,0,0,0.08);
+  background:#fff;
 }
-
-/* Couleurs des sections (Gradients VCM) */
-.row.section-1 { background: linear-gradient(90deg, var(--section1), #ffffff); }
-.row.section-2 { background: linear-gradient(90deg, var(--section2), #ffffff); }
-.row.section-3 { background: linear-gradient(90deg, var(--section3), #ffffff); }
-
-.time {
-  font-weight: 700;
-  color: var(--muted);
-  font-feature-settings: "tnum";
-  font-variant-numeric: tabular-nums;
-}
-
-/* Conteneur Personne/Note */
-.personNoteContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-/* Champs éditables */
-/* MODIFICATION: Suppression du padding, border-radius et min-height 
-   pour enlever l'aspect "boîte" et revenir au style texte simple (comme 16:30). */
-.theme, .duration, .person, .note {
-  padding: 0; 
-  border-radius: 0; 
-  min-height: 0;
-  line-height: 1.4;
-  transition: background 0.2s;
-}
-
-.theme { font-weight: 500; }
-.person { font-weight: 700; color: #000; }
-
-.note {
-  font-size: 13px;
-  font-style: italic;
-  color: #555;
-  /* MODIFICATION: Supprimer le background pour enlever l'encadré de couleur */
-  background: none; 
-}
-
-.duration {
-  text-align: center;
-  /* MODIFICATION: Supprimer le background pour enlever l'encadré de couleur */
-  background: none; 
-  font-size: 0.9rem;
-}
-
-/* Focus */
-.editable { cursor: text; }
-.editable:focus {
-  outline: 1px dotted var(--primary); /* Rendu plus subtil */
-  background: #fff;
-  /* MODIFICATION: Suppression de l'ombre */
-  box-shadow: none; 
-}
-
-.sectionTitle {
-  padding: 12px 16px;
-  font-weight: 800;
-  text-transform: uppercase;
-  font-size: 0.9rem;
-  background: #eaeaea;
-  border-bottom: 1px solid var(--border);
-  letter-spacing: 0.5px;
-  color: #444;
+.sectionTitle{
+  padding:10px 8px;
+  font-weight:700;
+  background:#f0f0f0;
+  border-bottom:1px solid #e6e6e6;
 }
 
 /* -----------------------------
-   LABELS AUTOMATIQUES (VCM)
+   AJOUTS POUR Учащийся / Помощник
 --------------------------------*/
 .person[data-role="student"]::before {
-  content: "Учащийся: ";
-  color: var(--muted);
-  font-weight: normal;
-  font-size: 0.9em;
-  margin-right: 4px;
-  user-select: none;
+    content: "Учащийся: ";
+    color: var(--muted);
+    font-weight: bold;
+    margin-right: 4px;
+    user-select: none;
 }
 
 .note[data-role="assistant"]::before {
-  content: "Помощник: ";
-  color: var(--muted);
-  font-weight: bold;
-  font-style: normal;
-  font-size: 0.9em;
-  margin-right: 4px;
-  user-select: none;
+    content: "Помощник: ";
+    color: var(--muted);
+    font-weight: bold;
+    font-style: normal; /* Annule l'italic de .note pour le label */
+    margin-right: 4px;
+    user-select: none;
 }
 
 /* -----------------------------
-   RESPONSIVE (Mobile & Tablette)
+   RESPONSIVE
 --------------------------------*/
-@media (max-width: 900px) {
-  
-  /* Transformation du Header en mode "App" */
-  .topbar {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 12px;
-    gap: 16px;
-  }
-
-  .brand {
-    justify-content: center;
-    text-align: center;
-  }
-  .brand .subtitle { display: none; } /* On cache le sous-titre sur mobile pour gagner de la place */
-
-  /* Grille de boutons ergonomique */
-  .controls {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* 2 colonnes */
-    gap: 10px;
-    width: 100%;
-  }
-
-  /* Le selecteur prend toute la largeur */
-  #weekSelect {
-    grid-column: 1 / -1;
-    text-align: center;
-    max-width: none;
-    padding: 12px;
-  }
-
-  /* PDF est l'action principale, on le met en évidence */
-  #pdfBtn {
-    grid-column: 1 / -1;
-    order: 10; /* Tout en bas */
-    padding: 14px;
-    font-size: 16px;
-  }
-
-  /* Ajustement de la grille du planning */
-  .row {
-    grid-template-columns: 60px 1fr 50px; /* Heure | Theme | Durée */
-    /* La colonne Personne passe à la ligne suivante */
-    gap: 8px;
-  }
-  
-  /* La colonne 4 (Personne/Note) prend toute la largeur en dessous */
-  .personNoteContainer {
-    grid-column: 2 / -1; /* Commence col 2, va jusqu'à la fin */
-    margin-top: -4px;
-  }
-
-  .time { font-size: 0.9rem; }
-  .duration { font-size: 0.85rem; }
-}
-
-@media (max-width: 480px) {
-    /* Sur très petit écran, le bouton Save et Reset prennent aussi toute la largeur si besoin, 
-       ou restent cote à cote. Ici on garde cote à cote pour gagner de la place verticale. */
+@media (max-width:900px){
+  .row{grid-template-columns:70px 1fr 60px 160px;}
+  .controls{flex-wrap:wrap;}
 }
 
 /* -----------------------------
-   DARK MODE
+   THEME SOMBRE AUTOMATIQUE
 --------------------------------*/
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #121212;
-    --card: #1e1e1e;
-    --text: #e0e0e0;
-    --muted: #a0a0a0;
-    --border: #333;
-    
-    /* Gradients assombris */
-    --section1: #1a2e2c; 
-    --section2: #2e2a1a;
-    --section3: #2e1a1c;
-  }
-
-  .topbar { background: #1e1e1e; }
-  .logo { background: #fff; opacity: 0.9; } /* Logo reste clair */
-  
-  .controls select {
-    background: #2c2c2c;
-    border-color: #444;
-    color: #fff;
-  }
-  
-  /* Boutons standard Dark */
-  .controls button {
-    background: #2c2c2c;
-    border-color: #444;
-    color: #ddd;
-  }
-  .controls button:hover { background: #383838; }
-
-  /* Actions conservent leur teinte mais adaptées */
-  #pdfBtn { background-color: #4f46e5; color: #fff; border: none; }
-  #saveBtn { background-color: #059669; color: #fff; border: none; }
-  #resetBtn { background: #3f1a1a; color: #f87171; border-color: #5c2b2b; }
-
-  .sectionTitle { background: #252525; color: #ccc; }
-  
-  .row.section-1 { background: linear-gradient(90deg, var(--section1), var(--card)); }
-  .row.section-2 { background: linear-gradient(90deg, var(--section2), var(--card)); }
-  .row.section-3 { background: linear-gradient(90deg, var(--section3), var(--card)); }
-  
-  /* MODIFICATION DARK MODE: Suppression du background pour les notes/durées */
-  .note, .duration { background: none; color: #ccc; } 
-  .person { color: #fff; }
-  
-  /* MODIFICATION DARK MODE: Simplification du focus */
-  .editable:focus { background: #2a2a2a; box-shadow: none; }
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#1a1d21;
+    --card:#2b2f36;
+    --muted:#e5e5e5;
+    --accent:#fff;
+    --section1:#303640; 
+    --section2:#333;
+    --section3:#444;
+  }
+  body{color:var(--accent);}
+  .topbar{background:#2b2f36;border-bottom:1px solid #444;}
+  .controls select, .controls button{background:#3a3f4b;border:1px solid #555;color:#e5e5e5;}
+  .row{background:var(--card);border-bottom:1px solid #444;}
+  .row.section-1{background:linear-gradient(90deg,var(--section1),var(--card));}
+  .row.section-2{background:linear-gradient(90deg,var(--section2),var(--card));}
+  .row.section-3{background:linear-gradient(90deg,var(--section3),var(--card));}
+  .sectionTitle{background:#333;border-bottom:1px solid #444;}
+  .note{background:#3a3f4b;color:#ddd;}
+  .duration{background:#3a3f4b;}
+  .editable:focus{background:#444;outline:2px solid rgba(255,255,255,0.15);}
+  /* Ajustements pour le thème sombre */
+  .person[data-role="student"]::before {
+      color: var(--muted);
+  }
+  .note[data-role="assistant"]::before {
+      color: var(--muted);
+  }
 }
