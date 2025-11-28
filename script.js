@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const pdfBtn = document.getElementById("pdfBtn");
   const changeChairmanBtn = document.getElementById("changeChairmanBtn");
   const changeDateBtn = document.getElementById("changeDateBtn");
-  const changeScriptureBtn = document.getElementById("changeScriptureBtn");
+  const changeScriptureBtn = document.getElementById("changeScriptureBtn"); // CORRECTIF : La variable est bien déclarée
 
   let planningData = null;
   let currentWeekIndex = 0;
@@ -242,7 +242,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   
   // LOGIQUE DE MODIFICATION DE LA LECTURE DE LA BIBLE
-  if (changeScriptureBtn) {
+  if (changeScriptureBtn) { // Vérification de sécurité
       changeScriptureBtn.addEventListener("click", () => {
         const week = planningData.weeks[currentWeekIndex];
         const newScripture = prompt("Nouvelle lecture (ex: ИСАЙЯ 3—5) :", week.scripture || "");
@@ -277,7 +277,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       try {
         console.log("Téléchargement de Roboto...");
         const resp = await fetch(ROBOTO_TTF_URL, {cache:"no-store"});
-        if(!resp.ok) throw new Error("Impossible de télécharger Roboto (Vérifiez la présence du fichier Roboto-Regular.ttf)");
+        if(!resp.ok) throw new Error("Impossible de télécharger Roboto (Vérifiez la présence du fichier Roboto-Regular.ttf sur GitHub)");
         const ab = await resp.arrayBuffer();
         ROBOTO_BASE64 = arrayBufferToBase64(ab);
         localStorage.setItem(FONT_KEY, ROBOTO_BASE64);
@@ -321,7 +321,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const pageW = doc.internal.pageSize.getWidth(); // 595
     const marginLeft = 32, marginTop = 40;
     
-    // Largeurs de colonnes
+    // Largeurs de colonnes (identiques au fichier original)
     const timeWidth = 40;     
     const themeWidth = 260;   
     const roleWidth = 80;     
@@ -333,7 +333,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     const fontName = ROBOTO_LOADED ? "Roboto" : "helvetica";
     
-    // Couleurs pour les sections
+    // Couleurs pour les sections (identiques au fichier original)
     const SECTION_COLORS = [
         [230, 247, 245], 
         [255, 247, 230], 
@@ -358,7 +358,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         doc.setFont(fontName, "normal");
         doc.setFontSize(9);
         doc.setTextColor(50); 
-        doc.text(`${week.date} | ${week.scripture}`, x, currentY);
+        doc.text(`${week.date} | ${week.scripture}`, x, currentY); // Lecture de la Bible est bien là
         
         // Président 
         doc.setFont(fontName, "bold");
@@ -435,17 +435,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 doc.setTextColor(0); 
             }
             
-            // J'ai ajouté l'index de l'élément (itemIdx) ici
-            section.items.forEach((item, itemIdx) => { 
-               
-                // >>> DÉBUT DE LA LOGIQUE DE MASQUAGE CONDITIONNEL <<<
-                // Cible la section "ХРИСТИАНСКАЯ ЖИЗНЬ" (sIdx = 3) et les deux items supplémentaires (index 2 et 3)
-                if (sIdx === 3 && (itemIdx === 2 || itemIdx === 3) && !item.theme.trim()) {
-                    // Si le thème est vide, on saute le rendu complet de cette ligne.
-                    return; 
-                }
-                // >>> FIN DE LA LOGIQUE DE MASQUAGE CONDITIONNEL <<<
-
+            section.items.forEach(item => {
+                
                 // Heure
                 doc.setFont(fontName, "bold");
                 doc.setFontSize(9);
