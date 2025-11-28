@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const pdfBtn = document.getElementById("pdfBtn");
   const changeChairmanBtn = document.getElementById("changeChairmanBtn");
   const changeDateBtn = document.getElementById("changeDateBtn");
-  const changeScriptureBtn = document.getElementById("changeScriptureBtn"); // AJOUTÉ
+  const changeScriptureBtn = document.getElementById("changeScriptureBtn"); // CORRECTIF : La variable est bien déclarée
 
   let planningData = null;
   let currentWeekIndex = 0;
@@ -241,18 +241,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
   
-  // NOUVEAU: Événement pour la Lecture de la Bible
-  changeScriptureBtn.addEventListener("click", () => {
-    const week = planningData.weeks[currentWeekIndex];
-    const newScripture = prompt("Nouvelle lecture (ex: ИСАЙЯ 3—5) :", week.scripture || "");
-    
-    if (newScripture !== null) {
-      week.scripture = newScripture;
-      saveLocal();              // Sauvegarde locale
-      populateWeekSelect();     // Met à jour la liste déroulante
-      renderWeek(currentWeekIndex); // Met à jour l'affichage principal
-    }
-  });
+  // LOGIQUE DE MODIFICATION DE LA LECTURE DE LA BIBLE
+  if (changeScriptureBtn) { // Vérification de sécurité
+      changeScriptureBtn.addEventListener("click", () => {
+        const week = planningData.weeks[currentWeekIndex];
+        const newScripture = prompt("Nouvelle lecture (ex: ИСАЙЯ 3—5) :", week.scripture || "");
+        
+        if (newScripture !== null) {
+          week.scripture = newScripture;
+          saveLocal();              // Sauvegarde locale
+          populateWeekSelect();     // Met à jour la liste déroulante
+          renderWeek(currentWeekIndex); // Met à jour l'affichage principal
+        }
+      });
+  }
 
 
   // --- PDF AVEC ROBOTO (cached) ---
