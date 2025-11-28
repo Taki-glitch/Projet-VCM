@@ -23,7 +23,7 @@
       <select id="weekSelect" title="Sélectionner une semaine"></select>
       <button id="changeChairmanBtn">Modifier Président</button>
       <button id="changeDateBtn">Modifier Date</button>
-      <button id="resetBtn">Reset → server</button>
+      <button id="changeScriptureBtn">Modifier Lecture</button> <button id="resetBtn">Reset → server</button>
       <button id="saveBtn">Sauvegarder (local)</button>
       <button id="pdfBtn">Exporter PDF</button>
     </div>
@@ -50,13 +50,5 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
   <script src="script.js"></script>
-  
-  <script>
-    // Correction du script de gestion d'erreur du logo
-    document.getElementById('siteLogo').addEventListener('error', (e) => {
-        e.target.style.display = 'none';
-        console.warn("Logo (logo.jpeg) non trouvé, masqué.");
-    });
-  </script>
 </body>
 </html>
