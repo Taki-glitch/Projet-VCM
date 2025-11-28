@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const pdfBtn = document.getElementById("pdfBtn");
   const changeChairmanBtn = document.getElementById("changeChairmanBtn");
   const changeDateBtn = document.getElementById("changeDateBtn");
-  const changeScriptureBtn = document.getElementById("changeScriptureBtn");
+  const changeScriptureBtn = document.getElementById("changeScriptureBtn"); // CORRECTIF : La variable est bien déclarée
 
   let planningData = null;
   let currentWeekIndex = 0;
@@ -242,7 +242,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   
   // LOGIQUE DE MODIFICATION DE LA LECTURE DE LA BIBLE
-  if (changeScriptureBtn) {
+  if (changeScriptureBtn) { // Vérification de sécurité
       changeScriptureBtn.addEventListener("click", () => {
         const week = planningData.weeks[currentWeekIndex];
         const newScripture = prompt("Nouvelle lecture (ex: ИСАЙЯ 3—5) :", week.scripture || "");
@@ -321,7 +321,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const pageW = doc.internal.pageSize.getWidth(); // 595
     const marginLeft = 32, marginTop = 40;
     
-    // Largeurs de colonnes
+    // Largeurs de colonnes (identiques au fichier original)
     const timeWidth = 40;     
     const themeWidth = 260;   
     const roleWidth = 80;     
@@ -333,7 +333,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     const fontName = ROBOTO_LOADED ? "Roboto" : "helvetica";
     
-    // Couleurs pour les sections
+    // Couleurs pour les sections (identiques au fichier original)
     const SECTION_COLORS = [
         [230, 247, 245], 
         [255, 247, 230], 
@@ -358,7 +358,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         doc.setFont(fontName, "normal");
         doc.setFontSize(9);
         doc.setTextColor(50); 
-        doc.text(`${week.date} | ${week.scripture}`, x, currentY);
+        doc.text(`${week.date} | ${week.scripture}`, x, currentY); // Lecture de la Bible est bien là
         
         // Président 
         doc.setFont(fontName, "bold");
@@ -435,20 +435,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 doc.setTextColor(0); 
             }
             
-            section.items.forEach((item, itemIdx) => {
+            section.items.forEach(item => {
                 
-                // >>> DÉBUT DE LA LOGIQUE DE MASQUAGE CONDITIONNEL <<<
-                // La section "ХРИСТИАНСКАЯ ЖИЗНЬ" est la 3e (index 2) ou la 4e (index 3) selon votre structure.
-                // Basé sur votre planning.json (index 3), je cible l'index 3 (ХРИСТИАНСКАЯ ЖИЗНЬ)
-                // et les items 1 ("8. Дополнительный доклад") et 2 ("10. Дополнительный разбор").
-
-                // Vérifier si c'est la section "ХРИСТИАНСКАЯ ЖИЗНЬ" (index 3) et si l'item a un thème vide (ou seulement des espaces)
-                if (sIdx === 3 && (itemIdx === 1 || itemIdx === 2) && !item.theme.trim()) {
-                    // Si le thème est vide pour ces deux discours facultatifs, on ne dessine rien et on passe à l'élément suivant.
-                    return; 
-                }
-                // >>> FIN DE LA LOGIQUE DE MASQUAGE CONDITIONNEL <<<
-
                 // Heure
                 doc.setFont(fontName, "bold");
                 doc.setFontSize(9);
