@@ -73,7 +73,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       const isServingSkills = sec.title && sec.title.includes("ОТТАЧИВАЕМ"); 
       
       html += sec.items.map((it, itidx)=>{
-        const part = it.part ? `<span class="part">${escapeHtml(it.part)} </span>` : "";
+        // --- DÉBUT MODIFICATION : Intégrer 'part' dans 'theme' pour l'édition manuelle ---
+        // Si 'it.part' existe, on l'ajoute au thème pour qu'il soit éditable.
+        const fullTheme = it.part ? `${escapeHtml(it.part)} ${escapeHtml(it.theme)}` : escapeHtml(it.theme);
+        // --- FIN MODIFICATION ---
         
         let personContent = escapeHtml(it.person);
         let noteContent = escapeHtml(it.note||"");
@@ -88,7 +91,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Ajout de l'attribut data-role pour identifier les champs dans cette section
         return `<div class="row section-${(sidx%4)+1}" data-section="${sidx}" data-item="${itidx}">
           <div class="time">${escapeHtml(it.time)}</div>
-          <div class="theme editable" contenteditable="true" data-field="theme" data-section="${sidx}" data-item="${itidx}">${part}${escapeHtml(it.theme)}</div>
+          <div class="theme editable" contenteditable="true" data-field="theme" data-section="${sidx}" data-item="${itidx}">${fullTheme}</div>
           <div class="duration editable" contenteditable="true" data-field="duration" data-section="${sidx}" data-item="${itidx}">${escapeHtml(it.duration)}</div>
           <div class="personNoteContainer">
             <div class="person editable" contenteditable="true" data-field="person" data-section="${sidx}" data-item="${itidx}" data-role="${isServingSkills ? 'student' : ''}">${personContent}</div>
@@ -435,10 +438,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             section.items.forEach(item => {
                 
                 // 🚨 NOUVELLE LOGIQUE : SAUTER L'ÉLÉMENT SI AUCUNE PERSONNE N'EST ASSIGNÉE
-                // On considère qu'un élément est non assigné si:
-                // 1. Le champ 'person' est vide.
-                // 2. Le champ 'note' est vide (il contient souvent le nom de l'assistant ou du conducteur).
-                // Si ces deux champs sont vides, cela signifie qu'il n'y a ni personne principale, ni assistant/conducteur.
                 if (!item.person && !item.note) {
                     return; // Saute l'affichage de cet élément dans le PDF.
                 }
@@ -450,10 +449,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 // Thème (Colonne C)
                 doc.setFont(fontName, "normal");
-                const part = item.part ? item.part + " " : "";
-                // Le thème inclut la durée entre parenthèses
-                let themeText = part + (item.theme || "") + (item.duration ? ` (${item.duration} мин.)` : "");
-                
+                // --- DÉBUT MODIFICATION PDF : Ne plus utiliser 'item.part' séparément ---
+                // Le thème est désormais complet (avec le numéro si tapé dans l'éditeur)
+                let themeText = (item.theme || "") + (item.duration ? ` (${item.duration} мин.)` : "");
+                // --- FIN MODIFICATION PDF ---
+
                 let themeLines = doc.splitTextToSize(themeText, themeWidth);
                 // Le texte du thème ne doit pas déborder sur la colonne Rôle/Personne
                 doc.text(themeLines, x + timeWidth, currentY);
@@ -463,8 +463,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                 let lineY = currentY; // Position Y de la ligne Rôle/Personne
                 
                 // LOGIQUE POUR GÉRER LES RÔLES/ASSISTANTS (Aligné sur les colonnes F, G, H)
-                // Note : Cette logique fonctionne car on s'assure que item.note pour l'Assistant 
-                // contient toujours le préfixe "Помощник :" (géré par onEdit).
                 if (item.person || item.note || item.role) {
                     doc.setFontSize(9);
                     
