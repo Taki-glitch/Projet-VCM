@@ -73,10 +73,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       const isServingSkills = sec.title && sec.title.includes("ОТТАЧИВАЕМ"); 
       
       html += sec.items.map((it, itidx)=>{
-        // --- DÉBUT MODIFICATION : Intégrer 'part' dans 'theme' pour l'édition manuelle ---
+        // --- MODIFICATION 1 (Numéro de discours dans le thème) ---
         // Si 'it.part' existe, on l'ajoute au thème pour qu'il soit éditable.
         const fullTheme = it.part ? `${escapeHtml(it.part)} ${escapeHtml(it.theme)}` : escapeHtml(it.theme);
-        // --- FIN MODIFICATION ---
         
         let personContent = escapeHtml(it.person);
         let noteContent = escapeHtml(it.note||"");
@@ -133,7 +132,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (field === "note" && isServingSkills) {
         // Si c'est le champ du Помощник et qu'il y a une valeur, on ajoute le préfixe 
-        // requis par la logique PDF. Sinon, on enregistre une chaîne vide.
+        // requis par la logique PDF. Sinon, on enregistre une chaîne vide ("").
         item[field] = value ? `Помощник : ${value}` : "";
     } else {
         // Pour tous les autres champs (theme, duration, person), on enregistre la valeur telle quelle.
@@ -232,6 +231,17 @@ document.addEventListener("DOMContentLoaded", async () => {
       renderWeek(currentWeekIndex);
     }
   });
+
+  // --- Fonctions utilitaires ---
+  
+  function isMobileOrTablet() {
+      // MODIFICATION 3 : Détection Mobile/Tablette pour adapter la sortie PDF
+      // Basé sur la largeur d'écran ou la détection tactile
+      return window.matchMedia("(max-width: 900px)").matches || 
+             ('ontouchstart' in window) || 
+             (navigator.maxTouchPoints > 0) || 
+             (navigator.msMaxTouchPoints > 0);
+  }
 
   // --- PDF AVEC ROBOTO (cached) ---
 
@@ -437,7 +447,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             
             section.items.forEach(item => {
                 
-                // 🚨 NOUVELLE LOGIQUE : SAUTER L'ÉLÉMENT SI AUCUNE PERSONNE N'EST ASSIGNÉE
+                // 🚨 LOGIQUE : SAUTER L'ÉLÉMENT SI AUCUNE PERSONNE N'EST ASSIGNÉE (pour 3 ou 4 discours)
                 if (!item.person && !item.note) {
                     return; // Saute l'affichage de cet élément dans le PDF.
                 }
@@ -449,10 +459,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 // Thème (Colonne C)
                 doc.setFont(fontName, "normal");
-                // --- DÉBUT MODIFICATION PDF : Ne plus utiliser 'item.part' séparément ---
-                // Le thème est désormais complet (avec le numéro si tapé dans l'éditeur)
+                // Le thème est complet (avec le numéro tapé manuellement)
                 let themeText = (item.theme || "") + (item.duration ? ` (${item.duration} мин.)` : "");
-                // --- FIN MODIFICATION PDF ---
 
                 let themeLines = doc.splitTextToSize(themeText, themeWidth);
                 // Le texte du thème ne doit pas déborder sur la colonne Rôle/Personne
@@ -551,15 +559,28 @@ document.addEventListener("DOMContentLoaded", async () => {
         renderWeekPDF(pageX, marginTop, weeks[i]); 
     }
 
-    // Affichage dans l'iframe
-    const url = doc.output("bloburl");
+    // --- MODIFICATION 4 : Gestion de la sortie PDF (Mobile vs Desktop) ---
+    const filename = `Planning_${planningData.title.replace(/\s/g, '_') || "TPL"}.pdf`;
     const previewContainer = document.getElementById("pdfPreviewContainer");
-    const previewIframe = document.getElementById("pdfPreview");
-    previewContainer.style.display = "block";
-    previewIframe.src = url;
+    
+    if (isMobileOrTablet()) {
+        // SUR MOBILE/TABLETTE: Tenter le téléchargement direct
+        doc.save(filename);
+        
+        // Cacher la prévisualisation (qui cause des problèmes sur mobile)
+        previewContainer.style.display = "none";
+        
+    } else {
+        // SUR ORDINATEUR (Desktop): Utiliser l'iFrame pour la prévisualisation
+        const url = doc.output("bloburl");
+        const previewIframe = document.getElementById("pdfPreview");
+        
+        previewContainer.style.display = "block";
+        previewIframe.src = url;
 
-    // Téléchargement direct (COMMENTÉ POUR NE FAIRE QUE LA PRÉVISUALISATION)
-    // doc.save(`Planning_${planningData.title.replace(/\s/g, '_') || "TPL"}.pdf`);
+        // Optionnel: Pour avoir un bouton de téléchargement séparé sur Desktop si la prévisualisation ne suffit pas.
+        // doc.save(filename); 
+    }
   }
 
   /* ------------ INITIALISATION ------------ */
