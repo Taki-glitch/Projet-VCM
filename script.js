@@ -235,8 +235,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // --- Fonctions utilitaires ---
   
   function isMobileOrTablet() {
-      // MODIFICATION 3 : Détection Mobile/Tablette pour adapter la sortie PDF
-      // Basé sur la largeur d'écran ou la détection tactile
+      // Détection Mobile/Tablette pour adapter la sortie PDF
       return window.matchMedia("(max-width: 900px)").matches || 
              ('ontouchstart' in window) || 
              (navigator.maxTouchPoints > 0) || 
@@ -452,65 +451,68 @@ document.addEventListener("DOMContentLoaded", async () => {
                     return; // Saute l'affichage de cet élément dans le PDF.
                 }
 
-                // Heure (Colonne A)
+                // --- NOUVELLE LOGIQUE D'ALIGNEMENT HORIZONTAL ---
+                
+                // 1. Pré-calcul des lignes
+                doc.setFontSize(9);
+                
+                let themeText = (item.theme || "") + (item.duration ? ` (${item.duration} мин.)` : "");
+                let themeLines = doc.splitTextToSize(themeText, themeWidth);
+                let themeHeight = lineHeight * themeLines.length;
+
+                let primaryRole = item.role || "";
+                let primaryPerson = item.person || "";
+                let secondaryRole = "";
+                let secondaryPerson = "";
+                let personLines = 0;
+                
+                let noteCleaned = item.note ? item.note.trim() : ""; // Nettoyage anticipé
+                
+                if (item.note) {
+                    if (noteCleaned.includes("Помощник :")) {
+                        primaryRole = "Учащийся:"; 
+                        secondaryRole = "Помощник:";
+                        secondaryPerson = noteCleaned.replace("Помощник :", "").trim();
+                        personLines = 2; // Élève + Assistant = 2 lignes
+                    } else if (noteCleaned.includes("Ведущий/Чтец :") || item.role === "Молитва" || noteCleaned.includes("Молитва :")) {
+                        personLines = 1; // Conducteur ou Prière = 1 ligne
+                    } else if (noteCleaned.includes("Учащийся")) {
+                         personLines = 1;
+                    } else {
+                        // Simple note ou texte non standard
+                        personLines = 1; 
+                    }
+                } else if (primaryRole || primaryPerson) {
+                    personLines = 1;
+                }
+                
+                let personHeight = personLines * lineHeight;
+                
+                // Déterminer la hauteur maximale pour cet élément
+                const itemHeight = Math.max(themeHeight, personHeight); 
+                
+                // --- RENDU : Le point de départ Y est `currentY` pour tout aligner sur le haut ---
+                
+                // 1. Heure (Colonne A)
                 doc.setFont(fontName, "bold");
                 doc.setFontSize(9);
-                doc.text(item.time || "", x, currentY);
+                doc.text(item.time || "", x, currentY); 
 
-                // Thème (Colonne C)
+                // 2. Thème (Colonne C)
                 doc.setFont(fontName, "normal");
-                // Le thème est complet (avec le numéro tapé manuellement)
-                let themeText = (item.theme || "") + (item.duration ? ` (${item.duration} мин.)` : "");
-
-                let themeLines = doc.splitTextToSize(themeText, themeWidth);
-                // Le texte du thème ne doit pas déborder sur la colonne Rôle/Personne
+                // Début au même Y que l'heure
                 doc.text(themeLines, x + timeWidth, currentY);
+
+                // --- 3. RENDU DES RÔLES/PERSONNES (Partie Droite) ---
                 
-                currentY += lineHeight * themeLines.length;
+                let lineY = currentY; // Le point de départ pour les personnes est aussi `currentY`
                 
-                let lineY = currentY; // Position Y de la ligne Rôle/Personne
-                
-                // LOGIQUE POUR GÉRER LES RÔLES/ASSISTANTS (Aligné sur les colonnes F, G, H)
                 if (item.person || item.note || item.role) {
                     doc.setFontSize(9);
                     
-                    let primaryRole = item.role || "";
-                    let primaryPerson = item.person || "";
-                    let secondaryRole = "";
-                    let secondaryPerson = "";
-
-                    if (item.note) {
-                        const noteCleaned = item.note.trim();
-                        
-                        if (noteCleaned.includes("Помощник :")) {
-                            // Cas 1: Discours élève avec assistant (2 lignes)
-                            primaryRole = "Учащийся:"; 
-                            primaryPerson = item.person; 
-                            secondaryRole = "Помощник:";
-                            secondaryPerson = noteCleaned.replace("Помощник :", "").trim();
-                            
-                        } else if (noteCleaned.includes("Ведущий/Чтец :")) {
-                            // Cas 2: Étude biblique de l'assemblée (1 ligne combinée)
-                            primaryRole = "Ведущий/Чтец:"; 
-                            primaryPerson = noteCleaned.replace("Ведущий/Чтец :", "").trim(); 
-                            
-                        } else if (item.role === "Молитва" || noteCleaned.includes("Молитва :")) {
-                            // Cas 3: Prière (1 ligne)
-                            primaryRole = "Молитва:";
-                            primaryPerson = item.person || noteCleaned.replace("Молитва :", "").trim();
-                            
-                        } else if (noteCleaned.includes("Учащийся")) {
-                            primaryRole = "Учащийся:";
-                        } else {
-                            // Simple note: combinée avec la personne pour alignement à droite (1 ligne)
-                            primaryPerson = (item.person || "") + (item.note ? ` — ${item.note}` : "");
-                        }
-                    } else if (primaryRole) {
-                         primaryRole = primaryRole + ":";
-                    }
-                    
                     // --- RENDU DE LA LIGNE PRIMAIRE (Élève/Conducteur/Personne principale) ---
                     if(primaryRole || primaryPerson) {
+                        
                         // Rendu du Rôle (Aligné sur la colonne F/G)
                         if(primaryRole) {
                             doc.setFont(fontName, "normal"); 
@@ -518,14 +520,20 @@ document.addEventListener("DOMContentLoaded", async () => {
                         }
                         
                         // Rendu de la Personne (Aligné sur la colonne H)
-                        if (primaryPerson) {
+                        let textP = primaryPerson;
+                        if (personLines === 1 && item.note && !noteCleaned.includes("Ведущий/Чтец") && !noteCleaned.includes("Молитва")) {
+                            // Si c'est une simple note sans assistant, on l'ajoute à la personne
+                            textP = (item.person || "") + (item.note ? ` — ${noteCleaned}` : "");
+                        }
+
+                        if (textP) {
                             doc.setFont(fontName, "bold"); 
-                            doc.text(primaryPerson, x + totalContentWidth, lineY, {align: 'right'}); 
+                            doc.text(textP, x + totalContentWidth, lineY, {align: 'right'}); 
                         }
                         lineY += lineHeight;
                     }
                     
-                    // --- RENDU DE LA LIGNE SECONDAIRE (Assistant) ---
+                    // --- RENDU DE LA LIGNE SECONDAIRE (Assistant: uniquement si 2 lignes nécessaires) ---
                     if(secondaryRole === "Помощник:"){
                          // Rendu du Rôle Secondaire (Aligné sur la colonne F/G)
                          doc.setFont(fontName, "normal");
@@ -533,12 +541,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                          // Rendu de la Personne Secondaire (Aligné sur la colonne H)
                          doc.setFont(fontName, "bold"); 
                          doc.text(secondaryPerson, x + totalContentWidth, lineY, {align: 'right'}); 
-                         lineY += lineHeight;
+                         // lineY n'avance pas plus, car on utilise itemHeight
                     }
-
-                    currentY = lineY; 
                 }
-                currentY += itemSpacing;
+                
+                // Avancer currentY de la hauteur maximale trouvée, plus l'espacement
+                currentY += itemHeight + itemSpacing; 
             });
             currentY += 4; // Espacement fin de section
         });
@@ -559,7 +567,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         renderWeekPDF(pageX, marginTop, weeks[i]); 
     }
 
-    // --- MODIFICATION 4 : Gestion de la sortie PDF (Mobile vs Desktop) ---
+    // --- Gestion de la sortie PDF (Mobile vs Desktop) ---
     const filename = `Planning_${planningData.title.replace(/\s/g, '_') || "TPL"}.pdf`;
     const previewContainer = document.getElementById("pdfPreviewContainer");
     
