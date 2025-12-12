@@ -312,19 +312,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Paramètres de mise en page (A4: 595 x 842 pt)
     const pageW = doc.internal.pageSize.getWidth(); // 595
-    const pageH = doc.internal.pageSize.getHeight(); // 842 (Ajout de pageH pour MidY)
+    const pageH = doc.internal.pageSize.getHeight(); // 842
     const marginLeft = 32, marginTop = 40;
     
     // Position Y de départ de la DEUXIÈME semaine sur la page.
-    // Environ la moitié de la hauteur (842/2 = 421). Utilisation de 420 pour une valeur entière stable.
     const midY = 420; 
     
     // NOUVELLES LARGEURS DE COLONNES pour calquer l'alignement du tableur:
-    // Largeur totale utilisable: 531pt (Approximation des colonnes A->H)
-    const timeWidth = 40;     // Colonne A (Heure)
-    const themeWidth = 260;   // Colonne C (Thème/Part)
-    const roleWidth = 80;     // Colonne F/G (Rôle/Sous-rôle)
-    const personWidth = 151;  // Colonne G/H (Personne)
+    const timeWidth = 40;     
+    const themeWidth = 260;   
+    const roleWidth = 80;     
+    const personWidth = 151;  
     const totalContentWidth = timeWidth + themeWidth + roleWidth + personWidth; // 531
 
     const lineHeight = 12; 
@@ -332,11 +330,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     const fontName = ROBOTO_LOADED ? "Roboto" : "helvetica";
     
-    // Couleurs pour les sections (basé sur le modèle)
+    // --- NOUVELLES COULEURS (Bleu, Jaune, Rose clair) ---
     const SECTION_COLORS = [
-        [230, 247, 245], // Section 1: СОКРОВИЩА (Light Cyan/Green) 
-        [255, 247, 230], // Section 2: ОТТАЧИВАЕМ (Light Yellow/Orange)
-        [255, 241, 242]  // Section 3: ХРИСТИАНСКАЯ ЖИЗНЬ (Light Pink/Red)
+        [220, 237, 245], // Section 1: СОКРОВИЩА (Bleu clair) 
+        [255, 249, 219], // Section 2: ОТТАЧИВАЕМ (Jaune clair / Crème)
+        [255, 224, 230]  // Section 3: ХРИСТИАНСКАЯ ЖИЗНЬ (Rose clair)
     ];
     const MUTE_COLOR = [120, 120, 120]; // Gris foncé pour les sous-textes
     
