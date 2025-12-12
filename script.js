@@ -318,6 +318,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Position Y de départ de la DEUXIÈME semaine sur la page.
     const midY = 420; 
     
+    // Position Y du TRAIT DE SÉPARATION (légèrement au-dessus de midY)
+    const lineY = midY - 12; 
+
+    // Définition de l'épaisseur et du style du trait
+    const lineWidth = 0.5; // 0.5pt d'épaisseur
+
     // NOUVELLES LARGEURS DE COLONNES pour calquer l'alignement du tableur:
     const timeWidth = 40;     
     const themeWidth = 260;   
@@ -330,7 +336,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     const fontName = ROBOTO_LOADED ? "Roboto" : "helvetica";
     
-    // --- NOUVELLES COULEURS (Bleu, Jaune, Rose clair) ---
+    // --- COULEURS DES SECTIONS (Bleu, Jaune, Rose clair) ---
     const SECTION_COLORS = [
         [220, 237, 245], // Section 1: СОКРОВИЩА (Bleu clair) 
         [255, 249, 219], // Section 2: ОТТАЧИВАЕМ (Jaune clair / Crème)
@@ -574,6 +580,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         
         // 2. Rendu de la DEUXIÈME semaine (en bas de la page)
         if (week2) {
+            
+            // --- AJOUT DU TRAIT DE SÉPARATION ---
+            doc.setLineWidth(lineWidth);
+            doc.setDrawColor(180, 180, 180); // Couleur gris clair
+            // Dessine la ligne de (x, y) à (x + largeur, y)
+            doc.line(pageX, lineY, pageX + totalContentWidth, lineY); 
+            
             // Rendu de la deuxième semaine, en commençant à la position verticale 'midY'
             renderWeekPDF(pageX, midY, week2);
         }
