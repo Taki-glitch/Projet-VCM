@@ -1,4 +1,4 @@
-/* script.js — Version Définitive : PDF 1 semaine/page, toutes les semaines, style VCM (Alignement Tableur - Champs séparés pour Учащийся/Помощник) */
+/* script.js — Version Définitive : PDF 2 semaines/page, toutes les semaines, style VCM (Alignement Tableur - Champs séparés pour Учащийся/Помощник) */
 
 document.addEventListener("DOMContentLoaded", async () => {
 
@@ -312,7 +312,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Paramètres de mise en page (A4: 595 x 842 pt)
     const pageW = doc.internal.pageSize.getWidth(); // 595
+    const pageH = doc.internal.pageSize.getHeight(); // 842 (Ajout de pageH pour MidY)
     const marginLeft = 32, marginTop = 40;
+    
+    // Position Y de départ de la DEUXIÈME semaine sur la page.
+    // Environ la moitié de la hauteur (842/2 = 421). Utilisation de 420 pour une valeur entière stable.
+    const midY = 420; 
     
     // NOUVELLES LARGEURS DE COLONNES pour calquer l'alignement du tableur:
     // Largeur totale utilisable: 531pt (Approximation des colonnes A->H)
@@ -553,18 +558,27 @@ document.addEventListener("DOMContentLoaded", async () => {
         return currentY; // Retourne la position Y finale
     }
 
-    // --- LOGIQUE DE GÉNÉRATION PDF : 1 SEMAINE PAR PAGE ---
+    // --- LOGIQUE DE GÉNÉRATION PDF : 2 SEMAINES PAR PAGE ---
     const weeks = planningData.weeks;
     const pageX = marginLeft; 
 
-    // Cette boucle va parcourir *toutes* les semaines disponibles, une par page
-    for (let i = 0; i < weeks.length; i++) { 
+    // On boucle en sautant de 2 semaines à chaque itération
+    for (let i = 0; i < weeks.length; i += 2) { 
+        
+        const week1 = weeks[i];       // Première semaine de la paire
+        const week2 = weeks[i + 1];   // Deuxième semaine de la paire (peut être undefined)
         
         // Ajoute une nouvelle page si ce n'est PAS la toute première itération
         if (i > 0) doc.addPage();
         
-        // Rendu de la semaine courante (en haut de la page, y=marginTop)
-        renderWeekPDF(pageX, marginTop, weeks[i]); 
+        // 1. Rendu de la PREMIÈRE semaine (en haut de la page)
+        renderWeekPDF(pageX, marginTop, week1); 
+        
+        // 2. Rendu de la DEUXIÈME semaine (en bas de la page)
+        if (week2) {
+            // Rendu de la deuxième semaine, en commençant à la position verticale 'midY'
+            renderWeekPDF(pageX, midY, week2);
+        }
     }
 
     // --- Gestion de la sortie PDF (Mobile vs Desktop) ---
