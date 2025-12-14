@@ -316,7 +316,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const marginLeft = 32, marginTop = 40;
     
     // Position Y de départ de la DEUXIÈME semaine sur la page.
-    // MODIFIÉ à 450pt pour garantir une séparation suffisante avec la fin de la première semaine.
     const midY = 450; 
     
     // Position Y du TRAIT DE SÉPARATION (légèrement au-dessus de midY)
@@ -346,17 +345,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     const MUTE_COLOR = [120, 120, 120]; // Gris foncé pour les sous-textes
     
     // Fonction d'affichage d'une seule semaine
-    function renderWeekPDF(x, y, week) {
+    // Ajout de isSecondWeek
+    function renderWeekPDF(x, y, week, isSecondWeek) {
         let currentY = y;
         
         // --- Entête de la semaine (Aligné avec les colonnes du tableur) ---
         
-        // Titre de l'assemblée
-        doc.setFont(fontName, "bold");
-        doc.setFontSize(11);
-        doc.setTextColor(0); 
-        doc.text(planningData.title || "Planning TPL", x, currentY); 
-        currentY += titleSpacing;
+        // Titre de l'assemblée (Affiché SEULEMENT pour la première semaine)
+        if (!isSecondWeek) {
+            doc.setFont(fontName, "bold");
+            doc.setFontSize(11);
+            doc.setTextColor(0); 
+            doc.text(planningData.title || "Planning TPL", x, currentY); 
+            currentY += titleSpacing;
+        } else {
+            // Ajouter un petit espacement si le titre est omis pour aligner avec les autres blocs
+            currentY += 4; 
+        }
 
         // Date et Écriture
         doc.setFont(fontName, "normal");
@@ -577,7 +582,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (i > 0) doc.addPage();
         
         // 1. Rendu de la PREMIÈRE semaine (en haut de la page)
-        renderWeekPDF(pageX, marginTop, week1); 
+        // isSecondWeek = false
+        renderWeekPDF(pageX, marginTop, week1, false); 
         
         // 2. Rendu de la DEUXIÈME semaine (en bas de la page)
         if (week2) {
@@ -589,7 +595,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             doc.line(pageX, lineY, pageX + totalContentWidth, lineY); 
             
             // Rendu de la deuxième semaine, en commençant à la position verticale 'midY'
-            renderWeekPDF(pageX, midY, week2);
+            // isSecondWeek = true
+            renderWeekPDF(pageX, midY, week2, true);
         }
     }
 
