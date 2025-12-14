@@ -316,7 +316,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     const marginLeft = 32, marginTop = 40;
     
     // Position Y de départ de la DEUXIÈME semaine sur la page.
-    const midY = 420; 
+    // MODIFIÉ à 450pt pour garantir une séparation suffisante avec la fin de la première semaine.
+    const midY = 450; 
     
     // Position Y du TRAIT DE SÉPARATION (légèrement au-dessus de midY)
     const lineY = midY - 12; 
@@ -514,7 +515,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 // --- 3. RENDU DES RÔLES/PERSONNES (Partie Droite) ---
                 
-                let lineY = currentY; // Le point de départ pour les personnes est aussi `currentY`
+                let lineY_inner = currentY; // Le point de départ pour les personnes est aussi `currentY`
                 
                 if (item.person || item.note || item.role) {
                     doc.setFontSize(9);
@@ -525,7 +526,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                         // Rendu du Rôle (Aligné sur la colonne F/G)
                         if(primaryRole) {
                             doc.setFont(fontName, "normal"); 
-                            doc.text(primaryRole, x + timeWidth + themeWidth, lineY); 
+                            doc.text(primaryRole, x + timeWidth + themeWidth, lineY_inner); 
                         }
                         
                         // Rendu de la Personne (Aligné sur la colonne H)
@@ -537,19 +538,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                         if (textP) {
                             doc.setFont(fontName, "bold"); 
-                            doc.text(textP, x + totalContentWidth, lineY, {align: 'right'}); 
+                            doc.text(textP, x + totalContentWidth, lineY_inner, {align: 'right'}); 
                         }
-                        lineY += lineHeight;
+                        lineY_inner += lineHeight;
                     }
                     
                     // --- RENDU DE LA LIGNE SECONDAIRE (Assistant: uniquement si 2 lignes nécessaires) ---
                     if(secondaryRole === "Помощник:"){
                          // Rendu du Rôle Secondaire (Aligné sur la colonne F/G)
                          doc.setFont(fontName, "normal");
-                         doc.text(secondaryRole, x + timeWidth + themeWidth, lineY); 
+                         doc.text(secondaryRole, x + timeWidth + themeWidth, lineY_inner); 
                          // Rendu de la Personne Secondaire (Aligné sur la colonne H)
                          doc.setFont(fontName, "bold"); 
-                         doc.text(secondaryPerson, x + totalContentWidth, lineY, {align: 'right'}); 
+                         doc.text(secondaryPerson, x + totalContentWidth, lineY_inner, {align: 'right'}); 
                          // lineY n'avance pas plus, car on utilise itemHeight
                     }
                 }
