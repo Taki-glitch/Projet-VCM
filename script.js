@@ -1,4 +1,4 @@
-/* script.js — Version Définitive : PDF 2 semaines/page, toutes les semaines, style VCM (Alignement Tableur - Champs séparés pour Учащийся/Помощник) */
+/* script.js — Version avec Menu Action "+" pour Mobile */
 
 document.addEventListener("DOMContentLoaded", async () => {
 
@@ -13,6 +13,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const changeChairmanBtn = document.getElementById("changeChairmanBtn");
   const changeDateBtn = document.getElementById("changeDateBtn");
 
+  // Nouveaux éléments pour le menu mobile
+  const fabToggle = document.getElementById("fabToggle");
+  const buttonGroup = document.getElementById("buttonGroup");
+
   let planningData = null;
   let currentWeekIndex = 0;
 
@@ -20,7 +24,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   const ROBOTO_TTF_URL = "./Roboto-Regular.ttf"; 
 
   let ROBOTO_LOADED = false;
-  let ROBOTO_BASE64 = null; // Variable pour stocker la base64
+  let ROBOTO_BASE64 = null; 
+
+  // --- GESTION DU MENU MOBILE "+" ---
+  if (fabToggle && buttonGroup) {
+    fabToggle.addEventListener("click", (e) => {
+      e.stopPropagation(); // Empêche la fermeture immédiate via l'écouteur du document
+      buttonGroup.classList.toggle("show");
+      fabToggle.classList.toggle("active");
+    });
+
+    // Ferme le menu si on clique n'importe où ailleurs sur la page
+    document.addEventListener("click", () => {
+      buttonGroup.classList.remove("show");
+      fabToggle.classList.remove("active");
+    });
+  }
 
   // --- Fonctions de base de données et chargement ---
 
@@ -69,25 +88,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         html += `<div class="sectionTitle">${escapeHtml(sec.title)}${sec.location? " — "+escapeHtml(sec.location):""}</div>`;
       }
 
-      // Détecter si c'est la section "ОТТАЧИВАЕМ НАВЫКИ СЛУЖЕНИЯ"
       const isServingSkills = sec.title && sec.title.includes("ОТТАЧИВАЕМ"); 
       
       html += sec.items.map((it, itidx)=>{
-        // --- MODIFICATION 1 (Numéro de discours dans le thème) ---
-        // Si 'it.part' existe, on l'ajoute au thème pour qu'il soit éditable.
         const fullTheme = it.part ? `${escapeHtml(it.part)} ${escapeHtml(it.theme)}` : escapeHtml(it.theme);
-        
         let personContent = escapeHtml(it.person);
         let noteContent = escapeHtml(it.note||"");
 
-        // Si c'est la section "ОТТАЧИВАЕМ", on retire le préfixe "Помощник :" pour l'affichage,
-        // car on le gère à la sauvegarde.
         if (isServingSkills) {
             noteContent = noteContent.replace(/^Помощник :/, '').trim();
         }
 
-        // Nouvelle structure HTML pour le conteneur Personne/Note
-        // Ajout de l'attribut data-role pour identifier les champs dans cette section
         return `<div class="row section-${(sidx%4)+1}" data-section="${sidx}" data-item="${itidx}">
           <div class="time">${escapeHtml(it.time)}</div>
           <div class="theme editable" contenteditable="true" data-field="theme" data-section="${sidx}" data-item="${itidx}">${fullTheme}</div>
@@ -126,16 +137,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
     
-    // Vérifier si la section est "ОТТАЧИВАЕМ" pour la gestion du champ "note" (Помощник)
     const section = planningData.weeks[currentWeekIndex].sections[sec];
     const isServingSkills = section.title && section.title.includes("ОТТАЧИВАЕМ");
 
     if (field === "note" && isServingSkills) {
-        // Si c'est le champ du Помощник et qu'il y a une valeur, on ajoute le préfixe 
-        // requis par la logique PDF. Sinon, on enregistre une chaîne vide ("").
         item[field] = value ? `Помощник : ${value}` : "";
     } else {
-        // Pour tous les autres champs (theme, duration, person), on enregistre la valeur telle quelle.
         item[field] = value;
     }
   }
@@ -235,20 +242,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   // --- Fonctions utilitaires ---
   
   function isMobileOrTablet() {
-      // Détection Mobile/Tablette pour adapter la sortie PDF
       return window.matchMedia("(max-width: 900px)").matches || 
              ('ontouchstart' in window) || 
-             (navigator.maxTouchPoints > 0) || 
-             (navigator.msMaxTouchPoints > 0);
+             (navigator.maxTouchPoints > 0);
   }
 
-  // --- PDF AVEC ROBOTO (cached) ---
+  // --- PDF AVEC ROBOTO ---
 
   function arrayBufferToBase64(buffer) {
     let binary = '';
     const bytes = new Uint8Array(buffer);
-    const len = bytes.byteLength;
-    for (let i = 0; i < len; i++) {
+    for (let i = 0; i < bytes.byteLength; i++) {
       binary += String.fromCharCode(bytes[i]);
     }
     return btoa(binary);
@@ -256,39 +260,27 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function loadRobotoBase64(){ 
     if(ROBOTO_LOADED) return;
-    if(ROBOTO_BASE64 === null) ROBOTO_BASE64 = localStorage.getItem(FONT_KEY);
-
+    ROBOTO_BASE64 = localStorage.getItem(FONT_KEY);
     if(!ROBOTO_BASE64){
       try {
-        console.log("Téléchargement de Roboto...");
         const resp = await fetch(ROBOTO_TTF_URL, {cache:"no-store"});
-        if(!resp.ok) throw new Error("Impossible de télécharger Roboto (Vérifiez la présence du fichier Roboto-Regular.ttf sur GitHub)");
+        if(!resp.ok) throw new Error("Erreur Roboto");
         const ab = await resp.arrayBuffer();
         ROBOTO_BASE64 = arrayBufferToBase64(ab);
         localStorage.setItem(FONT_KEY, ROBOTO_BASE64);
-        console.log("Roboto téléchargée et mise en cache.");
-      } catch(e){
-        console.error("Échec téléchargement Roboto. Utilisation de la police par défaut.", e);
-        throw e; 
-      }
+      } catch(e){ throw e; }
     }
-    
-    // Marque la police comme chargée (la Base64 est prête à être utilisée)
     ROBOTO_LOADED = true; 
   }
   
   pdfBtn.addEventListener("click", async () => {
       pdfBtn.textContent = "Génération PDF...";
       try {
-          // Étape 1 : S'assurer que les données Base64 de la police sont chargées ou en cache
           await loadRobotoBase64(); 
-
-          // Étape 2 : Générer le PDF
           exportPDF();
       } catch (e) {
-          console.error("Erreur lors de la préparation du PDF:", e);
+          console.error(e);
           pdfBtn.textContent = "Erreur PDF";
-          alert("Erreur lors de la préparation du PDF. Si le problème persiste, videz le cache Local Storage: (F12 > Application > Local Storage > Effacer l'entrée 'roboto_base64_v1').");
       }
       pdfBtn.textContent = "Exporter PDF";
   });
@@ -299,339 +291,151 @@ document.addEventListener("DOMContentLoaded", async () => {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ unit: "pt", format: "a4" });
 
-    // Enregistrement de la police sur l'instance 'doc' (si la Base64 est disponible)
     if(ROBOTO_LOADED && ROBOTO_BASE64){
-        // Ajout de Roboto-Regular
         doc.addFileToVFS("Roboto-Regular.ttf", ROBOTO_BASE64);
         doc.addFont("Roboto-Regular.ttf", "Roboto", "normal");
-        
-        // Ajout d'alias pour les styles Bold et Italic pointant vers la police Regular
         doc.addFont("Roboto-Regular.ttf", "Roboto", "bold");
-        doc.addFont("Roboto-Regular.ttf", "Roboto", "italic");
     }
 
-    // Paramètres de mise en page (A4: 595 x 842 pt)
-    const pageW = doc.internal.pageSize.getWidth(); // 595
-    const pageH = doc.internal.pageSize.getHeight(); // 842
+    const pageW = doc.internal.pageSize.getWidth();
     const marginLeft = 32, marginTop = 40;
-    
-    // Position Y de départ de la DEUXIÈME semaine sur la page.
     const midY = 450; 
-    
-    // Position Y du TRAIT DE SÉPARATION (légèrement au-dessus de midY)
     const lineY = midY - 12; 
 
-    // Définition de l'épaisseur et du style du trait
-    const lineWidth = 0.5; // 0.5pt d'épaisseur
-
-    // NOUVELLES LARGEURS DE COLONNES pour calquer l'alignement du tableur:
-    const timeWidth = 40;     
-    const themeWidth = 260;   
-    const roleWidth = 80;     
-    const personWidth = 151;  
-    const totalContentWidth = timeWidth + themeWidth + roleWidth + personWidth; // 531
-
+    const timeWidth = 40, themeWidth = 260, roleWidth = 80, personWidth = 151;  
+    const totalContentWidth = timeWidth + themeWidth + roleWidth + personWidth; 
     const lineHeight = 12; 
     const titleSpacing = 16, sectionSpacing = 12, itemSpacing = 2;
-    
     const fontName = ROBOTO_LOADED ? "Roboto" : "helvetica";
     
-    // --- COULEURS DES SECTIONS (Bleu, Jaune, Rose clair) ---
-    const SECTION_COLORS = [
-        [220, 237, 245], // Section 1: СОКРОВИЩА (Bleu clair) 
-        [255, 249, 219], // Section 2: ОТТАЧИВАЕМ (Jaune clair / Crème)
-        [255, 224, 230]  // Section 3: ХРИСТИАНСКАЯ ЖИЗНЬ (Rose clair)
-    ];
-    const MUTE_COLOR = [120, 120, 120]; // Gris foncé pour les sous-textes
-    
-    // Fonction d'affichage d'une seule semaine
-    // Ajout de isSecondWeek
+    const SECTION_COLORS = [[220,237,245], [255,249,219], [255,224,230]];
+    const MUTE_COLOR = [120, 120, 120];
+
     function renderWeekPDF(x, y, week, isSecondWeek) {
         let currentY = y;
-        
-        // --- Entête de la semaine (Aligné avec les colonnes du tableur) ---
-        
-        // Titre de l'assemblée (Affiché SEULEMENT pour la première semaine)
         if (!isSecondWeek) {
             doc.setFont(fontName, "bold");
             doc.setFontSize(11);
-            doc.setTextColor(0); 
             doc.text(planningData.title || "Planning TPL", x, currentY); 
             currentY += titleSpacing;
-        } else {
-            // Ajouter un petit espacement si le titre est omis pour aligner avec les autres blocs
-            currentY += 4; 
-        }
+        } else { currentY += 4; }
 
-        // Date et Écriture
         doc.setFont(fontName, "normal");
         doc.setFontSize(9);
-        doc.setTextColor(50); 
         doc.text(`${week.date} | ${week.scripture}`, x, currentY); 
         
-        // Président (Aligné à droite de la ligne du titre, sur la colonne Rôle/Personne)
         doc.setFont(fontName, "bold");
-        doc.setTextColor(0);
         doc.text(`Председатель:`, x + timeWidth + themeWidth, currentY); 
         doc.text(week.chairman || "", x + totalContentWidth, currentY, {align: 'right'}); 
         currentY += 10;
         
-        // --- Prière/Chant/Intro (Première section) ---
-
         const introItems = week.sections[0] ? week.sections[0].items : [];
-        if(introItems[0] && introItems[0].time && introItems[0].theme) {
-            const item = introItems[0];
+        if(introItems[0]) {
+            const it = introItems[0];
             doc.setFont(fontName, "bold");
-            doc.setFontSize(9);
-            // Colonne Heure
-            doc.text(item.time, x, currentY);
-            
-            // Colonne Thème
+            doc.text(it.time, x, currentY);
             doc.setFont(fontName, "normal");
-            // Retirer la durée du Chant (première ligne) pour correspondre au modèle tableur
-            doc.text(`${item.theme}`, x + timeWidth, currentY);
-            
-            // Rôle et Personne (Priére, aligné sur les colonnes Rôle/Personne)
-            if(item.person || item.role === "Молитва"){
-                doc.setFont(fontName, "normal");
-                // Colonne Rôle
-                doc.text(item.role === "Молитва" ? "Молитва:" : "", x + timeWidth + themeWidth, currentY); 
-                // Colonne Personne
+            doc.text(`${it.theme}`, x + timeWidth, currentY);
+            if(it.person || it.role === "Молитва"){
+                doc.text(it.role === "Молитва" ? "Молитва:" : "", x + timeWidth + themeWidth, currentY); 
                 doc.setFont(fontName, "bold");
-                doc.text(item.person || "", x + totalContentWidth, currentY, {align: 'right'}); 
-                currentY += lineHeight;
-                currentY += 4; 
-            } else {
-                currentY += lineHeight;
-                currentY += 4;
+                doc.text(it.person || "", x + totalContentWidth, currentY, {align: 'right'}); 
             }
+            currentY += lineHeight + 4;
         }
         
-        if(introItems[1] && introItems[1].time && introItems[1].theme) {
-            const item = introItems[1];
+        if(introItems[1]) {
+            const it = introItems[1];
             doc.setFont(fontName, "bold");
-            doc.setFontSize(9);
-            // Colonne Heure
-            doc.text(item.time, x, currentY);
-            
-            // Colonne Thème + Durée
+            doc.text(it.time, x, currentY);
             doc.setFont(fontName, "normal");
-            doc.text(`${item.theme} (${item.duration} мин.)`, x + timeWidth, currentY);
-            currentY += lineHeight;
-            currentY += sectionSpacing;
+            doc.text(`${it.theme} (${it.duration} мин.)`, x + timeWidth, currentY);
+            currentY += lineHeight + sectionSpacing;
         }
 
-        // --- Sections suivantes (avec fond coloré) ---
-        
-        // On commence à la section 1 
         week.sections.forEach((section, sIdx) => { 
             if (sIdx < 1) return; 
-            
-            // Titre de la section
             if (section.title) {
-                
-                // Définir la couleur de fond
-                const colorIndex = (sIdx - 1) % SECTION_COLORS.length;
-                const bgColor = SECTION_COLORS[colorIndex];
-                
-                // Dessiner le fond coloré
-                const boxHeight = 16; 
-                doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
-                doc.rect(x, currentY, totalContentWidth, boxHeight, 'F');
-                
-                // Afficher le titre
+                const color = SECTION_COLORS[(sIdx - 1) % SECTION_COLORS.length];
+                doc.setFillColor(color[0], color[1], color[2]);
+                doc.rect(x, currentY, totalContentWidth, 16, 'F');
                 doc.setFont(fontName, "bold");
                 doc.setFontSize(10);
-                doc.setTextColor(60); 
-                // Aligné avec la colonne Thème
                 doc.text(section.title, x + timeWidth + 4, currentY + 11); 
-                
-                // Afficher la localisation (petit, aligné à droite de la zone)
                 if(section.location) {
-                    doc.setFont(fontName, "normal");
-                    doc.setFontSize(8);
-                    doc.setTextColor(MUTE_COLOR[0], MUTE_COLOR[1], MUTE_COLOR[2]);
+                    doc.setFont(fontName, "normal"); doc.setFontSize(8);
                     doc.text(`${section.location}`, x + totalContentWidth - 4, currentY + 11, {align: 'right'});
                 }
-                
-                currentY += boxHeight;
-                currentY += sectionSpacing;
-                doc.setTextColor(0); // Reset couleur texte principal
+                currentY += 16 + sectionSpacing;
             }
             
             section.items.forEach(item => {
-                
-                // 🚨 LOGIQUE : SAUTER L'ÉLÉMENT SI AUCUNE PERSONNE N'EST ASSIGNÉE (pour 3 ou 4 discours)
-                if (!item.person && !item.note) {
-                    return; // Saute l'affichage de cet élément dans le PDF.
-                }
-
-                // --- NOUVELLE LOGIQUE D'ALIGNEMENT HORIZONTAL ---
-                
-                // 1. Pré-calcul des lignes
+                if (!item.person && !item.note) return;
                 doc.setFontSize(9);
-                
                 let themeText = (item.theme || "") + (item.duration ? ` (${item.duration} мин.)` : "");
                 let themeLines = doc.splitTextToSize(themeText, themeWidth);
-                let themeHeight = lineHeight * themeLines.length;
-
-                let primaryRole = item.role || "";
-                let primaryPerson = item.person || "";
-                let secondaryRole = "";
-                let secondaryPerson = "";
-                let personLines = 0;
                 
-                let noteCleaned = item.note ? item.note.trim() : ""; // Nettoyage anticipé
+                let primaryRole = item.role || "", primaryPerson = item.person || "";
+                let secondaryRole = "", secondaryPerson = "", personLines = 1;
+                let noteCleaned = item.note ? item.note.trim() : "";
                 
-                if (item.note) {
-                    if (noteCleaned.includes("Помощник :")) {
-                        primaryRole = "Учащийся:"; 
-                        secondaryRole = "Помощник:";
-                        secondaryPerson = noteCleaned.replace("Помощник :", "").trim();
-                        personLines = 2; // Élève + Assistant = 2 lignes
-                    } else if (noteCleaned.includes("Ведущий/Чтец :") || item.role === "Молитва" || noteCleaned.includes("Молитва :")) {
-                        personLines = 1; // Conducteur ou Prière = 1 ligne
-                    } else if (noteCleaned.includes("Учащийся")) {
-                         personLines = 1;
-                    } else {
-                        // Simple note ou texte non standard
-                        personLines = 1; 
-                    }
-                } else if (primaryRole || primaryPerson) {
-                    personLines = 1;
+                if (noteCleaned.includes("Помощник :")) {
+                    primaryRole = "Учащийся:"; secondaryRole = "Помощник:";
+                    secondaryPerson = noteCleaned.replace("Помощник :", "").trim();
+                    personLines = 2;
                 }
-                
-                let personHeight = personLines * lineHeight;
-                
-                // Déterminer la hauteur maximale pour cet élément
-                const itemHeight = Math.max(themeHeight, personHeight); 
-                
-                // --- RENDU : Le point de départ Y est `currentY` pour tout aligner sur le haut ---
-                
-                // 1. Heure (Colonne A)
-                doc.setFont(fontName, "bold");
-                doc.setFontSize(9);
-                doc.text(item.time || "", x, currentY); 
 
-                // 2. Thème (Colonne C)
+                const itemHeight = Math.max(lineHeight * themeLines.length, personLines * lineHeight);
+                doc.setFont(fontName, "bold");
+                doc.text(item.time || "", x, currentY); 
                 doc.setFont(fontName, "normal");
-                // Début au même Y que l'heure
                 doc.text(themeLines, x + timeWidth, currentY);
 
-                // --- 3. RENDU DES RÔLES/PERSONNES (Partie Droite) ---
-                
-                let lineY_inner = currentY; // Le point de départ pour les personnes est aussi `currentY`
-                
-                if (item.person || item.note || item.role) {
-                    doc.setFontSize(9);
-                    
-                    // --- RENDU DE LA LIGNE PRIMAIRE (Élève/Conducteur/Personne principale) ---
-                    if(primaryRole || primaryPerson) {
-                        
-                        // Rendu du Rôle (Aligné sur la colonne F/G)
-                        if(primaryRole) {
-                            doc.setFont(fontName, "normal"); 
-                            doc.text(primaryRole, x + timeWidth + themeWidth, lineY_inner); 
-                        }
-                        
-                        // Rendu de la Personne (Aligné sur la colonne H)
-                        let textP = primaryPerson;
-                        if (personLines === 1 && item.note && !noteCleaned.includes("Ведущий/Чтец") && !noteCleaned.includes("Молитва")) {
-                            // Si c'est une simple note sans assistant, on l'ajoute à la personne
-                            textP = (item.person || "") + (item.note ? ` — ${noteCleaned}` : "");
-                        }
-
-                        if (textP) {
-                            doc.setFont(fontName, "bold"); 
-                            doc.text(textP, x + totalContentWidth, lineY_inner, {align: 'right'}); 
-                        }
-                        lineY_inner += lineHeight;
-                    }
-                    
-                    // --- RENDU DE LA LIGNE SECONDAIRE (Assistant: uniquement si 2 lignes nécessaires) ---
-                    if(secondaryRole === "Помощник:"){
-                         // Rendu du Rôle Secondaire (Aligné sur la colonne F/G)
-                         doc.setFont(fontName, "normal");
-                         doc.text(secondaryRole, x + timeWidth + themeWidth, lineY_inner); 
-                         // Rendu de la Personne Secondaire (Aligné sur la colonne H)
-                         doc.setFont(fontName, "bold"); 
-                         doc.text(secondaryPerson, x + totalContentWidth, lineY_inner, {align: 'right'}); 
-                         // lineY n'avance pas plus, car on utilise itemHeight
+                if (primaryRole || primaryPerson) {
+                    doc.text(primaryRole, x + timeWidth + themeWidth, currentY);
+                    doc.setFont(fontName, "bold");
+                    doc.text(personLines === 1 && noteCleaned && !noteCleaned.includes("Учащийся") ? (primaryPerson + " — " + noteCleaned) : primaryPerson, x + totalContentWidth, currentY, {align:'right'});
+                    if(secondaryRole){
+                        doc.setFont(fontName, "normal");
+                        doc.text(secondaryRole, x + timeWidth + themeWidth, currentY + lineHeight);
+                        doc.setFont(fontName, "bold");
+                        doc.text(secondaryPerson, x + totalContentWidth, currentY + lineHeight, {align:'right'});
                     }
                 }
-                
-                // Avancer currentY de la hauteur maximale trouvée, plus l'espacement
                 currentY += itemHeight + itemSpacing; 
             });
-            currentY += 4; // Espacement fin de section
+            currentY += 4;
         });
-        return currentY; // Retourne la position Y finale
+        return currentY;
     }
 
-    // --- LOGIQUE DE GÉNÉRATION PDF : 2 SEMAINES PAR PAGE ---
     const weeks = planningData.weeks;
-    const pageX = marginLeft; 
-
-    // On boucle en sautant de 2 semaines à chaque itération
     for (let i = 0; i < weeks.length; i += 2) { 
-        
-        const week1 = weeks[i];       // Première semaine de la paire
-        const week2 = weeks[i + 1];   // Deuxième semaine de la paire (peut être undefined)
-        
-        // Ajoute une nouvelle page si ce n'est PAS la toute première itération
         if (i > 0) doc.addPage();
-        
-        // 1. Rendu de la PREMIÈRE semaine (en haut de la page)
-        // isSecondWeek = false
-        renderWeekPDF(pageX, marginTop, week1, false); 
-        
-        // 2. Rendu de la DEUXIÈME semaine (en bas de la page)
-        if (week2) {
-            
-            // --- AJOUT DU TRAIT DE SÉPARATION ---
-            doc.setLineWidth(lineWidth);
-            doc.setDrawColor(180, 180, 180); // Couleur gris clair
-            // Dessine la ligne de (x, y) à (x + largeur, y)
-            doc.line(pageX, lineY, pageX + totalContentWidth, lineY); 
-            
-            // Rendu de la deuxième semaine, en commençant à la position verticale 'midY'
-            // isSecondWeek = true
-            renderWeekPDF(pageX, midY, week2, true);
+        renderWeekPDF(marginLeft, marginTop, weeks[i], false); 
+        if (weeks[i+1]) {
+            doc.setLineWidth(0.5); doc.setDrawColor(180);
+            doc.line(marginLeft, lineY, marginLeft + totalContentWidth, lineY); 
+            renderWeekPDF(marginLeft, midY, weeks[i+1], true);
         }
     }
 
-    // --- Gestion de la sortie PDF (Mobile vs Desktop) ---
-    const filename = `Planning_${planningData.title.replace(/\s/g, '_') || "TPL"}.pdf`;
-    const previewContainer = document.getElementById("pdfPreviewContainer");
-    
+    const filename = `Planning_${planningData.title.replace(/\s/g, '_')}.pdf`;
     if (isMobileOrTablet()) {
-        // SUR MOBILE/TABLETTE: Tenter le téléchargement direct
         doc.save(filename);
-        
-        // Cacher la prévisualisation (qui cause des problèmes sur mobile)
-        previewContainer.style.display = "none";
-        
     } else {
-        // SUR ORDINATEUR (Desktop): Utiliser l'iFrame pour la prévisualisation
         const url = doc.output("bloburl");
-        const previewIframe = document.getElementById("pdfPreview");
-        
-        previewContainer.style.display = "block";
-        previewIframe.src = url;
-
-        // Optionnel: Pour avoir un bouton de téléchargement séparé sur Desktop si la prévisualisation ne suffit pas.
-        // doc.save(filename); 
+        document.getElementById("pdfPreviewContainer").style.display = "block";
+        document.getElementById("pdfPreview").src = url;
     }
   }
 
   /* ------------ INITIALISATION ------------ */
   planningData = loadLocal() || await loadServer();
-  if(!planningData){ alert("Impossible de charger le planning"); return; }
+  if(!planningData){ return; }
   if(!planningData.title) planningData.title = "Planning TPL";
-  
   planningData.weeks.forEach((w, i) => recalcTimesForWeek(i)); 
-  
   populateWeekSelect();
   renderWeek(currentWeekIndex);
 
-}); // DOMContentLoaded
+});
