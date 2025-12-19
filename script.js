@@ -1,194 +1,637 @@
+/* script.js — Version Définitive : PDF 2 semaines/page, toutes les semaines, style VCM (Alignement Tableur - Champs séparés pour Учащийся/Помощник) */
+
 document.addEventListener("DOMContentLoaded", async () => {
+
   const PLANNING_KEY = "planning_tpl_full_v1";
   const FONT_KEY = "roboto_base64_v1";
-  const ROBOTO_TTF_URL = "./Roboto-Regular.ttf";
-
-  const elements = {
-    weekSelect: document.getElementById("weekSelect"),
-    planning: document.getElementById("planning"),
-    dateDisplay: document.getElementById("dateDisplay"),
-    fabToggle: document.getElementById("fabToggle"),
-    buttonGroup: document.getElementById("buttonGroup")
-  };
+  const weekSelect = document.getElementById("weekSelect");
+  const planningContainer = document.getElementById("planning");
+  const dateDisplay = document.getElementById("dateDisplay");
+  const saveBtn = document.getElementById("saveBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const pdfBtn = document.getElementById("pdfBtn");
+  const changeChairmanBtn = document.getElementById("changeChairmanBtn");
+  const changeDateBtn = document.getElementById("changeDateBtn");
 
   let planningData = null;
   let currentWeekIndex = 0;
-  let ROBOTO_BASE64 = localStorage.getItem(FONT_KEY);
 
-  // --- LOGIQUE DU MENU FLOTTANT ---
-  elements.fabToggle.onclick = (e) => {
-    e.stopPropagation();
-    elements.buttonGroup.classList.toggle("show");
-    elements.fabToggle.classList.toggle("active");
-  };
-  document.onclick = () => {
-    elements.buttonGroup.classList.remove("show");
-    elements.fabToggle.classList.remove("active");
-  };
+  // Chemin local vers le fichier Roboto-Regular.ttf
+  const ROBOTO_TTF_URL = "./Roboto-Regular.ttf"; 
 
-  // --- CHARGEMENT ---
-  async function loadData() {
-    const local = localStorage.getItem(PLANNING_KEY);
-    if (local) return JSON.parse(local);
+  let ROBOTO_LOADED = false;
+  let ROBOTO_BASE64 = null; // Variable pour stocker la base64
+
+  // --- Fonctions de base de données et chargement ---
+
+  async function loadServer(){
     try {
-      const res = await fetch("planning.json", { cache: "no-store" });
+      const res = await fetch("planning.json",{cache:"no-store"});
+      if(!res.ok) throw new Error("planning.json non trouvé");
       return await res.json();
-    } catch (e) { return null; }
+    } catch(e) {
+      console.warn(e);
+      return null;
+    }
   }
 
-  function saveLocal() {
-    localStorage.setItem(PLANNING_KEY, JSON.stringify(planningData));
+  function escapeHtml(s){
+    return (s||"").toString()
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;");
   }
 
-  // --- RENDU ÉCRAN ---
-  function renderWeek() {
-    const week = planningData.weeks[currentWeekIndex];
-    elements.dateDisplay.textContent = `${week.date} — Председатель: ${week.chairman}`;
-    let html = "";
-    week.sections.forEach((sec, sidx) => {
-      if (sec.title) html += `<div class="sectionTitle">${sec.title}</div>`;
-      sec.items.forEach((it, itidx) => {
-        html += `
-          <div class="row section-${(sidx % 3) + 1}">
-            <div class="time">${it.time}</div>
-            <div class="theme editable" contenteditable="true" oninput="updateData(${sidx},${itidx},'theme',this.textContent)">${it.part ? it.part + ' ' : ''}${it.theme}</div>
-            <div class="duration editable" contenteditable="true" oninput="updateDuration(${sidx},${itidx},this.textContent)">${it.duration}</div>
-            <div class="personNoteContainer">
-              <div class="person editable" contenteditable="true" oninput="updateData(${sidx},${itidx},'person',this.textContent)">${it.person || ''}</div>
-              <div class="note editable" contenteditable="true" oninput="updateData(${sidx},${itidx},'note',this.textContent)">${it.note || ''}</div>
-            </div>
-          </div>`;
-      });
+  function populateWeekSelect(){
+    weekSelect.innerHTML = "";
+    planningData.weeks.forEach((w,i)=>{
+      const opt = document.createElement("option");
+      opt.value = i;
+      opt.textContent = `${w.date} | ${w.scripture} | ${w.chairman}`;
+      weekSelect.appendChild(opt);
     });
-    elements.planning.innerHTML = html;
+    weekSelect.value = currentWeekIndex || 0;
   }
 
-  window.updateData = (s, i, field, val) => {
-    planningData.weeks[currentWeekIndex].sections[s].items[i][field] = val.trim();
-    saveLocal();
-  };
+  // --- Rendu et édition ---
 
-  // --- LOGIQUE PDF AVANCÉE (STYLE & FILTRAGE) ---
-  async function loadRoboto() {
-    if (ROBOTO_BASE64) return;
-    const resp = await fetch(ROBOTO_TTF_URL);
-    const ab = await resp.arrayBuffer();
-    ROBOTO_BASE64 = btoa(String.fromCharCode(...new Uint8Array(ab)));
-    localStorage.setItem(FONT_KEY, ROBOTO_BASE64);
-  }
+  function renderWeek(idx){
+    const week = planningData.weeks[idx];
+    if(!week) return;
 
-  function exportPDF() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ unit: "pt", format: "a4" });
-    
-    if (ROBOTO_BASE64) {
-      doc.addFileToVFS("Roboto.ttf", ROBOTO_BASE64);
-      doc.addFont("Roboto.ttf", "Roboto", "normal");
-      doc.setFont("Roboto");
-    }
+    dateDisplay.textContent =
+      `${week.date} — ${week.scripture} — Председатель : ${week.chairman}`;
 
-    const weeks = planningData.weeks;
-    for (let i = 0; i < weeks.length; i += 2) {
-      if (i > 0) doc.addPage();
-      renderWeekPDF(doc, 40, weeks[i]); // Semaine du haut
-      if (weeks[i + 1]) {
-        doc.setDrawColor(200);
-        doc.line(40, 418, 555, 418); // Ligne de séparation médiane
-        renderWeekPDF(doc, 435, weeks[i + 1]); // Semaine du bas
+    let html = "";
+
+    week.sections.forEach((sec, sidx)=>{
+      if(sec.title){
+        html += `<div class="sectionTitle">${escapeHtml(sec.title)}${sec.location? " — "+escapeHtml(sec.location):""}</div>`;
       }
-    }
 
-    const blobUrl = doc.output("bloburl");
-    document.getElementById("pdfPreviewContainer").style.display = "block";
-    document.getElementById("pdfPreview").src = blobUrl;
-    if (/Android|iPhone|iPad/i.test(navigator.userAgent)) doc.save("VCM_Program.pdf");
-  }
-
-  function renderWeekPDF(doc, startY, week) {
-    let y = startY;
-
-    // En-tête de la semaine
-    doc.setFontSize(11);
-    doc.setTextColor(0);
-    doc.text(week.date, 40, y);
-    doc.setFontSize(9);
-    doc.setTextColor(80);
-    doc.text(`${week.scripture}  |  Председатель: ${week.chairman}`, 40, y + 15);
-    y += 30;
-
-    const col = { time: 40, theme: 85, dur: 340, pers: 400 };
-    const colors = [[230, 247, 245], [255, 247, 230], [255, 241, 242]]; // Sections colors
-
-    week.sections.forEach((sec, sIdx) => {
-      // Filtrer les items : on n'affiche que ceux qui ont un thème ou une personne
-      const visibleItems = sec.items.filter(it => it.theme.trim() !== "" || (it.person && it.person.trim() !== ""));
+      // Détecter si c'est la section "ОТТАЧИВАЕМ НАВЫКИ СЛУЖЕНИЯ"
+      const isServingSkills = sec.title && sec.title.includes("ОТТАЧИВАЕМ"); 
       
-      if (visibleItems.length === 0) return; // Saute la section si elle est vide
-
-      // Fond de titre de section
-      doc.setFillColor(245, 245, 245);
-      doc.rect(40, y, 515, 14, 'F');
-      doc.setFontSize(8);
-      doc.setTextColor(60);
-      if (sec.title) doc.text(sec.title.toUpperCase(), 45, y + 10);
-      y += 14;
-
-      visibleItems.forEach(it => {
-        // Fond de ligne coloré selon la section
-        doc.setFillColor(...colors[sIdx % 3]);
-        doc.rect(40, y, 515, 18, 'F');
+      html += sec.items.map((it, itidx)=>{
+        // --- MODIFICATION 1 (Numéro de discours dans le thème) ---
+        // Si 'it.part' existe, on l'ajoute au thème pour qu'il soit éditable.
+        const fullTheme = it.part ? `${escapeHtml(it.part)} ${escapeHtml(it.theme)}` : escapeHtml(it.theme);
         
-        doc.setFontSize(9);
-        doc.setTextColor(0);
-        doc.text(it.time, col.time + 2, y + 12);
+        let personContent = escapeHtml(it.person);
+        let noteContent = escapeHtml(it.note||"");
 
-        // Thème avec retour à la ligne
-        let txt = (it.part ? it.part + " " : "") + it.theme;
-        let splitTxt = doc.splitTextToSize(txt, 240);
-        doc.text(splitTxt, col.theme, y + 12);
-
-        // Durée
-        doc.setFontSize(8);
-        doc.setTextColor(100);
-        doc.text(`${it.duration} мин`, col.dur, y + 12);
-
-        // Personne et Note
-        doc.setFontSize(9);
-        doc.setTextColor(0);
-        doc.setFont(undefined, 'bold');
-        doc.text(it.person || "", col.pers, y + 12);
-        doc.setFont(undefined, 'normal');
-
-        if (it.note) {
-          doc.setFontSize(7);
-          doc.setTextColor(100);
-          doc.text(it.note, col.pers, y + 22);
+        // Si c'est la section "ОТТАЧИВАЕМ", on retire le préfixe "Помощник :" pour l'affichage,
+        // car on le gère à la sauvegarde.
+        if (isServingSkills) {
+            noteContent = noteContent.replace(/^Помощник :/, '').trim();
         }
 
-        let rowStep = splitTxt.length > 1 ? 28 : 22;
-        y += rowStep;
+        // Nouvelle structure HTML pour le conteneur Personne/Note
+        // Ajout de l'attribut data-role pour identifier les champs dans cette section
+        return `<div class="row section-${(sidx%4)+1}" data-section="${sidx}" data-item="${itidx}">
+          <div class="time">${escapeHtml(it.time)}</div>
+          <div class="theme editable" contenteditable="true" data-field="theme" data-section="${sidx}" data-item="${itidx}">${fullTheme}</div>
+          <div class="duration editable" contenteditable="true" data-field="duration" data-section="${sidx}" data-item="${itidx}">${escapeHtml(it.duration)}</div>
+          <div class="personNoteContainer">
+            <div class="person editable" contenteditable="true" data-field="person" data-section="${sidx}" data-item="${itidx}" data-role="${isServingSkills ? 'student' : ''}">${personContent}</div>
+            <div class="note editable" contenteditable="true" data-field="note" data-section="${sidx}" data-item="${itidx}" data-role="${isServingSkills ? 'assistant' : ''}">${noteContent}</div>
+          </div>
+        </div>`;
+      }).join("");
+    });
 
-        // Petite ligne de séparation
-        doc.setDrawColor(220);
-        doc.line(40, y, 555, y);
-        y += 2;
-      });
-      y += 4; // Espace entre sections
+    planningContainer.innerHTML = html;
+
+    planningContainer.querySelectorAll(".editable").forEach(el=>{
+      el.addEventListener("input", onEdit);
+      el.addEventListener("blur", saveLocal);
+    });
+    
+    updateTimesInDOM(currentWeekIndex);
+  }
+
+  function onEdit(e){
+    const el = e.target;
+    const field = el.dataset.field;
+    const sec = Number(el.dataset.section);
+    const idx = Number(el.dataset.item);
+    const item = planningData.weeks[currentWeekIndex].sections[sec].items[idx];
+    let value = el.textContent.trim();
+
+    if(field === "duration"){
+      const num = value.match(/(\d+)/);
+      item.duration = num ? Number(num[1]) : 0;
+      recalcTimesForWeek(currentWeekIndex);
+      updateTimesInDOM(currentWeekIndex);
+      return;
+    }
+    
+    // Vérifier si la section est "ОТТАЧИВАЕМ" pour la gestion du champ "note" (Помощник)
+    const section = planningData.weeks[currentWeekIndex].sections[sec];
+    const isServingSkills = section.title && section.title.includes("ОТТАЧИВАЕМ");
+
+    if (field === "note" && isServingSkills) {
+        // Si c'est le champ du Помощник et qu'il y a une valeur, on ajoute le préfixe 
+        // requis par la logique PDF. Sinon, on enregistre une chaîne vide ("").
+        item[field] = value ? `Помощник : ${value}` : "";
+    } else {
+        // Pour tous les autres champs (theme, duration, person), on enregistre la valeur telle quelle.
+        item[field] = value;
+    }
+  }
+  
+  function updateTimesInDOM(weekIndex){
+    const week = planningData.weeks[weekIndex];
+    if(!week) return;
+
+    week.sections.forEach((sec, sidx) => {
+        sec.items.forEach((item, itidx) => {
+            const rowEl = planningContainer.querySelector(`.row[data-section="${sidx}"][data-item="${itidx}"]`);
+            if (rowEl) {
+                rowEl.querySelector(".time").textContent = escapeHtml(item.time);
+            }
+        });
     });
   }
 
-  // --- BOUTONS ---
-  document.getElementById("pdfBtn").onclick = async () => {
-    await loadRoboto();
-    exportPDF();
-  };
-  document.getElementById("saveBtn").onclick = () => { saveLocal(); alert("OK"); };
+  function recalcTimesForWeek(weekIndex){
+    const week = planningData.weeks[weekIndex];
+    if(!week) return;
 
-  // --- INIT ---
-  planningData = await loadData();
-  if (planningData) {
-    elements.weekSelect.innerHTML = planningData.weeks.map((w, i) => `<option value="${i}">${w.date}</option>`).join("");
-    elements.weekSelect.onchange = (e) => { currentWeekIndex = parseInt(e.target.value); renderWeek(); };
-    renderWeek();
+    let flat = [];
+    week.sections.forEach((sec,s)=>{
+      sec.items.forEach((it,i)=> flat.push({sec:s, idx:i, it}));
+    });
+
+    for(let i=1; i<flat.length; i++){
+      const prev = flat[i-1].it;
+      const cur  = flat[i].it;
+      let [h,m] = (prev.time||"00:00").split(":").map(Number);
+      let dur = Number(prev.duration)||0;
+      let total = h*60 + m + dur;
+      let nh = String(Math.floor(total/60)).padStart(2,"0");
+      let nm = String(total%60).padStart(2,"0");
+      cur.time = `${nh}:${nm}`;
+    }
   }
-});
+
+  // --- Sauvegarde et chargement local ---
+
+  function saveLocal(){
+    try{ localStorage.setItem(PLANNING_KEY, JSON.stringify(planningData)); }catch(e){ console.warn(e); }
+  }
+  function loadLocal(){
+    try{ let raw = localStorage.getItem(PLANNING_KEY); if(raw) return JSON.parse(raw); }catch(e){}
+    return null;
+  }
+
+  saveBtn.addEventListener("click", ()=>{
+    saveLocal();
+    saveBtn.textContent = "Sauvegardé ✅";
+    setTimeout(()=> saveBtn.textContent="Sauvegarder (local)", 1200);
+  });
+
+  resetBtn.addEventListener("click", async ()=>{
+    const server = await loadServer();
+    if(server){
+      planningData = server;
+      localStorage.removeItem(PLANNING_KEY);
+      populateWeekSelect();
+      currentWeekIndex = 0;
+      recalcTimesForWeek(0); 
+      renderWeek(0);
+      alert("Planning réinitialisé depuis le serveur.");
+    } else alert("Impossible de recharger planning.json");
+  });
+
+  weekSelect.addEventListener("change", e=>{
+    currentWeekIndex = Number(e.target.value);
+    recalcTimesForWeek(currentWeekIndex);
+    renderWeek(currentWeekIndex);
+  });
+
+  changeChairmanBtn.addEventListener("click", ()=>{
+    const week = planningData.weeks[currentWeekIndex];
+    const newChair = prompt("Nom du Président :", week.chairman||"");
+    if(newChair!==null){
+      week.chairman = newChair;
+      saveLocal();
+      populateWeekSelect(); 
+      renderWeek(currentWeekIndex);
+    }
+  });
+
+  changeDateBtn.addEventListener("click", ()=>{
+    const week = planningData.weeks[currentWeekIndex];
+    const newDate = prompt("Nouvelle date :", week.date||"");
+    if(newDate!==null){
+      week.date = newDate;
+      saveLocal();
+      populateWeekSelect(); 
+      renderWeek(currentWeekIndex);
+    }
+  });
+
+  // --- Fonctions utilitaires ---
+  
+  function isMobileOrTablet() {
+      // Détection Mobile/Tablette pour adapter la sortie PDF
+      return window.matchMedia("(max-width: 900px)").matches || 
+             ('ontouchstart' in window) || 
+             (navigator.maxTouchPoints > 0) || 
+             (navigator.msMaxTouchPoints > 0);
+  }
+
+  // --- PDF AVEC ROBOTO (cached) ---
+
+  function arrayBufferToBase64(buffer) {
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+  }
+
+  async function loadRobotoBase64(){ 
+    if(ROBOTO_LOADED) return;
+    if(ROBOTO_BASE64 === null) ROBOTO_BASE64 = localStorage.getItem(FONT_KEY);
+
+    if(!ROBOTO_BASE64){
+      try {
+        console.log("Téléchargement de Roboto...");
+        const resp = await fetch(ROBOTO_TTF_URL, {cache:"no-store"});
+        if(!resp.ok) throw new Error("Impossible de télécharger Roboto (Vérifiez la présence du fichier Roboto-Regular.ttf sur GitHub)");
+        const ab = await resp.arrayBuffer();
+        ROBOTO_BASE64 = arrayBufferToBase64(ab);
+        localStorage.setItem(FONT_KEY, ROBOTO_BASE64);
+        console.log("Roboto téléchargée et mise en cache.");
+      } catch(e){
+        console.error("Échec téléchargement Roboto. Utilisation de la police par défaut.", e);
+        throw e; 
+      }
+    }
+    
+    // Marque la police comme chargée (la Base64 est prête à être utilisée)
+    ROBOTO_LOADED = true; 
+  }
+  
+  pdfBtn.addEventListener("click", async () => {
+      pdfBtn.textContent = "Génération PDF...";
+      try {
+          // Étape 1 : S'assurer que les données Base64 de la police sont chargées ou en cache
+          await loadRobotoBase64(); 
+
+          // Étape 2 : Générer le PDF
+          exportPDF();
+      } catch (e) {
+          console.error("Erreur lors de la préparation du PDF:", e);
+          pdfBtn.textContent = "Erreur PDF";
+          alert("Erreur lors de la préparation du PDF. Si le problème persiste, videz le cache Local Storage: (F12 > Application > Local Storage > Effacer l'entrée 'roboto_base64_v1').");
+      }
+      pdfBtn.textContent = "Exporter PDF";
+  });
+
+
+  function exportPDF() {
+    if (!planningData) return;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+
+    // Enregistrement de la police sur l'instance 'doc' (si la Base64 est disponible)
+    if(ROBOTO_LOADED && ROBOTO_BASE64){
+        // Ajout de Roboto-Regular
+        doc.addFileToVFS("Roboto-Regular.ttf", ROBOTO_BASE64);
+        doc.addFont("Roboto-Regular.ttf", "Roboto", "normal");
+        
+        // Ajout d'alias pour les styles Bold et Italic pointant vers la police Regular
+        doc.addFont("Roboto-Regular.ttf", "Roboto", "bold");
+        doc.addFont("Roboto-Regular.ttf", "Roboto", "italic");
+    }
+
+    // Paramètres de mise en page (A4: 595 x 842 pt)
+    const pageW = doc.internal.pageSize.getWidth(); // 595
+    const pageH = doc.internal.pageSize.getHeight(); // 842
+    const marginLeft = 32, marginTop = 40;
+    
+    // Position Y de départ de la DEUXIÈME semaine sur la page.
+    const midY = 450; 
+    
+    // Position Y du TRAIT DE SÉPARATION (légèrement au-dessus de midY)
+    const lineY = midY - 12; 
+
+    // Définition de l'épaisseur et du style du trait
+    const lineWidth = 0.5; // 0.5pt d'épaisseur
+
+    // NOUVELLES LARGEURS DE COLONNES pour calquer l'alignement du tableur:
+    const timeWidth = 40;     
+    const themeWidth = 260;   
+    const roleWidth = 80;     
+    const personWidth = 151;  
+    const totalContentWidth = timeWidth + themeWidth + roleWidth + personWidth; // 531
+
+    const lineHeight = 12; 
+    const titleSpacing = 16, sectionSpacing = 12, itemSpacing = 2;
+    
+    const fontName = ROBOTO_LOADED ? "Roboto" : "helvetica";
+    
+    // --- COULEURS DES SECTIONS (Bleu, Jaune, Rose clair) ---
+    const SECTION_COLORS = [
+        [220, 237, 245], // Section 1: СОКРОВИЩА (Bleu clair) 
+        [255, 249, 219], // Section 2: ОТТАЧИВАЕМ (Jaune clair / Crème)
+        [255, 224, 230]  // Section 3: ХРИСТИАНСКАЯ ЖИЗНЬ (Rose clair)
+    ];
+    const MUTE_COLOR = [120, 120, 120]; // Gris foncé pour les sous-textes
+    
+    // Fonction d'affichage d'une seule semaine
+    // Ajout de isSecondWeek
+    function renderWeekPDF(x, y, week, isSecondWeek) {
+        let currentY = y;
+        
+        // --- Entête de la semaine (Aligné avec les colonnes du tableur) ---
+        
+        // Titre de l'assemblée (Affiché SEULEMENT pour la première semaine)
+        if (!isSecondWeek) {
+            doc.setFont(fontName, "bold");
+            doc.setFontSize(11);
+            doc.setTextColor(0); 
+            doc.text(planningData.title || "Planning TPL", x, currentY); 
+            currentY += titleSpacing;
+        } else {
+            // Ajouter un petit espacement si le titre est omis pour aligner avec les autres blocs
+            currentY += 4; 
+        }
+
+        // Date et Écriture
+        doc.setFont(fontName, "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(50); 
+        doc.text(`${week.date} | ${week.scripture}`, x, currentY); 
+        
+        // Président (Aligné à droite de la ligne du titre, sur la colonne Rôle/Personne)
+        doc.setFont(fontName, "bold");
+        doc.setTextColor(0);
+        doc.text(`Председатель:`, x + timeWidth + themeWidth, currentY); 
+        doc.text(week.chairman || "", x + totalContentWidth, currentY, {align: 'right'}); 
+        currentY += 10;
+        
+        // --- Prière/Chant/Intro (Première section) ---
+
+        const introItems = week.sections[0] ? week.sections[0].items : [];
+        if(introItems[0] && introItems[0].time && introItems[0].theme) {
+            const item = introItems[0];
+            doc.setFont(fontName, "bold");
+            doc.setFontSize(9);
+            // Colonne Heure
+            doc.text(item.time, x, currentY);
+            
+            // Colonne Thème
+            doc.setFont(fontName, "normal");
+            // Retirer la durée du Chant (première ligne) pour correspondre au modèle tableur
+            doc.text(`${item.theme}`, x + timeWidth, currentY);
+            
+            // Rôle et Personne (Priére, aligné sur les colonnes Rôle/Personne)
+            if(item.person || item.role === "Молитва"){
+                doc.setFont(fontName, "normal");
+                // Colonne Rôle
+                doc.text(item.role === "Молитва" ? "Молитва:" : "", x + timeWidth + themeWidth, currentY); 
+                // Colonne Personne
+                doc.setFont(fontName, "bold");
+                doc.text(item.person || "", x + totalContentWidth, currentY, {align: 'right'}); 
+                currentY += lineHeight;
+                currentY += 4; 
+            } else {
+                currentY += lineHeight;
+                currentY += 4;
+            }
+        }
+        
+        if(introItems[1] && introItems[1].time && introItems[1].theme) {
+            const item = introItems[1];
+            doc.setFont(fontName, "bold");
+            doc.setFontSize(9);
+            // Colonne Heure
+            doc.text(item.time, x, currentY);
+            
+            // Colonne Thème + Durée
+            doc.setFont(fontName, "normal");
+            doc.text(`${item.theme} (${item.duration} мин.)`, x + timeWidth, currentY);
+            currentY += lineHeight;
+            currentY += sectionSpacing;
+        }
+
+        // --- Sections suivantes (avec fond coloré) ---
+        
+        // On commence à la section 1 
+        week.sections.forEach((section, sIdx) => { 
+            if (sIdx < 1) return; 
+            
+            // Titre de la section
+            if (section.title) {
+                
+                // Définir la couleur de fond
+                const colorIndex = (sIdx - 1) % SECTION_COLORS.length;
+                const bgColor = SECTION_COLORS[colorIndex];
+                
+                // Dessiner le fond coloré
+                const boxHeight = 16; 
+                doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
+                doc.rect(x, currentY, totalContentWidth, boxHeight, 'F');
+                
+                // Afficher le titre
+                doc.setFont(fontName, "bold");
+                doc.setFontSize(10);
+                doc.setTextColor(60); 
+                // Aligné avec la colonne Thème
+                doc.text(section.title, x + timeWidth + 4, currentY + 11); 
+                
+                // Afficher la localisation (petit, aligné à droite de la zone)
+                if(section.location) {
+                    doc.setFont(fontName, "normal");
+                    doc.setFontSize(8);
+                    doc.setTextColor(MUTE_COLOR[0], MUTE_COLOR[1], MUTE_COLOR[2]);
+                    doc.text(`${section.location}`, x + totalContentWidth - 4, currentY + 11, {align: 'right'});
+                }
+                
+                currentY += boxHeight;
+                currentY += sectionSpacing;
+                doc.setTextColor(0); // Reset couleur texte principal
+            }
+            
+            section.items.forEach(item => {
+                
+                // 🚨 LOGIQUE : SAUTER L'ÉLÉMENT SI AUCUNE PERSONNE N'EST ASSIGNÉE (pour 3 ou 4 discours)
+                if (!item.person && !item.note) {
+                    return; // Saute l'affichage de cet élément dans le PDF.
+                }
+
+                // --- NOUVELLE LOGIQUE D'ALIGNEMENT HORIZONTAL ---
+                
+                // 1. Pré-calcul des lignes
+                doc.setFontSize(9);
+                
+                let themeText = (item.theme || "") + (item.duration ? ` (${item.duration} мин.)` : "");
+                let themeLines = doc.splitTextToSize(themeText, themeWidth);
+                let themeHeight = lineHeight * themeLines.length;
+
+                let primaryRole = item.role || "";
+                let primaryPerson = item.person || "";
+                let secondaryRole = "";
+                let secondaryPerson = "";
+                let personLines = 0;
+                
+                let noteCleaned = item.note ? item.note.trim() : ""; // Nettoyage anticipé
+                
+                if (item.note) {
+                    if (noteCleaned.includes("Помощник :")) {
+                        primaryRole = "Учащийся:"; 
+                        secondaryRole = "Помощник:";
+                        secondaryPerson = noteCleaned.replace("Помощник :", "").trim();
+                        personLines = 2; // Élève + Assistant = 2 lignes
+                    } else if (noteCleaned.includes("Ведущий/Чтец :") || item.role === "Молитва" || noteCleaned.includes("Молитва :")) {
+                        personLines = 1; // Conducteur ou Prière = 1 ligne
+                    } else if (noteCleaned.includes("Учащийся")) {
+                         personLines = 1;
+                    } else {
+                        // Simple note ou texte non standard
+                        personLines = 1; 
+                    }
+                } else if (primaryRole || primaryPerson) {
+                    personLines = 1;
+                }
+                
+                let personHeight = personLines * lineHeight;
+                
+                // Déterminer la hauteur maximale pour cet élément
+                const itemHeight = Math.max(themeHeight, personHeight); 
+                
+                // --- RENDU : Le point de départ Y est `currentY` pour tout aligner sur le haut ---
+                
+                // 1. Heure (Colonne A)
+                doc.setFont(fontName, "bold");
+                doc.setFontSize(9);
+                doc.text(item.time || "", x, currentY); 
+
+                // 2. Thème (Colonne C)
+                doc.setFont(fontName, "normal");
+                // Début au même Y que l'heure
+                doc.text(themeLines, x + timeWidth, currentY);
+
+                // --- 3. RENDU DES RÔLES/PERSONNES (Partie Droite) ---
+                
+                let lineY_inner = currentY; // Le point de départ pour les personnes est aussi `currentY`
+                
+                if (item.person || item.note || item.role) {
+                    doc.setFontSize(9);
+                    
+                    // --- RENDU DE LA LIGNE PRIMAIRE (Élève/Conducteur/Personne principale) ---
+                    if(primaryRole || primaryPerson) {
+                        
+                        // Rendu du Rôle (Aligné sur la colonne F/G)
+                        if(primaryRole) {
+                            doc.setFont(fontName, "normal"); 
+                            doc.text(primaryRole, x + timeWidth + themeWidth, lineY_inner); 
+                        }
+                        
+                        // Rendu de la Personne (Aligné sur la colonne H)
+                        let textP = primaryPerson;
+                        if (personLines === 1 && item.note && !noteCleaned.includes("Ведущий/Чтец") && !noteCleaned.includes("Молитва")) {
+                            // Si c'est une simple note sans assistant, on l'ajoute à la personne
+                            textP = (item.person || "") + (item.note ? ` — ${noteCleaned}` : "");
+                        }
+
+                        if (textP) {
+                            doc.setFont(fontName, "bold"); 
+                            doc.text(textP, x + totalContentWidth, lineY_inner, {align: 'right'}); 
+                        }
+                        lineY_inner += lineHeight;
+                    }
+                    
+                    // --- RENDU DE LA LIGNE SECONDAIRE (Assistant: uniquement si 2 lignes nécessaires) ---
+                    if(secondaryRole === "Помощник:"){
+                         // Rendu du Rôle Secondaire (Aligné sur la colonne F/G)
+                         doc.setFont(fontName, "normal");
+                         doc.text(secondaryRole, x + timeWidth + themeWidth, lineY_inner); 
+                         // Rendu de la Personne Secondaire (Aligné sur la colonne H)
+                         doc.setFont(fontName, "bold"); 
+                         doc.text(secondaryPerson, x + totalContentWidth, lineY_inner, {align: 'right'}); 
+                         // lineY n'avance pas plus, car on utilise itemHeight
+                    }
+                }
+                
+                // Avancer currentY de la hauteur maximale trouvée, plus l'espacement
+                currentY += itemHeight + itemSpacing; 
+            });
+            currentY += 4; // Espacement fin de section
+        });
+        return currentY; // Retourne la position Y finale
+    }
+
+    // --- LOGIQUE DE GÉNÉRATION PDF : 2 SEMAINES PAR PAGE ---
+    const weeks = planningData.weeks;
+    const pageX = marginLeft; 
+
+    // On boucle en sautant de 2 semaines à chaque itération
+    for (let i = 0; i < weeks.length; i += 2) { 
+        
+        const week1 = weeks[i];       // Première semaine de la paire
+        const week2 = weeks[i + 1];   // Deuxième semaine de la paire (peut être undefined)
+        
+        // Ajoute une nouvelle page si ce n'est PAS la toute première itération
+        if (i > 0) doc.addPage();
+        
+        // 1. Rendu de la PREMIÈRE semaine (en haut de la page)
+        // isSecondWeek = false
+        renderWeekPDF(pageX, marginTop, week1, false); 
+        
+        // 2. Rendu de la DEUXIÈME semaine (en bas de la page)
+        if (week2) {
+            
+            // --- AJOUT DU TRAIT DE SÉPARATION ---
+            doc.setLineWidth(lineWidth);
+            doc.setDrawColor(180, 180, 180); // Couleur gris clair
+            // Dessine la ligne de (x, y) à (x + largeur, y)
+            doc.line(pageX, lineY, pageX + totalContentWidth, lineY); 
+            
+            // Rendu de la deuxième semaine, en commençant à la position verticale 'midY'
+            // isSecondWeek = true
+            renderWeekPDF(pageX, midY, week2, true);
+        }
+    }
+
+    // --- Gestion de la sortie PDF (Mobile vs Desktop) ---
+    const filename = `Planning_${planningData.title.replace(/\s/g, '_') || "TPL"}.pdf`;
+    const previewContainer = document.getElementById("pdfPreviewContainer");
+    
+    if (isMobileOrTablet()) {
+        // SUR MOBILE/TABLETTE: Tenter le téléchargement direct
+        doc.save(filename);
+        
+        // Cacher la prévisualisation (qui cause des problèmes sur mobile)
+        previewContainer.style.display = "none";
+        
+    } else {
+        // SUR ORDINATEUR (Desktop): Utiliser l'iFrame pour la prévisualisation
+        const url = doc.output("bloburl");
+        const previewIframe = document.getElementById("pdfPreview");
+        
+        previewContainer.style.display = "block";
+        previewIframe.src = url;
+
+        // Optionnel: Pour avoir un bouton de téléchargement séparé sur Desktop si la prévisualisation ne suffit pas.
+        // doc.save(filename); 
+    }
+  }
+
+  /* ------------ INITIALISATION ------------ */
+  planningData = loadLocal() || await loadServer();
+  if(!planningData){ alert("Impossible de charger le planning"); return; }
+  if(!planningData.title) planningData.title = "Planning TPL";
+  
+  planningData.weeks.forEach((w, i) => recalcTimesForWeek(i)); 
+  
+  populateWeekSelect();
+  renderWeek(currentWeekIndex);
+
+}); // DOMContentLoaded
