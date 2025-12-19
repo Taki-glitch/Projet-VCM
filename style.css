@@ -1,4 +1,4 @@
-/* style.css — Version Esthétique & Responsive VCM */
+/* style.css — Version Esthétique & Responsive VCM avec bouton flottant (FAB) */
 
 :root {
   --bg: #f8f9fa;
@@ -13,9 +13,9 @@
   --section3: #fff1f2; /* Vie Chrétienne */
   
   /* Couleurs Actions */
-  --primary: #4f46e5; /* Indigo (PDF) */
+  --primary: #4f46e5; /* Indigo (PDF / FAB) */
   --success: #10b981; /* Vert (Save) */
-  --danger: #ef4444;  /* Rouge (Reset) */
+  --danger: #ef4444;  /* Rouge (Reset / Close) */
   
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   color: var(--text);
@@ -30,392 +30,12 @@ body {
   margin: 0;
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
-  padding-bottom: 40px;
+  padding-bottom: 80px; /* Espace pour le bouton flottant sur mobile */
 }
 
 /* -----------------------------
    TOPBAR & NAVIGATION
 --------------------------------*/
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 20px;
-  background: #fff;
-  border-bottom: 1px solid var(--border);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.brand {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.logo {
-  width: 56px;
-  height: 56px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: #fff;
-}
-
-.brand h1 {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 700;
-}
-
-.subtitle {
-  font-size: 0.85rem;
-  color: var(--muted);
-  margin-top: 2px;
-}
-
-/* -----------------------------
-   CONTROLES (BOUTONS)
---------------------------------*/
-.controls {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-/* Style de base des boutons et selects */
-.controls select, 
-.controls button {
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-  white-space: nowrap;
-}
-
-/* Effet clic */
-.controls button:active { transform: scale(0.97); }
-
-/* Selecteur de semaine */
-.controls select {
-  background-color: #f0f4f8;
-  border-color: #dbe2e8;
-  color: #333;
-  max-width: 250px;
-}
-
-/* Boutons Standards (Gris) */
-.controls button {
-  background: #fff;
-  border: 1px solid var(--border);
-  color: #444;
-}
-.controls button:hover { background: #f9f9f9; border-color: #ccc; }
-
-/* Bouton PDF (Principal) */
-#pdfBtn {
-  background-color: var(--primary);
-  color: white;
-  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
-}
-#pdfBtn:hover { background-color: #4338ca; }
-
-/* Bouton Save (Succès) */
-#saveBtn {
-  background-color: var(--success);
-  color: white;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
-}
-#saveBtn:hover { background-color: #059669; }
-
-/* Bouton Reset (Danger léger) */
-#resetBtn {
-  color: var(--danger);
-  border-color: #fee2e2;
-  background: #fef2f2;
-}
-#resetBtn:hover { background: #fee2e2; }
-
-
-/* -----------------------------
-   MAIN CONTENT
---------------------------------*/
-main {
-  max-width: 1100px;
-  margin: 24px auto;
-  padding: 0 16px;
-}
-
-#meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.dateDisplay {
-  font-weight: 700;
-  font-size: 1.1rem;
-}
-
-#infoText {
-  font-size: 0.85rem;
-  color: var(--muted);
-}
-
-#planning {
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-  border: 1px solid var(--border);
-  background: var(--card);
-}
-
-/* -----------------------------
-   LIGNES & GRID (Alignement Tableur)
---------------------------------*/
-.row {
-  display: grid;
-  /* Grille Desktop: Heure | Thème | Durée | Pers/Note */
-  grid-template-columns: 80px 1fr 70px 280px; 
-  gap: 12px;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-  background: var(--card);
-  align-items: start;
-}
-
-/* Couleurs des sections (Gradients VCM) */
-.row.section-1 { background: linear-gradient(90deg, var(--section1), #ffffff); }
-.row.section-2 { background: linear-gradient(90deg, var(--section2), #ffffff); }
-.row.section-3 { background: linear-gradient(90deg, var(--section3), #ffffff); }
-
-.time {
-  font-weight: 700;
-  color: var(--muted);
-  font-feature-settings: "tnum";
-  font-variant-numeric: tabular-nums;
-}
-
-/* Conteneur Personne/Note */
-.personNoteContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-/* Champs éditables */
-.theme, .duration, .person, .note {
-  padding: 6px 8px;
-  border-radius: 6px;
-  min-height: 24px;
-  line-height: 1.4;
-  transition: background 0.2s;
-}
-
-.theme { font-weight: 500; }
-.person { font-weight: 700; color: #000; }
-
-.note {
-  font-size: 13px;
-  font-style: italic;
-  color: #555;
-  background: rgba(0,0,0,0.03);
-}
-
-.duration {
-  text-align: center;
-  background: rgba(0,0,0,0.03);
-  font-size: 0.9rem;
-}
-
-/* Focus */
-.editable { cursor: text; }
-.editable:focus {
-  outline: 2px solid var(--primary);
-  background: #fff;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.sectionTitle {
-  padding: 12px 16px;
-  font-weight: 800;
-  text-transform: uppercase;
-  font-size: 0.9rem;
-  background: #eaeaea;
-  border-bottom: 1px solid var(--border);
-  letter-spacing: 0.5px;
-  color: #444;
-}
-
-/* -----------------------------
-   LABELS AUTOMATIQUES (VCM)
---------------------------------*/
-.person[data-role="student"]::before {
-  content: "Учащийся: ";
-  color: var(--muted);
-  font-weight: normal;
-  font-size: 0.9em;
-  margin-right: 4px;
-  user-select: none;
-}
-
-.note[data-role="assistant"]::before {
-  content: "Помощник: ";
-  color: var(--muted);
-  font-weight: bold;
-  font-style: normal;
-  font-size: 0.9em;
-  margin-right: 4px;
-  user-select: none;
-}
-
-/* -----------------------------
-   RESPONSIVE (Mobile & Tablette)
---------------------------------*/
-@media (max-width: 900px) {
-  
-  /* Transformation du Header en mode "App" */
-  .topbar {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 12px;
-    gap: 16px;
-  }
-
-  .brand {
-    justify-content: center;
-    text-align: center;
-  }
-  .brand .subtitle { display: none; } /* On cache le sous-titre sur mobile pour gagner de la place */
-
-  /* Grille de boutons ergonomique */
-  .controls {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* 2 colonnes */
-    gap: 10px;
-    width: 100%;
-  }
-
-  /* Le selecteur prend toute la largeur */
-  #weekSelect {
-    grid-column: 1 / -1;
-    text-align: center;
-    max-width: none;
-    padding: 12px;
-  }
-
-  /* PDF est l'action principale, on le met en évidence */
-  #pdfBtn {
-    grid-column: 1 / -1;
-    order: 10; /* Tout en bas */
-    padding: 14px;
-    font-size: 16px;
-  }
-
-  /* Ajustement de la grille du planning */
-  .row {
-    grid-template-columns: 60px 1fr 50px; /* Heure | Theme | Durée */
-    /* La colonne Personne passe à la ligne suivante */
-    gap: 8px;
-  }
-  
-  /* La colonne 4 (Personne/Note) prend toute la largeur en dessous */
-  .personNoteContainer {
-    grid-column: 2 / -1; /* Commence col 2, va jusqu'à la fin */
-    margin-top: -4px;
-  }
-
-  .time { font-size: 0.9rem; }
-  .duration { font-size: 0.85rem; }
-}
-
-@media (max-width: 480px) {
-    /* Sur très petit écran, le bouton Save et Reset prennent aussi toute la largeur si besoin, 
-       ou restent cote à cote. Ici on garde cote à cote pour gagner de la place verticale. */
-}
-
-/* -----------------------------
-   DARK MODE
---------------------------------*/
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #121212;
-    --card: #1e1e1e;
-    --text: #e0e0e0;
-    --muted: #a0a0a0;
-    --border: #333;
-    
-    /* Gradients assombris */
-    --section1: #1a2e2c; 
-    --section2: #2e2a1a;
-    --section3: #2e1a1c;
-  }
-
-  .topbar { background: #1e1e1e; }
-  .logo { background: #fff; opacity: 0.9; } /* Logo reste clair */
-  
-  .controls select {
-    background: #2c2c2c;
-    border-color: #444;
-    color: #fff;
-  }
-  
-  /* Boutons standard Dark */
-  .controls button {
-    background: #2c2c2c;
-    border-color: #444;
-    color: #ddd;
-  }
-  .controls button:hover { background: #383838; }
-
-  /* Actions conservent leur teinte mais adaptées */
-  #pdfBtn { background-color: #4f46e5; color: #fff; border: none; }
-  #saveBtn { background-color: #059669; color: #fff; border: none; }
-  #resetBtn { background: #3f1a1a; color: #f87171; border-color: #5c2b2b; }
-
-  .sectionTitle { background: #252525; color: #ccc; }
-  
-  .row.section-1 { background: linear-gradient(90deg, var(--section1), var(--card)); }
-  .row.section-2 { background: linear-gradient(90deg, var(--section2), var(--card)); }
-  .row.section-3 { background: linear-gradient(90deg, var(--section3), var(--card)); }
-  
-  .note, .duration { background: rgba(255,255,255,0.05); color: #ccc; }
-  .person { color: #fff; }
-  
-  .editable:focus { background: #2a2a2a; }
-}
-
-/* style.css — Version Esthétique & Responsive VCM */
-
-:root {
-  --bg: #f8f9fa;
-  --card: #ffffff;
-  --text: #222;
-  --muted: #666;
-  --border: #e0e0e0;
-  --section1: #e6f7f5;
-  --section2: #fff7e6;
-  --section3: #fff1f2;
-  --primary: #4f46e5;
-  --success: #10b981;
-  --danger: #ef4444;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-  color: var(--text);
-}
-
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); padding-bottom: 40px; }
-
 .topbar {
   display: flex;
   justify-content: space-between;
@@ -429,15 +49,45 @@ body { margin: 0; background: var(--bg); padding-bottom: 40px; }
 }
 
 .brand { display: flex; gap: 12px; align-items: center; }
-.logo { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
-.brand h1 { margin: 0; font-size: 1.2rem; font-weight: 700; }
-.subtitle { font-size: 0.85rem; color: var(--muted); }
 
-/* CONTROLES */
-.controls { display: flex; gap: 10px; align-items: center; }
-.button-group { display: flex; gap: 10px; }
+.logo {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
 
-.controls select, .controls button, .button-group button {
+.brand h1 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* -----------------------------
+   CONTROLES (DESKTOP)
+--------------------------------*/
+.controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.button-group {
+  display: flex;
+  gap: 8px;
+}
+
+.controls select, 
+.controls button,
+.button-group button {
   padding: 10px 14px;
   border-radius: 8px;
   border: 1px solid var(--border);
@@ -449,58 +99,174 @@ body { margin: 0; background: var(--bg); padding-bottom: 40px; }
   background: #fff;
 }
 
-#pdfBtn { background-color: var(--primary); color: white; border: none; }
-#saveBtn { background-color: var(--success); color: white; border: none; }
-#resetBtn { color: var(--danger); background: #fef2f2; border-color: #fee2e2; }
+.controls select { padding-right: 30px; }
 
-/* FAB TOGGLE (Caché par défaut sur Desktop) */
+/* Styles spécifiques boutons */
+#pdfBtn { background-color: var(--primary); color: white; border: none; }
+#pdfBtn:hover { background-color: #4338ca; transform: translateY(-1px); }
+
+#saveBtn { background-color: var(--success); color: white; border: none; }
+#saveBtn:hover { background-color: #059669; }
+
+#resetBtn { color: var(--danger); background: #fef2f2; border-color: #fee2e2; }
+#resetBtn:hover { background: #fee2e2; }
+
+/* Bouton flottant (caché sur Desktop) */
 .fab-toggle { display: none; }
 
-/* PLANNING GRID */
-main { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
-#planning { border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.06); border: 1px solid var(--border); background: var(--card); }
-
-.row { display: grid; grid-template-columns: 80px 1fr 70px 280px; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); align-items: start; }
-.row.section-1 { background: linear-gradient(90deg, var(--section1), #ffffff); }
-.row.section-2 { background: linear-gradient(90deg, var(--section2), #ffffff); }
-.row.section-3 { background: linear-gradient(90deg, var(--section3), #ffffff); }
-
-.time { font-weight: 700; color: var(--muted); }
-.editable:focus { outline: 2px solid var(--primary); background: #fff; }
-.sectionTitle { padding: 12px 16px; font-weight: 800; text-transform: uppercase; font-size: 0.9rem; background: #eaeaea; color: #444; }
-
-/* RESPONSIVE MOBILE */
-@media (max-width: 900px) {
-  .topbar { padding: 10px; }
-  .brand .subtitle { display: none; }
-  
-  /* Logique du Menu "+" */
-  .fab-toggle {
-    display: flex; align-items: center; justify-content: center;
-    width: 44px; height: 44px; border-radius: 50%;
-    background: var(--primary); color: white; font-size: 24px; border: none;
-  }
-  .fab-toggle.active { transform: rotate(45deg); background: var(--danger); }
-
-  .button-group {
-    display: none;
-    flex-direction: column;
-    position: absolute; top: 65px; right: 10px;
-    background: white; padding: 10px; border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.2); border: 1px solid var(--border);
-    width: 220px; z-index: 1000;
-  }
-  .button-group.show { display: flex; }
-  .button-group button { width: 100%; text-align: left; margin-bottom: 5px; }
-
-  .row { grid-template-columns: 60px 1fr 50px; }
-  .personNoteContainer { grid-column: 2 / -1; }
+/* -----------------------------
+   PLANNING GRID
+--------------------------------*/
+main {
+  max-width: 1100px;
+  margin: 24px auto;
+  padding: 0 16px;
 }
 
-/* DARK MODE */
+#planning {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 80px 1fr 70px 280px;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  align-items: start;
+}
+
+.row:last-child { border-bottom: none; }
+
+/* Couleurs de fond par section */
+.row.section-1 { background: linear-gradient(90deg, var(--section1) 0%, #ffffff 100%); }
+.row.section-2 { background: linear-gradient(90deg, var(--section2) 0%, #ffffff 100%); }
+.row.section-3 { background: linear-gradient(90deg, var(--section3) 0%, #ffffff 100%); }
+
+.time { font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.theme { font-weight: 600; line-height: 1.4; }
+.duration { color: var(--muted); font-size: 0.9rem; text-align: center; }
+
+.personNoteContainer { display: flex; flex-direction: column; gap: 2px; }
+.person { font-weight: 700; color: #111; }
+.note { font-size: 0.85rem; color: var(--muted); font-style: italic; }
+
+.sectionTitle {
+  padding: 14px 16px;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  background: #f1f1f1;
+  color: #444;
+  border-bottom: 1px solid var(--border);
+}
+
+.editable:focus {
+  outline: 2px solid var(--primary);
+  background: rgba(255,255,255,0.8);
+  border-radius: 4px;
+}
+
+/* -----------------------------
+   RESPONSIVE (MOBILE)
+--------------------------------*/
+@media (max-width: 900px) {
+  .topbar { padding: 10px 15px; }
+  .brand .subtitle { display: none; }
+
+  /* On cache les boutons d'édition de la topbar pour le mobile */
+  .button-group { display: none; } 
+  #changeChairmanBtn, #changeDateBtn, #changeScriptureBtn, #resetBtn, #saveBtn, #pdfBtn {
+      display: none; 
+  }
+
+  /* Le bouton flottant devient le centre d'action */
+  .fab-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    bottom: 25px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    font-size: 32px;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    z-index: 2000;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .fab-toggle.active {
+    transform: rotate(45deg);
+    background: var(--danger);
+  }
+
+  /* Le menu qui surgit du bouton "+" */
+  .button-group.show {
+    display: flex;
+    flex-direction: column-reverse;
+    position: fixed;
+    bottom: 95px;
+    right: 20px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 12px;
+    gap: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    z-index: 1999;
+    width: 220px;
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .button-group.show button {
+    display: block; /* On les réaffiche dans le menu */
+    width: 100%;
+    text-align: left;
+    padding: 12px;
+    border: 1px solid #eee;
+  }
+
+  /* Adaptation de la grille planning pour petits écrans */
+  .row {
+    grid-template-columns: 65px 1fr 50px;
+    gap: 8px;
+    padding: 12px;
+  }
+  .personNoteContainer { grid-column: 2 / -1; margin-top: 4px; border-top: 1px dashed #eee; padding-top: 6px; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* -----------------------------
+   DARK MODE
+--------------------------------*/
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --muted: #a0a0a0; --border: #333; --section1: #1a2e2c; --section2: #2e2a1a; --section3: #2e1a1c; }
-  .topbar, .button-group { background: #1e1e1e; }
-  .controls select, .button-group button { background: #2c2c2c; color: #fff; border-color: #444; }
-  .sectionTitle { background: #252525; color: #ccc; }
+  :root {
+    --bg: #121212;
+    --card: #1e1e1e;
+    --text: #e0e0e0;
+    --muted: #a0a0a0;
+    --border: #333;
+    --section1: #1a2e2c; 
+    --section2: #2e2a1a;
+    --section3: #2e1a1c;
+  }
+
+  .topbar, .button-group.show { background: #1e1e1e; }
+  .sectionTitle { background: #252525; color: #aaa; }
+  .controls select, .button-group button { background: #2c2c2c; border-color: #444; color: #fff; }
+  .person { color: #fff; }
 }
