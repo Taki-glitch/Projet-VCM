@@ -43,16 +43,18 @@
     <small>Version A4 — Export PDF 2 semaines par page</small>
   </footer>
 
-  <button id="fabToggle" class="fab-toggle" title="Actions">+</button>
-  
-  <div id="buttonGroup" class="button-group">
-    <button id="changeChairmanBtn">👤 Modifier Président</button>
-    <button id="changeDateBtn">📅 Modifier Date</button>
-    <button id="changeScriptureBtn">📖 Modifier Lecture</button> 
-    <hr style="border:0; border-top:1px solid #eee; margin:5px 0;">
-    <button id="resetBtn" class="btn-danger">🔄 Reset (Serveur)</button>
-    <button id="saveBtn" class="btn-success">💾 Sauvegarder</button>
-    <button id="pdfBtn" class="btn-primary">📄 Exporter PDF</button>
+  <div class="fab-container" id="fabContainer">
+    <div id="buttonGroup" class="button-group">
+      <button id="pdfBtn" class="btn-primary">📄 Exporter PDF</button>
+      <button id="saveBtn" class="btn-success">💾 Sauvegarder</button>
+      <button id="changeChairmanBtn">👤 Président</button>
+      <button id="changeDateBtn">📅 Date</button>
+      <button id="changeScriptureBtn">📖 Lecture</button> 
+      <hr style="border:0; border-top:1px solid #eee; margin:5px 0; width: 100%;">
+      <button id="resetBtn" class="btn-danger">🔄 Reset (Serveur)</button>
+    </div>
+    
+    <button id="fabToggle" class="fab-toggle" title="Actions">+</button>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
