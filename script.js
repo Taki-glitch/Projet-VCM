@@ -1,5 +1,3 @@
-/* script.js — Version avec Style PDF Restauré et Menu Flottant */
-
 document.addEventListener("DOMContentLoaded", async () => {
   const PLANNING_KEY = "planning_tpl_full_v1";
   const FONT_KEY = "roboto_base64_v1";
@@ -17,13 +15,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   let currentWeekIndex = 0;
   let ROBOTO_BASE64 = localStorage.getItem(FONT_KEY);
 
-  // --- LOGIQUE DU MENU ---
+  // --- LOGIQUE DU MENU FLOTTANT ---
   elements.fabToggle.onclick = (e) => {
     e.stopPropagation();
     elements.buttonGroup.classList.toggle("show");
     elements.fabToggle.classList.toggle("active");
   };
-
   document.onclick = () => {
     elements.buttonGroup.classList.remove("show");
     elements.fabToggle.classList.remove("active");
@@ -43,31 +40,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     localStorage.setItem(PLANNING_KEY, JSON.stringify(planningData));
   }
 
-  // --- RENDU ET CALCULS ---
-  function recalcTimes() {
-    planningData.weeks.forEach((week) => {
-      let flat = [];
-      week.sections.forEach(s => s.items.forEach(it => flat.push(it)));
-      for (let i = 1; i < flat.length; i++) {
-        let [h, m] = flat[i - 1].time.split(":").map(Number);
-        let total = h * 60 + m + (parseInt(flat[i - 1].duration) || 0);
-        flat[i].time = `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
-      }
-    });
-  }
-
-  window.updateData = (s, i, field, val) => {
-    planningData.weeks[currentWeekIndex].sections[s].items[i][field] = val;
-    saveLocal();
-  };
-
-  window.updateDuration = (s, i, val) => {
-    planningData.weeks[currentWeekIndex].sections[s].items[i].duration = parseInt(val) || 0;
-    recalcTimes();
-    renderWeek();
-    saveLocal();
-  };
-
+  // --- RENDU ÉCRAN ---
   function renderWeek() {
     const week = planningData.weeks[currentWeekIndex];
     elements.dateDisplay.textContent = `${week.date} — Председатель: ${week.chairman}`;
@@ -90,7 +63,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.planning.innerHTML = html;
   }
 
-  // --- LOGIQUE PDF (STYLE RESTAURÉ) ---
+  window.updateData = (s, i, field, val) => {
+    planningData.weeks[currentWeekIndex].sections[s].items[i][field] = val.trim();
+    saveLocal();
+  };
+
+  // --- LOGIQUE PDF AVANCÉE (STYLE & FILTRAGE) ---
   async function loadRoboto() {
     if (ROBOTO_BASE64) return;
     const resp = await fetch(ROBOTO_TTF_URL);
@@ -112,121 +90,105 @@ document.addEventListener("DOMContentLoaded", async () => {
     const weeks = planningData.weeks;
     for (let i = 0; i < weeks.length; i += 2) {
       if (i > 0) doc.addPage();
-      drawWeekPDF(doc, weeks[i], 40); // Première semaine en haut
+      renderWeekPDF(doc, 40, weeks[i]); // Semaine du haut
       if (weeks[i + 1]) {
         doc.setDrawColor(200);
-        doc.line(40, 415, 555, 415); // Ligne de séparation
-        drawWeekPDF(doc, weeks[i + 1], 435); // Deuxième semaine en bas
+        doc.line(40, 418, 555, 418); // Ligne de séparation médiane
+        renderWeekPDF(doc, 435, weeks[i + 1]); // Semaine du bas
       }
     }
 
-    if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
-      doc.save("planning_vcm.pdf");
-    } else {
-      document.getElementById("pdfPreviewContainer").style.display = "block";
-      document.getElementById("pdfPreview").src = doc.output("bloburl");
-    }
+    const blobUrl = doc.output("bloburl");
+    document.getElementById("pdfPreviewContainer").style.display = "block";
+    document.getElementById("pdfPreview").src = blobUrl;
+    if (/Android|iPhone|iPad/i.test(navigator.userAgent)) doc.save("VCM_Program.pdf");
   }
 
-  function drawWeekPDF(doc, week, startY) {
+  function renderWeekPDF(doc, startY, week) {
     let y = startY;
-    
-    // Titre et En-tête
+
+    // En-tête de la semaine
     doc.setFontSize(11);
     doc.setTextColor(0);
     doc.text(week.date, 40, y);
     doc.setFontSize(9);
-    doc.setTextColor(100);
+    doc.setTextColor(80);
     doc.text(`${week.scripture}  |  Председатель: ${week.chairman}`, 40, y + 15);
-    
     y += 30;
 
-    // Tableau
-    week.sections.forEach((sec, sIdx) => {
-      // Titre de section (optionnel)
-      if (sec.title) {
-        doc.setFillColor(240);
-        doc.rect(40, y, 515, 15, 'F');
-        doc.setFontSize(8);
-        doc.setTextColor(50);
-        doc.text(sec.title.toUpperCase(), 45, y + 10);
-        y += 15;
-      }
+    const col = { time: 40, theme: 85, dur: 340, pers: 400 };
+    const colors = [[230, 247, 245], [255, 247, 230], [255, 241, 242]]; // Sections colors
 
-      sec.items.forEach(it => {
+    week.sections.forEach((sec, sIdx) => {
+      // Filtrer les items : on n'affiche que ceux qui ont un thème ou une personne
+      const visibleItems = sec.items.filter(it => it.theme.trim() !== "" || (it.person && it.person.trim() !== ""));
+      
+      if (visibleItems.length === 0) return; // Saute la section si elle est vide
+
+      // Fond de titre de section
+      doc.setFillColor(245, 245, 245);
+      doc.rect(40, y, 515, 14, 'F');
+      doc.setFontSize(8);
+      doc.setTextColor(60);
+      if (sec.title) doc.text(sec.title.toUpperCase(), 45, y + 10);
+      y += 14;
+
+      visibleItems.forEach(it => {
+        // Fond de ligne coloré selon la section
+        doc.setFillColor(...colors[sIdx % 3]);
+        doc.rect(40, y, 515, 18, 'F');
+        
         doc.setFontSize(9);
         doc.setTextColor(0);
-        
-        // Colonne Temps
-        doc.text(it.time, 40, y + 10);
-        
-        // Colonne Thème (avec retour à la ligne automatique)
-        let themeText = (it.part ? it.part + " " : "") + it.theme;
-        let splitTheme = doc.splitTextToSize(themeText, 250);
-        doc.text(splitTheme, 85, y + 10);
-        
-        // Colonne Durée
-        doc.text(`${it.duration} мин`, 345, y + 10);
-        
-        // Colonne Personne
+        doc.text(it.time, col.time + 2, y + 12);
+
+        // Thème avec retour à la ligne
+        let txt = (it.part ? it.part + " " : "") + it.theme;
+        let splitTxt = doc.splitTextToSize(txt, 240);
+        doc.text(splitTxt, col.theme, y + 12);
+
+        // Durée
+        doc.setFontSize(8);
+        doc.setTextColor(100);
+        doc.text(`${it.duration} мин`, col.dur, y + 12);
+
+        // Personne et Note
+        doc.setFontSize(9);
+        doc.setTextColor(0);
         doc.setFont(undefined, 'bold');
-        doc.text(it.person || "", 400, y + 10);
+        doc.text(it.person || "", col.pers, y + 12);
         doc.setFont(undefined, 'normal');
-        
-        // Note en dessous du nom
+
         if (it.note) {
           doc.setFontSize(7);
-          doc.setTextColor(120);
-          doc.text(it.note, 400, y + 18);
+          doc.setTextColor(100);
+          doc.text(it.note, col.pers, y + 22);
         }
 
-        // Ligne de séparation horizontale fine
-        doc.setDrawColor(235);
-        let rowHeight = splitTheme.length > 1 ? 25 : 20;
-        y += rowHeight;
+        let rowStep = splitTxt.length > 1 ? 28 : 22;
+        y += rowStep;
+
+        // Petite ligne de séparation
+        doc.setDrawColor(220);
         doc.line(40, y, 555, y);
+        y += 2;
       });
-      y += 5; // Espace entre sections
+      y += 4; // Espace entre sections
     });
   }
 
-  // --- BRANCHEMENT BOUTONS ---
+  // --- BOUTONS ---
   document.getElementById("pdfBtn").onclick = async () => {
-    const b = document.getElementById("pdfBtn");
-    b.textContent = "⌛...";
     await loadRoboto();
     exportPDF();
-    b.textContent = "📄 Exporter PDF";
   };
-
-  document.getElementById("saveBtn").onclick = () => {
-    saveLocal();
-    alert("Enregistré !");
-  };
-
-  document.getElementById("resetBtn").onclick = async () => {
-    if (confirm("Réinitialiser ?")) {
-      localStorage.removeItem(PLANNING_KEY);
-      location.reload();
-    }
-  };
-
-  document.getElementById("changeChairmanBtn").onclick = () => {
-    const val = prompt("Président :", planningData.weeks[currentWeekIndex].chairman);
-    if (val) { planningData.weeks[currentWeekIndex].chairman = val; renderWeek(); saveLocal(); }
-  };
-
-  document.getElementById("changeDateBtn").onclick = () => {
-    const val = prompt("Date :", planningData.weeks[currentWeekIndex].date);
-    if (val) { planningData.weeks[currentWeekIndex].date = val; renderWeek(); saveLocal(); }
-  };
+  document.getElementById("saveBtn").onclick = () => { saveLocal(); alert("OK"); };
 
   // --- INIT ---
   planningData = await loadData();
   if (planningData) {
     elements.weekSelect.innerHTML = planningData.weeks.map((w, i) => `<option value="${i}">${w.date}</option>`).join("");
     elements.weekSelect.onchange = (e) => { currentWeekIndex = parseInt(e.target.value); renderWeek(); };
-    recalcTimes();
     renderWeek();
   }
 });
