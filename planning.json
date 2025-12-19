@@ -4,13 +4,13 @@
   "weeks": [
     {
       "date": "СРЕДА, 3 ДЕКАБРЯ 2025 Г.",
-      "scripture": "ИСАЙЯ 3—5",
-      "chairman": "Голенищев А.",
+      "scripture": "...",
+      "chairman": "...",
       "sections": [
         {
           "title": null,
           "items": [
-            {"time":"19:00","theme":"Песня 135","duration":5,"role":"Молитва","person":"Комаров Д."},
+            {"time":"19:00","theme":"Песня ...","duration":5,"role":"Молитва","person":"..."},
             {"time":"19:05","theme":"Вступительные слова","duration":1,"role":null,"person":""}
           ]
         },
@@ -18,30 +18,30 @@
           "title":"СОКРОВИЩА ИЗ СЛОВА БОГА",
           "location":"Главный зал",
           "items":[
-            {"time":"19:06","part":"1.","theme":"Иегова вправе требовать от нас послушания","duration":10,"person":"Надёжа А.","note":null},
-            {"time":"19:16","part":"2.","theme":"Духовные жемчужины","duration":10,"person":"Цатурян М.","note":null},
-            {"time":"19:26","part":"3.","theme":"Чтение Библии","duration":4,"person":"Нганга Л.","note":" "}
+            {"time":"19:06","part":"1.","theme":"...","duration":10,"person":"...","note":null},
+            {"time":"19:16","part":"2.","theme":"Духовные жемчужины","duration":10,"person":"...","note":null},
+            {"time":"19:26","part":"3.","theme":"Чтение Библии","duration":4,"person":"...","note":" "}
           ]
         },
         {
           "title":"ОТТАЧИВАЕМ НАВЫКИ СЛУЖЕНИЯ",
           "location":"Главный зал",
           "items":[
-            {"time":"19:31","part":"4.","theme":"Начинайте разговор","duration":3,"person":"Григорева А.","note":"Помощник : Григорева А./Малява С."},
-            {"time":"19:35","part":"5.","theme":"Развивайте интерес","duration":4,"person":"Надёжа Н.","note":"Помощник : Надёжа Н./Федорова Е."},
-            {"time":"19:40","part":"6.","theme":"Подготавливайте учеников","duration":5,"person":"Гаврилюк Е.","note":"Помощник : Гаврилюк Е./Слипец А."},
-            {"time":"19:45","part":"7.","theme":"Дополнительный разбор","duration":4,"person":"Слипец А.","note":"Помощник : Слипец А./Валивахин В."}
+            {"time":"19:31","part":"4.","theme":"...","duration":3,"person":"...","note":"Помощник : ..."},
+            {"time":"19:35","part":"5.","theme":"...","duration":4,"person":"...","note":"Помощник : ..."},
+            {"time":"19:40","part":"6.","theme":"...","duration":5,"person":"...","note":"Помощник : ..."},
+            {"time":"19:45","part":"7.","theme":"...","duration":4,"person":"...","note":"Помощник : ..."}
           ]
         },
         {
           "title":"ХРИСТИАНСКАЯ ЖИЗНЬ",
           "items":[
-            {"time":"19:46","theme":"Песня 65","duration":4,"role":null,"person":""},
-            {"time":"19:50","part":"7.","theme":"Местные потребности : Комментарии радуют Иегову","duration":15,"person":"Соваж А."},
-            {"time":"20:05","part":"8.","theme":"Дополнительный доклад","duration":15,"person":"Валивахин В."},
-            {"time":"20:05","part":"9.","theme":"Изучение Библии в собрании","duration":30,"person":null,"note":"Ведущий/Чтец : Шейко А."},
-            {"time":"20:35","theme":"Заключительные слова","duration":3,"person":"Голенищев А."},
-            {"time":"20:38","theme":"Песня 4","duration":null,"role":"Молитва","person":"Кононов Ю."}
+            {"time":"19:46","theme":"Песня ...","duration":4,"role":null,"person":""},
+            {"time":"19:50","part":"7.","theme":"...","duration":15,"person":"..."},
+            {"time":"20:05","part":"8.","theme":"...","duration":15,"person":"..."},
+            {"time":"20:05","part":"9.","theme":"Изучение Библии в собрании","duration":30,"person":null,"note":"Ведущий/Чтец : ..."},
+            {"time":"20:35","theme":"Заключительные слова","duration":3,"person":"..."},
+            {"time":"20:38","theme":"Песня ...","duration":null,"role":"Молитва","person":"..."}
           ]
         }
       ]
@@ -49,13 +49,13 @@
 
     {
       "date": "СРЕДА, 10 ДЕКАБРЯ 2025 Г.",
-      "scripture": "ИСАЙЯ 6—8",
-      "chairman": "Клименчук М.",
+      "scripture": "...",
+      "chairman": "...",
       "sections": [
         {
           "title": null,
           "items":[
-            {"time":"19:00","theme":"Песня 75","duration":5,"role":"Молитва","person":"Пуансено Б."},
+            {"time":"19:00","theme":"Песня ...","duration":5,"role":"Молитва","person":"..."},
             {"time":"19:05","theme":"Вступительные слова","duration":1,"role":null,"person":""}
           ]
         },
@@ -63,30 +63,30 @@
           "title":"СОКРОВИЩА ИЗ СЛОВА БОГА",
           "location":"Главный зал",
           "items":[
-            {"time":"19:06","part":"1.","theme":"«Я готов! Пошли меня»","duration":10,"person":"Погосян Г."},
-            {"time":"19:16","part":"2.","theme":"Духовные жемчужины","duration":10,"person":"Слипец А."},
-            {"time":"19:26","part":"3.","theme":"Чтение Библии","duration":4,"person":"Благородов Р.","note":"Учащийся"}
+            {"time":"19:06","part":"1.","theme":"...","duration":10,"person":"..."},
+            {"time":"19:16","part":"2.","theme":"Духовные жемчужины","duration":10,"person":"..."},
+            {"time":"19:26","part":"3.","theme":"Чтение Библии","duration":4,"person":"...","note":"Учащийся"}
           ]
         },
         {
           "title":"ОТТАЧИВАЕМ НАВЫКИ СЛУЖЕНИЯ",
           "location":"Главный зал",
           "items":[
-            {"time":"19:31","part":"4.","theme":"Начинайте разговор","duration":3,"person":"","note":"Помощник : Пуаснено К./Сафиулина Н."},
-            {"time":"19:35","part":"5.","theme":"Развивайте интерес","duration":4,"person":"","note":"Помощник : Валивахина В./Халапова Л."},
-            {"time":"19:40","part":"6.","theme":"Развивайте интерес","duration":5,"person":"","note":"Помощник : Шейко Н./Науменко Н."},
-            {"time":"19:45","part":"7.","theme":"Дополнительный разбор","duration":4,"person":"","note":"Помощник : Н/Д"}
+            {"time":"19:31","part":"4.","theme":"...","duration":3,"person":"","note":"Помощник : ..."},
+            {"time":"19:35","part":"5.","theme":"...","duration":4,"person":"","note":"Помощник : ..."},
+            {"time":"19:40","part":"6.","theme":"...","duration":5,"person":"","note":"Помощник : ..."},
+            {"time":"19:45","part":"7.","theme":"...","duration":4,"person":"","note":"Помощник : ..."}
           ]
         },
         {
           "title":"ХРИСТИАНСКАЯ ЖИЗНЬ",
           "items":[
-            {"time":"19:46","theme":"Песня 83","duration":4,"person":""},
-            {"time":"19:50","part":"7.","theme":"Проповедь по домам — наша отличительная черта","duration":15,"person":"Староселец Н."},
-            {"time":"20:05","part":"8.","theme":"Дополнительный доклад","duration":15,"person":"Н/Д"},
-            {"time":"20:05","part":"9.","theme":"Изучение Библии в собрании","duration":30,"person":"Карапетян А.","note":"Ведущий/Чтец : Карапетян А./Науменко Р."},
-            {"time":"20:35","theme":"Заключительные слова","duration":3,"person":"Клименчук М."},
-            {"time":"20:38","theme":"Песня 123","duration":4,"person":"Маня В.","note":"Молитва : Маня В."}
+            {"time":"19:46","theme":"Песня ...","duration":4,"person":""},
+            {"time":"19:50","part":"7.","theme":"...","duration":15,"person":"..."},
+            {"time":"20:05","part":"8.","theme":"...","duration":15,"person":"..."},
+            {"time":"20:05","part":"9.","theme":"Изучение Библии в собрании","duration":30,"person":null,"note":"Ведущий/Чтец : ..."},
+            {"time":"20:35","theme":"Заключительные слова","duration":3,"person":"..."},
+            {"time":"20:38","theme":"Песня ...","duration":null,"role":"Молитва","person":"..."}
           ]
         }
       ]
@@ -94,43 +94,43 @@
 
     {
       "date": "СРЕДА, 17 ДЕКАБРЯ 2025 Г.",
-      "scripture": "ИСАЙЯ 9, 10",
-      "chairman": "Соваж А.",
+      "scripture": "...",
+      "chairman": "...",
       "sections": [
         {
           "title": null,
           "items":[
-            {"time":"19:00","theme":"Молитва","duration":1,"person":"Девин Т."},
+            {"time":"19:00","theme":"Молитва","duration":1,"person":"..."},
             {"time":"19:05","theme":"Вступительные слова","duration":1,"person":""}
           ]
         },
         {
           "title":"СОКРОВИЩА ИЗ СЛОВА БОГА",
           "items":[
-            {"time":"19:06","part":"1.","theme":"Пророчество о «великом свете»","duration":10,"person":"Пуансено Б."},
-            {"time":"19:16","part":"2.","theme":"Духовные жемчужины","duration":10,"person":"Садоев Т."},
-            {"time":"19:26","part":"3.","theme":"Чтение Библии","duration":4,"person":"Мелконян А.","note":"Учащийся"}
+            {"time":"19:06","part":"1.","theme":"...","duration":10,"person":"..."},
+            {"time":"19:16","part":"2.","theme":"Духовные жемчужины","duration":10,"person":"..."},
+            {"time":"19:26","part":"3.","theme":"Чтение Библии","duration":4,"person":"...","note":"Учащийся"}
           ]
         },
         {
           "title":"ОТТАЧИВАЕМ НАВЫКИ СЛУЖЕНИЯ",
           "items":[
-            {"time":"19:31","part":"4.","theme":"Начинайте разговор","duration":3,"person":"","note":"Помощник : Соваж О./Смирнова Н."},
-            {"time":"19:35","part":"5.","theme":"Развивайте интерес","duration":4,"person":"","note":"Помощник : Садоева Э./Карапетян Т."},
-            {"time":"19:40","part":"6.","theme":"Объясняйте свои взгляды","duration":5,"person":"","note":"Помощник : Комаров Д./Комарова С."},
-            {"time":"19:45","part":"7.","theme":"Дополнительный разбор","duration":4,"person":"","note":"Помощник : Н/Д"}
+            {"time":"19:31","part":"4.","theme":"...","duration":3,"person":"","note":"Помощник : ..."},
+            {"time":"19:35","part":"5.","theme":"...","duration":4,"person":"","note":"Помощник : ..."},
+            {"time":"19:40","part":"6.","theme":"...","duration":5,"person":"","note":"Помощник : ..."},
+            {"time":"19:45","part":"7.","theme":"...","duration":4,"person":"","note":"Помощник : ..."}
           ]
         },
         {
           "title":"ХРИСТИАНСКАЯ ЖИЗНЬ",
           "items":[
-            {"time":"19:46","theme":"Песня 95","duration":4,"person":""},
-            {"time":"19:50","part":"7.","theme":"Свет становится ярче","duration":5,"person":"Маня В."},
-            {"time":"19:55","part":"8.","theme":"«Чего достигла наша организация» (декабрь)","duration":10,"person":"Соваж А."},
-            {"time":"20:05","part":"9.","theme":"Дополнительный доклад","duration":15,"person":"Н/Д"},
-            {"time":"20:05","part":"10.","theme":"Изучение Библии в собрании","duration":30,"person":"Жуковский Д.","note":"Ведущий/Чтец : Жуковский Д./Слипец А."},
-            {"time":"20:35","theme":"Заключительные слова","duration":3,"person":"Соваж А."},
-            {"time":"20:38","theme":"Молитва","duration":1,"person":"Надёжа А."}
+            {"time":"19:46","theme":"Песня ...","duration":4,"person":""},
+            {"time":"19:50","part":"7.","theme":"...","duration":5,"person":"..."},
+            {"time":"19:55","part":"8.","theme":"...","duration":10,"person":"..."},
+            {"time":"20:05","part":"9.","theme":"...","duration":15,"person":"..."},
+            {"time":"20:05","part":"10.","theme":"Изучение Библии в собрании","duration":30,"person":"...","note":"Ведущий/Чтец : ..."},
+            {"time":"20:35","theme":"Заключительные слова","duration":3,"person":"..."},
+            {"time":"20:38","theme":"Песня ...","duration":null,"role":"Молитва","person":"..."}
           ]
         }
       ]
@@ -138,42 +138,42 @@
 
     {
       "date": "СРЕДА, 24 ДЕКАБРЯ 2025 Г.",
-      "scripture": "ИСАЙЯ 11—13",
-      "chairman": "Валивахин В.",
+      "scripture": "...",
+      "chairman": "...",
       "sections": [
         {
           "title": null,
           "items":[
-            {"time":"19:00","theme":"Молитва","duration":1,"person":"Комаров Д."},
+            {"time":"19:00","theme":"Молитва","duration":1,"person":"..."},
             {"time":"19:05","theme":"Вступительные слова","duration":1,"person":""}
           ]
         },
         {
           "title":"СОКРОВИЩА ИЗ СЛОВА БОГА",
           "items":[
-            {"time":"19:06","part":"1.","theme":"Библейские пророчества о Мессии","duration":10,"person":"Клименчук М."},
-            {"time":"19:16","part":"2.","theme":"Духовные жемчужины","duration":10,"person":"Мелконян С."},
-            {"time":"19:26","part":"3.","theme":"Чтение Библии","duration":4,"person":"Карапетян Арс.","note":"Учащийся"}
+            {"time":"19:06","part":"1.","theme":"...","duration":10,"person":"..."},
+            {"time":"19:16","part":"2.","theme":"Духовные жемчужины","duration":10,"person":"..."},
+            {"time":"19:26","part":"3.","theme":"Чтение Библии","duration":4,"person":"...","note":"Учащийся"}
           ]
         },
         {
           "title":"ОТТАЧИВАЕМ НАВЫКИ СЛУЖЕНИЯ",
           "items":[
-            {"time":"19:31","part":"4.","theme":"Начинайте разговор","duration":3,"person":"","note":"Помощник : Орлова К./Левченко Я."},
-            {"time":"19:35","part":"5.","theme":"Развивайте интерес","duration":4,"person":"","note":"Помощник : Шимшит К./Староселец И."},
-            {"time":"19:40","part":"6.","theme":"Подготавливайте учеников","duration":5,"person":"","note":"Помощник : Гаврилюк М./Валивахин Г."},
-            {"time":"19:45","part":"7.","theme":"Дополнительный разбор","duration":4,"person":"","note":"Помощник : Н/Д"}
+            {"time":"19:31","part":"4.","theme":"...","duration":3,"person":"","note":"Помощник : ..."},
+            {"time":"19:35","part":"5.","theme":"...","duration":4,"person":"","note":"Помощник : ..."},
+            {"time":"19:40","part":"6.","theme":"...","duration":5,"person":"","note":"Помощник : ..."},
+            {"time":"19:45","part":"7.","theme":"...","duration":4,"person":"","note":"Помощник : ..."}
           ]
         },
         {
           "title":"ХРИСТИАНСКАЯ ЖИЗНЬ",
           "items":[
-            {"time":"19:46","theme":"Песня 57","duration":4,"person":""},
-            {"time":"19:50","part":"7.","theme":"Судите ли вы праведно?","duration":15,"person":"Науменко Р."},
-            {"time":"20:05","part":"8.","theme":"Дополнительный доклад","duration":15,"person":"Н/Д"},
-            {"time":"20:05","part":"9.","theme":"Изучение Библии в собрании","duration":30,"person":"Староселец Н.","note":"Ведущий/Чтец : Староселец Н./Мелконян С."},
-            {"time":"20:35","theme":"Заключительные слова","duration":3,"person":"Валивахин В."},
-            {"time":"20:38","theme":"Песня 12","duration":4,"person":"Мукулу Ш.","note":"Молитва : Мукулу Ш."}
+            {"time":"19:46","theme":"Песня ...","duration":4,"person":""},
+            {"time":"19:50","part":"7.","theme":"...","duration":15,"person":"..."},
+            {"time":"20:05","part":"8.","theme":"...","duration":15,"person":"..."},
+            {"time":"20:05","part":"9.","theme":"Изучение Библии в собрании","duration":30,"person":"...","note":"Ведущий/Чтец : ..."},
+            {"time":"20:35","theme":"Заключительные слова","duration":3,"person":"..."},
+            {"time":"20:38","theme":"Песня ...","duration":null,"role":"Молитва","person":"..."}
           ]
         }
       ]
