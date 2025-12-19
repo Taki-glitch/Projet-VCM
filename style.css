@@ -1,272 +1,102 @@
-/* style.css — Version Esthétique & Responsive VCM avec bouton flottant (FAB) */
-
 :root {
   --bg: #f8f9fa;
   --card: #ffffff;
   --text: #222;
   --muted: #666;
   --border: #e0e0e0;
-  
-  /* Couleurs Sections VCM */
-  --section1: #e6f7f5; /* Trésors */
-  --section2: #fff7e6; /* Ottachivaem */
-  --section3: #fff1f2; /* Vie Chrétienne */
-  
-  /* Couleurs Actions */
-  --primary: #4f46e5; /* Indigo (PDF / FAB) */
-  --success: #10b981; /* Vert (Save) */
-  --danger: #ef4444;  /* Rouge (Reset / Close) */
-  
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  color: var(--text);
+  --section1: #e6f7f5;
+  --section2: #fff7e6;
+  --section3: #fff1f2;
+  --primary: #4f46e5;
+  --success: #10b981;
+  --danger: #ef4444;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* -----------------------------
-   RESET & BODY
---------------------------------*/
 * { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 100px; }
 
-body {
-  margin: 0;
-  background: var(--bg);
-  -webkit-font-smoothing: antialiased;
-  padding-bottom: 80px; /* Espace pour le bouton flottant sur mobile */
-}
-
-/* -----------------------------
-   TOPBAR & NAVIGATION
---------------------------------*/
+/* TOPBAR */
 .topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 20px;
-  background: #fff;
-  border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 20px; background: #fff; border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
 }
-
 .brand { display: flex; gap: 12px; align-items: center; }
+.logo { width: 50px; height: 50px; border-radius: 8px; border: 1px solid var(--border); }
+.brand h1 { margin: 0; font-size: 1.1rem; }
+.subtitle { font-size: 0.8rem; color: var(--muted); }
 
-.logo {
-  width: 56px;
-  height: 56px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid var(--border);
+/* SELECT */
+#weekSelect {
+  padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);
+  font-size: 14px; cursor: pointer; max-width: 200px;
 }
 
-.brand h1 {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.subtitle {
-  font-size: 0.85rem;
-  color: var(--muted);
-  font-weight: 500;
-}
-
-/* -----------------------------
-   CONTROLES (DESKTOP)
---------------------------------*/
-.controls {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.button-group {
-  display: flex;
-  gap: 8px;
-}
-
-.controls select, 
-.controls button,
-.button-group button {
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background: #fff;
-}
-
-.controls select { padding-right: 30px; }
-
-/* Styles spécifiques boutons */
-#pdfBtn { background-color: var(--primary); color: white; border: none; }
-#pdfBtn:hover { background-color: #4338ca; transform: translateY(-1px); }
-
-#saveBtn { background-color: var(--success); color: white; border: none; }
-#saveBtn:hover { background-color: #059669; }
-
-#resetBtn { color: var(--danger); background: #fef2f2; border-color: #fee2e2; }
-#resetBtn:hover { background: #fee2e2; }
-
-/* Bouton flottant (caché sur Desktop) */
-.fab-toggle { display: none; }
-
-/* -----------------------------
-   PLANNING GRID
---------------------------------*/
-main {
-  max-width: 1100px;
-  margin: 24px auto;
-  padding: 0 16px;
-}
-
-#planning {
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  border: 1px solid var(--border);
-  background: var(--card);
+/* PLANNING GRID */
+main { max-width: 1000px; margin: 20px auto; padding: 0 15px; }
+#planning { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+.sectionTitle {
+  padding: 12px 16px; background: #f1f1f1; font-weight: bold; font-size: 0.85rem;
+  text-transform: uppercase; border-bottom: 1px solid var(--border);
 }
 
 .row {
-  display: grid;
-  grid-template-columns: 80px 1fr 70px 280px;
-  gap: 12px;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-  align-items: start;
+  display: grid; grid-template-columns: 70px 1fr 60px 250px;
+  gap: 15px; padding: 12px 16px; border-bottom: 1px solid var(--border);
 }
+.row.section-1 { background: linear-gradient(90deg, var(--section1), #fff); }
+.row.section-2 { background: linear-gradient(90deg, var(--section2), #fff); }
+.row.section-3 { background: linear-gradient(90deg, var(--section3), #fff); }
 
-.row:last-child { border-bottom: none; }
-
-/* Couleurs de fond par section */
-.row.section-1 { background: linear-gradient(90deg, var(--section1) 0%, #ffffff 100%); }
-.row.section-2 { background: linear-gradient(90deg, var(--section2) 0%, #ffffff 100%); }
-.row.section-3 { background: linear-gradient(90deg, var(--section3) 0%, #ffffff 100%); }
-
-.time { font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
-.theme { font-weight: 600; line-height: 1.4; }
-.duration { color: var(--muted); font-size: 0.9rem; text-align: center; }
-
-.personNoteContainer { display: flex; flex-direction: column; gap: 2px; }
-.person { font-weight: 700; color: #111; }
+.time { font-weight: bold; color: var(--muted); }
+.editable:focus { outline: 2px solid var(--primary); background: #fff; border-radius: 4px; }
+.person { font-weight: bold; }
 .note { font-size: 0.85rem; color: var(--muted); font-style: italic; }
 
-.sectionTitle {
-  padding: 14px 16px;
-  font-weight: 800;
-  text-transform: uppercase;
-  font-size: 0.85rem;
-  letter-spacing: 0.05em;
-  background: #f1f1f1;
-  color: #444;
-  border-bottom: 1px solid var(--border);
+/* UNIVERSAL FAB (Floating Action Button) */
+.fab-toggle {
+  position: fixed; bottom: 30px; right: 30px;
+  width: 60px; height: 60px; border-radius: 50%;
+  background: var(--primary); color: white; border: none;
+  font-size: 30px; cursor: pointer; z-index: 2000;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.fab-toggle.active { transform: rotate(45deg); background: var(--danger); }
+
+.button-group {
+  position: fixed; bottom: 100px; right: 30px;
+  background: var(--card); border: 1px solid var(--border);
+  padding: 15px; border-radius: 16px; display: none;
+  flex-direction: column-reverse; gap: 10px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 1999;
+  width: 240px; animation: slideUp 0.3s ease-out;
+}
+.button-group.show { display: flex; }
+.button-group button {
+  padding: 12px; border-radius: 8px; border: 1px solid var(--border);
+  background: #fff; text-align: left; cursor: pointer; font-weight: 600;
+}
+.button-group button:hover { background: #f5f5f5; }
+
+/* COLORS */
+.btn-success { color: var(--success) !important; }
+.btn-danger { color: var(--danger) !important; }
+.btn-primary { background: var(--primary) !important; color: white !important; }
+
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* RESPONSIVE */
+@media (max-width: 800px) {
+  .row { grid-template-columns: 60px 1fr 45px; }
+  .personNoteContainer { grid-column: 1 / -1; padding-top: 5px; border-top: 1px dashed #eee; }
 }
 
-.editable:focus {
-  outline: 2px solid var(--primary);
-  background: rgba(255,255,255,0.8);
-  border-radius: 4px;
-}
-
-/* -----------------------------
-   RESPONSIVE (MOBILE)
---------------------------------*/
-@media (max-width: 900px) {
-  .topbar { padding: 10px 15px; }
-  .brand .subtitle { display: none; }
-
-  /* On cache les boutons d'édition de la topbar pour le mobile */
-  .button-group { display: none; } 
-  #changeChairmanBtn, #changeDateBtn, #changeScriptureBtn, #resetBtn, #saveBtn, #pdfBtn {
-      display: none; 
-  }
-
-  /* Le bouton flottant devient le centre d'action */
-  .fab-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: fixed;
-    bottom: 25px;
-    right: 20px;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: var(--primary);
-    color: white;
-    font-size: 32px;
-    border: none;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    z-index: 2000;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .fab-toggle.active {
-    transform: rotate(45deg);
-    background: var(--danger);
-  }
-
-  /* Le menu qui surgit du bouton "+" */
-  .button-group.show {
-    display: flex;
-    flex-direction: column-reverse;
-    position: fixed;
-    bottom: 95px;
-    right: 20px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 12px;
-    gap: 10px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-    z-index: 1999;
-    width: 220px;
-    animation: slideUp 0.3s ease-out;
-  }
-
-  .button-group.show button {
-    display: block; /* On les réaffiche dans le menu */
-    width: 100%;
-    text-align: left;
-    padding: 12px;
-    border: 1px solid #eee;
-  }
-
-  /* Adaptation de la grille planning pour petits écrans */
-  .row {
-    grid-template-columns: 65px 1fr 50px;
-    gap: 8px;
-    padding: 12px;
-  }
-  .personNoteContainer { grid-column: 2 / -1; margin-top: 4px; border-top: 1px dashed #eee; padding-top: 6px; }
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* -----------------------------
-   DARK MODE
---------------------------------*/
+/* DARK MODE */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #121212;
-    --card: #1e1e1e;
-    --text: #e0e0e0;
-    --muted: #a0a0a0;
-    --border: #333;
-    --section1: #1a2e2c; 
-    --section2: #2e2a1a;
-    --section3: #2e1a1c;
-  }
-
-  .topbar, .button-group.show { background: #1e1e1e; }
-  .sectionTitle { background: #252525; color: #aaa; }
-  .controls select, .button-group button { background: #2c2c2c; border-color: #444; color: #fff; }
-  .person { color: #fff; }
+  :root { --bg: #121212; --card: #1e1e1e; --text: #eee; --border: #333; }
+  .topbar, .sectionTitle { background: #1e1e1e; }
+  .button-group { background: #1e1e1e; }
+  .button-group button { background: #2a2a2a; color: white; border-color: #444; }
 }
