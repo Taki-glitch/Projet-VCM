@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#ffffff">
   <title>Программа встречи — editable</title>
-
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -21,18 +20,24 @@
 
     <div class="controls">
       <select id="weekSelect" title="Sélectionner une semaine"></select>
-      <button id="changeChairmanBtn">Modifier Président</button>
-      <button id="changeDateBtn">Modifier Date</button>
-      <button id="changeScriptureBtn">Modifier Lecture</button> <button id="resetBtn">Reset → server</button>
-      <button id="saveBtn">Sauvegarder (local)</button>
-      <button id="pdfBtn">Exporter PDF</button>
+      
+      <button id="fabToggle" class="fab-toggle" title="Actions">+</button>
+
+      <div id="buttonGroup" class="button-group">
+        <button id="changeChairmanBtn">Modifier Président</button>
+        <button id="changeDateBtn">Modifier Date</button>
+        <button id="changeScriptureBtn">Modifier Lecture</button> 
+        <button id="resetBtn">Reset → server</button>
+        <button id="saveBtn">Sauvegarder (local)</button>
+        <button id="pdfBtn">Exporter PDF</button>
+      </div>
     </div>
   </header>
 
   <main>
     <section id="meta">
       <div id="dateDisplay" class="dateDisplay"></div>
-      <div id="infoText">Cliquez sur un champ pour éditer (thème, durée, personne, note). Les modifications sont locales.</div>
+      <div id="infoText">Cliquez sur un champ pour éditer. Les modifications sont locales.</div>
     </section>
 
     <section id="planning" aria-live="polite"></section>
@@ -54,7 +59,7 @@
   <script>
     document.getElementById('siteLogo').addEventListener('error', (e) => {
         e.target.style.display = 'none';
-        console.warn("Logo (logo.jpeg) non trouvé, masqué.");
+        console.warn("Logo non trouvé.");
     });
   </script>
 </body>
