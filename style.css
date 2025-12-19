@@ -1,4 +1,4 @@
-/* style.css — Version Esthétique & Responsive VCM */
+/* style.css — Version Intégrale avec Couleurs Originales et Correctif FAB */
 
 :root {
   --bg: #f8f9fa;
@@ -7,22 +7,22 @@
   --muted: #666;
   --border: #e0e0e0;
   
-  /* Couleurs Sections VCM */
-  --section1: #e6f7f5; /* Trésors */
-  --section2: #fff7e6; /* Ottachivaem */
-  --section3: #fff1f2; /* Vie Chrétienne */
+  /* Couleurs Sections VCM ORIGINALES */
+  --section1: #e6f7f5; 
+  --section2: #fff7e6; 
+  --section3: #fff1f2; 
   
-  /* Couleurs Actions */
-  --primary: #4f46e5; /* Indigo (PDF) */
-  --success: #10b981; /* Vert (Save) */
-  --danger: #ef4444;  /* Rouge (Reset) */
+  /* Couleurs Actions ORIGINALES */
+  --primary: #4f46e5; 
+  --success: #10b981; 
+  --danger: #ef4444;  
   
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   color: var(--text);
 }
 
 /* -----------------------------
-   RESET & BODY
+   RESET & STRUCTURE
 --------------------------------*/
 * { box-sizing: border-box; }
 
@@ -30,12 +30,10 @@ body {
   margin: 0;
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
-  padding-bottom: 100px; /* Augmenté pour laisser de la place au bouton flottant */
+  padding-bottom: 150px; /* Plus d'espace pour le bouton flottant */
 }
 
-/* -----------------------------
-   TOPBAR & NAVIGATION
---------------------------------*/
+/* TOPBAR */
 .topbar {
   display: flex;
   justify-content: space-between;
@@ -46,82 +44,27 @@ body {
   box-shadow: 0 2px 4px rgba(0,0,0,0.03);
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 1000; /* Priorité haute */
 }
 
-.brand {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
+.brand { display: flex; gap: 12px; align-items: center; }
+.logo { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
+.brand h1 { margin: 0; font-size: 1.2rem; font-weight: 700; }
+.subtitle { font-size: 0.85rem; color: var(--muted); }
 
-.logo {
-  width: 56px;
-  height: 56px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: #fff;
-}
-
-.brand h1 {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 700;
-}
-
-.subtitle {
-  font-size: 0.85rem;
-  color: var(--muted);
-  margin-top: 2px;
-}
-
-/* -----------------------------
-   CONTROLES (HEADER)
---------------------------------*/
-.controls {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
+/* CONTROLES HEADER */
 .controls select {
   padding: 10px 14px;
   border-radius: 8px;
   border: 1px solid #dbe2e8;
-  font-family: inherit;
-  font-size: 14px;
   background-color: #f0f4f8;
-  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
 }
 
-/* -----------------------------
-   MAIN CONTENT
---------------------------------*/
-main {
-  max-width: 1100px;
-  margin: 24px auto;
-  padding: 0 16px;
-}
-
-#meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.dateDisplay {
-  font-weight: 700;
-  font-size: 1.1rem;
-}
-
-#infoText {
-  font-size: 0.85rem;
-  color: var(--muted);
-}
+/* PLANNING */
+main { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+.dateDisplay { font-weight: 700; font-size: 1.1rem; margin-bottom: 15px; }
 
 #planning {
   border-radius: 12px;
@@ -131,86 +74,61 @@ main {
   background: var(--card);
 }
 
-/* -----------------------------
-   LIGNES & GRID
---------------------------------*/
+/* GRILLE DU TABLEUR */
 .row {
   display: grid;
   grid-template-columns: 80px 1fr 70px 280px; 
   gap: 12px;
-  padding: 12px 16px;
+  padding: 14px 16px;
   border-bottom: 1px solid var(--border);
   background: var(--card);
   align-items: start;
 }
 
+/* COULEURS DES SECTIONS */
 .row.section-1 { background: linear-gradient(90deg, var(--section1), #ffffff); }
 .row.section-2 { background: linear-gradient(90deg, var(--section2), #ffffff); }
 .row.section-3 { background: linear-gradient(90deg, var(--section3), #ffffff); }
 
-.time {
-  font-weight: 700;
-  color: var(--muted);
-}
+.time { font-weight: 700; color: var(--muted); }
+.personNoteContainer { display: flex; flex-direction: column; gap: 6px; }
 
-.personNoteContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.theme, .duration, .person, .note {
-  padding: 6px 8px;
-  border-radius: 6px;
-  min-height: 24px;
-  line-height: 1.4;
+.theme, .duration, .person, .note { 
+  padding: 6px 8px; 
+  border-radius: 6px; 
+  min-height: 24px; 
 }
 
 .theme { font-weight: 500; }
 .person { font-weight: 700; color: #000; }
+.note { font-size: 13px; font-style: italic; background: rgba(0,0,0,0.03); color: #555; }
+.duration { text-align: center; background: rgba(0,0,0,0.03); font-size: 0.9rem; }
 
-.note {
-  font-size: 13px;
-  font-style: italic;
-  color: #555;
-  background: rgba(0,0,0,0.03);
+.editable:focus { 
+  outline: 2px solid var(--primary); 
+  background: #fff; 
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
 }
 
-.duration {
-  text-align: center;
-  background: rgba(0,0,0,0.03);
-  font-size: 0.9rem;
-}
-
-.editable:focus {
-  outline: 2px solid var(--primary);
-  background: #fff;
-}
-
-.sectionTitle {
-  padding: 12px 16px;
-  font-weight: 800;
+.sectionTitle { 
+  padding: 12px 16px; 
+  font-weight: 800; 
+  background: #eaeaea; 
+  font-size: 0.9rem; 
   text-transform: uppercase;
-  font-size: 0.9rem;
-  background: #eaeaea;
-  border-bottom: 1px solid var(--border);
   color: #444;
 }
 
 /* -----------------------------
-   LABELS AUTOMATIQUES
---------------------------------*/
-.person[data-role="student"]::before { content: "Учащийся: "; color: var(--muted); font-weight: normal; }
-.note[data-role="assistant"]::before { content: "Помощник: "; color: var(--muted); font-weight: bold; }
-
-/* -----------------------------
-   BOUTON FLOTTANT (FAB SYSTEM)
+   SYSTÈME BOUTON FLOTTANT (FAB)
 --------------------------------*/
 .fab-container {
-  position: fixed; /* Fixé par rapport à la fenêtre */
-  bottom: 30px;    /* 30px du bas */
-  right: 30px;     /* 30px de la droite */
-  z-index: 9999;   /* Toujours au dessus */
+  position: fixed !important;
+  bottom: 25px !important;
+  right: 25px !important;
+  top: auto !important; /* Neutralise toute erreur précédente */
+  left: auto !important;
+  z-index: 9999 !important;
   display: flex;
   flex-direction: column-reverse;
   align-items: flex-end;
@@ -230,13 +148,10 @@ main {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.fab-container.open .fab-toggle {
-  transform: rotate(135deg);
-  background-color: #3730a3;
-}
+.fab-container.open .fab-toggle { transform: rotate(135deg); background-color: #3730a3; }
 
 .button-group {
   display: flex;
@@ -248,10 +163,10 @@ main {
   transition: all 0.3s ease;
 }
 
-.fab-container.open .button-group {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
+.fab-container.open .button-group { 
+  opacity: 1; 
+  visibility: visible; 
+  transform: translateY(0); 
 }
 
 .button-group button {
@@ -260,36 +175,30 @@ main {
   border: none;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  font-size: 14px;
   white-space: nowrap;
   font-family: inherit;
-  font-size: 14px;
+  transition: background 0.2s;
 }
 
-/* Couleurs spécifiques boutons FAB */
+/* COULEURS DES BOUTONS FAB */
 #pdfBtn { background-color: var(--primary); color: white; }
 #saveBtn { background-color: var(--success); color: white; }
-#resetBtn { background-color: #fff; color: var(--danger); border: 1px solid #fee2e2; }
-
-/* -----------------------------
-   RESPONSIVE
---------------------------------*/
-@media (max-width: 900px) {
-  .topbar { flex-direction: column; gap: 10px; text-align: center; }
-  .row { grid-template-columns: 60px 1fr 50px; }
-  .personNoteContainer { grid-column: 2 / -1; }
-  .fab-container { bottom: 20px; right: 20px; } /* Un peu plus serré sur mobile */
+#resetBtn { background-color: #fef2f2; color: var(--danger); border: 1px solid #fee2e2; }
+#changeChairmanBtn, #changeDateBtn, #changeScriptureBtn { 
+  background-color: #ffffff; 
+  color: #444; 
+  border: 1px solid #ccc; 
 }
 
-/* -----------------------------
-   DARK MODE
---------------------------------*/
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --border: #333;
-    --section1: #1a2e2c; --section2: #2e2a1a; --section3: #2e1a1c;
-  }
-  .topbar, .button-group button { background: #1e1e1e; color: #fff; }
-  .sectionTitle { background: #252525; }
-  #resetBtn { background: #2a1a1a; }
+#pdfBtn:hover { background-color: #4338ca; }
+#saveBtn:hover { background-color: #059669; }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .row { grid-template-columns: 60px 1fr 50px; }
+  .personNoteContainer { grid-column: 2 / -1; margin-top: -4px; }
+  .topbar { flex-direction: column; gap: 10px; text-align: center; }
+  .fab-container { bottom: 15px !important; right: 15px !important; }
 }
