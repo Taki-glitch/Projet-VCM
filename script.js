@@ -1,3 +1,5 @@
+/* script.js — Version avec Style PDF Restauré et Menu Flottant */
+
 document.addEventListener("DOMContentLoaded", async () => {
   const PLANNING_KEY = "planning_tpl_full_v1";
   const FONT_KEY = "roboto_base64_v1";
@@ -15,19 +17,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   let currentWeekIndex = 0;
   let ROBOTO_BASE64 = localStorage.getItem(FONT_KEY);
 
-  // --- MENU ACTIONS ---
-  elements.fabToggle.addEventListener("click", (e) => {
+  // --- LOGIQUE DU MENU ---
+  elements.fabToggle.onclick = (e) => {
     e.stopPropagation();
     elements.buttonGroup.classList.toggle("show");
     elements.fabToggle.classList.toggle("active");
-  });
+  };
 
-  document.addEventListener("click", () => {
+  document.onclick = () => {
     elements.buttonGroup.classList.remove("show");
     elements.fabToggle.classList.remove("active");
-  });
+  };
 
-  // --- GESTION DES DONNÉES ---
+  // --- CHARGEMENT ---
   async function loadData() {
     const local = localStorage.getItem(PLANNING_KEY);
     if (local) return JSON.parse(local);
@@ -41,9 +43,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     localStorage.setItem(PLANNING_KEY, JSON.stringify(planningData));
   }
 
-  // --- RECALCUL ET RENDU ---
+  // --- RENDU ET CALCULS ---
   function recalcTimes() {
-    planningData.weeks.forEach((week, wIdx) => {
+    planningData.weeks.forEach((week) => {
       let flat = [];
       week.sections.forEach(s => s.items.forEach(it => flat.push(it)));
       for (let i = 1; i < flat.length; i++) {
@@ -55,14 +57,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   window.updateData = (s, i, field, val) => {
-    const week = planningData.weeks[currentWeekIndex];
-    week.sections[s].items[i][field] = val;
+    planningData.weeks[currentWeekIndex].sections[s].items[i][field] = val;
     saveLocal();
   };
 
   window.updateDuration = (s, i, val) => {
-    const num = parseInt(val) || 0;
-    planningData.weeks[currentWeekIndex].sections[s].items[i].duration = num;
+    planningData.weeks[currentWeekIndex].sections[s].items[i].duration = parseInt(val) || 0;
     recalcTimes();
     renderWeek();
     saveLocal();
@@ -90,21 +90,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.planning.innerHTML = html;
   }
 
-  // --- LOGIQUE PDF ---
+  // --- LOGIQUE PDF (STYLE RESTAURÉ) ---
   async function loadRoboto() {
     if (ROBOTO_BASE64) return;
-    try {
-      const resp = await fetch(ROBOTO_TTF_URL);
-      const ab = await resp.arrayBuffer();
-      const binary = String.fromCharCode(...new Uint8Array(ab));
-      ROBOTO_BASE64 = btoa(binary);
-      localStorage.setItem(FONT_KEY, ROBOTO_BASE64);
-    } catch (e) { console.error("Erreur police Roboto", e); }
+    const resp = await fetch(ROBOTO_TTF_URL);
+    const ab = await resp.arrayBuffer();
+    ROBOTO_BASE64 = btoa(String.fromCharCode(...new Uint8Array(ab)));
+    localStorage.setItem(FONT_KEY, ROBOTO_BASE64);
   }
 
   function exportPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ unit: "pt", format: "a4" });
+    
     if (ROBOTO_BASE64) {
       doc.addFileToVFS("Roboto.ttf", ROBOTO_BASE64);
       doc.addFont("Roboto.ttf", "Roboto", "normal");
@@ -114,64 +112,116 @@ document.addEventListener("DOMContentLoaded", async () => {
     const weeks = planningData.weeks;
     for (let i = 0; i < weeks.length; i += 2) {
       if (i > 0) doc.addPage();
-      drawWeekPDF(doc, weeks[i], 40);
+      drawWeekPDF(doc, weeks[i], 40); // Première semaine en haut
       if (weeks[i + 1]) {
         doc.setDrawColor(200);
-        doc.line(40, 420, 550, 420);
-        drawWeekPDF(doc, weeks[i + 1], 440);
+        doc.line(40, 415, 555, 415); // Ligne de séparation
+        drawWeekPDF(doc, weeks[i + 1], 435); // Deuxième semaine en bas
       }
     }
-    
+
     if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
-        doc.save("planning.pdf");
+      doc.save("planning_vcm.pdf");
     } else {
-        document.getElementById("pdfPreviewContainer").style.display = "block";
-        document.getElementById("pdfPreview").src = doc.output("bloburl");
+      document.getElementById("pdfPreviewContainer").style.display = "block";
+      document.getElementById("pdfPreview").src = doc.output("bloburl");
     }
   }
 
-  function drawWeekPDF(doc, week, y) {
-    doc.setFontSize(12); doc.text(week.date, 40, y);
-    doc.setFontSize(10); doc.text(week.scripture + " | Председатель: " + week.chairman, 40, y + 15);
-    let currentY = y + 35;
-    week.sections.forEach(sec => {
+  function drawWeekPDF(doc, week, startY) {
+    let y = startY;
+    
+    // Titre et En-tête
+    doc.setFontSize(11);
+    doc.setTextColor(0);
+    doc.text(week.date, 40, y);
+    doc.setFontSize(9);
+    doc.setTextColor(100);
+    doc.text(`${week.scripture}  |  Председатель: ${week.chairman}`, 40, y + 15);
+    
+    y += 30;
+
+    // Tableau
+    week.sections.forEach((sec, sIdx) => {
+      // Titre de section (optionnel)
+      if (sec.title) {
+        doc.setFillColor(240);
+        doc.rect(40, y, 515, 15, 'F');
+        doc.setFontSize(8);
+        doc.setTextColor(50);
+        doc.text(sec.title.toUpperCase(), 45, y + 10);
+        y += 15;
+      }
+
       sec.items.forEach(it => {
-        if(currentY > y + 360) return; 
         doc.setFontSize(9);
-        doc.text(it.time, 40, currentY);
-        let txt = (it.part ? it.part + " " : "") + it.theme + " (" + it.duration + " мин)";
-        doc.text(doc.splitTextToSize(txt, 300), 80, currentY);
-        doc.text(it.person || "", 400, currentY);
-        currentY += 15;
+        doc.setTextColor(0);
+        
+        // Colonne Temps
+        doc.text(it.time, 40, y + 10);
+        
+        // Colonne Thème (avec retour à la ligne automatique)
+        let themeText = (it.part ? it.part + " " : "") + it.theme;
+        let splitTheme = doc.splitTextToSize(themeText, 250);
+        doc.text(splitTheme, 85, y + 10);
+        
+        // Colonne Durée
+        doc.text(`${it.duration} мин`, 345, y + 10);
+        
+        // Colonne Personne
+        doc.setFont(undefined, 'bold');
+        doc.text(it.person || "", 400, y + 10);
+        doc.setFont(undefined, 'normal');
+        
+        // Note en dessous du nom
+        if (it.note) {
+          doc.setFontSize(7);
+          doc.setTextColor(120);
+          doc.text(it.note, 400, y + 18);
+        }
+
+        // Ligne de séparation horizontale fine
+        doc.setDrawColor(235);
+        let rowHeight = splitTheme.length > 1 ? 25 : 20;
+        y += rowHeight;
+        doc.line(40, y, 555, y);
       });
-      currentY += 5;
+      y += 5; // Espace entre sections
     });
   }
 
-  // --- BOUTONS ---
+  // --- BRANCHEMENT BOUTONS ---
   document.getElementById("pdfBtn").onclick = async () => {
-    document.getElementById("pdfBtn").textContent = "⌛ Génération...";
+    const b = document.getElementById("pdfBtn");
+    b.textContent = "⌛...";
     await loadRoboto();
     exportPDF();
-    document.getElementById("pdfBtn").textContent = "📄 Exporter PDF";
+    b.textContent = "📄 Exporter PDF";
+  };
+
+  document.getElementById("saveBtn").onclick = () => {
+    saveLocal();
+    alert("Enregistré !");
+  };
+
+  document.getElementById("resetBtn").onclick = async () => {
+    if (confirm("Réinitialiser ?")) {
+      localStorage.removeItem(PLANNING_KEY);
+      location.reload();
+    }
   };
 
   document.getElementById("changeChairmanBtn").onclick = () => {
-    const val = prompt("Nom du Président :", planningData.weeks[currentWeekIndex].chairman);
-    if(val !== null) { planningData.weeks[currentWeekIndex].chairman = val; saveLocal(); renderWeek(); }
+    const val = prompt("Président :", planningData.weeks[currentWeekIndex].chairman);
+    if (val) { planningData.weeks[currentWeekIndex].chairman = val; renderWeek(); saveLocal(); }
   };
 
   document.getElementById("changeDateBtn").onclick = () => {
     const val = prompt("Date :", planningData.weeks[currentWeekIndex].date);
-    if(val !== null) { planningData.weeks[currentWeekIndex].date = val; saveLocal(); renderWeek(); }
+    if (val) { planningData.weeks[currentWeekIndex].date = val; renderWeek(); saveLocal(); }
   };
 
-  document.getElementById("changeScriptureBtn").onclick = () => {
-    const val = prompt("Lecture :", planningData.weeks[currentWeekIndex].scripture);
-    if(val !== null) { planningData.weeks[currentWeekIndex].scripture = val; saveLocal(); renderWeek(); }
-  };
-
-  // --- INITIALISATION ---
+  // --- INIT ---
   planningData = await loadData();
   if (planningData) {
     elements.weekSelect.innerHTML = planningData.weeks.map((w, i) => `<option value="${i}">${w.date}</option>`).join("");
