@@ -394,3 +394,89 @@ main {
   
   .editable:focus { background: #2a2a2a; }
 }
+
+/* --- FAB SYSTEM --- */
+.fab-container {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: 15px;
+}
+
+/* Le bouton principal "+" */
+.fab-toggle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  font-size: 30px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.2s;
+}
+
+.fab-toggle:hover {
+  background-color: #4338ca;
+  transform: scale(1.05);
+}
+
+/* Rotation du "+" quand ouvert */
+.fab-container.open .fab-toggle {
+  transform: rotate(135deg);
+  background-color: #3730a3;
+}
+
+/* Groupe de boutons masqué par défaut */
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+  pointer-events: none; /* Empêche de cliquer quand caché */
+}
+
+/* État ouvert du groupe */
+.fab-container.open .button-group {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Style des boutons dans le menu */
+.button-group button {
+  padding: 12px 20px;
+  border-radius: 30px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  white-space: nowrap;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Animation en cascade (optionnel) */
+.fab-container.open .button-group button {
+  animation: slideIn 0.3s ease forwards;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
