@@ -1,37 +1,39 @@
-/* style.css — Version Optimisée avec Menu Flottant */
+/* style.css — Version Intégrale avec Menu Flottant et Responsive VCM */
 
 :root {
-  /* Palette de couleurs */
+  /* Palette de couleurs VCM */
   --bg: #f8f9fa;
   --card: #ffffff;
   --text: #222;
   --muted: #666;
   --border: #e0e0e0;
   
-  /* Couleurs Sections VCM */
-  --section1: #e6f7f5; /* Trésors */
-  --section2: #fff7e6; /* Appliquer au ministère */
-  --section3: #fff1f2; /* Vie chrétienne */
+  /* Couleurs des Sections (Style Cahier Vie et Ministère) */
+  --section1: #e6f7f5; /* Trésors (Bleu/Vert) */
+  --section2: #fff7e6; /* Ministère (Jaune/Or) */
+  --section3: #fff1f2; /* Vie Chrétienne (Rose/Rouge) */
   
-  /* Actions */
-  --primary: #4f46e5;
-  --success: #10b981;
-  --danger: #ef4444;
+  /* Actions et Statuts */
+  --primary: #4f46e5; /* Indigo */
+  --success: #10b981; /* Vert */
+  --danger: #ef4444;  /* Rouge */
   
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
+/* --- BASES --- */
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  padding-bottom: 100px; /* Espace pour ne pas cacher le contenu derrière le bouton */
+  padding-bottom: 100px; /* Espace pour le bouton flottant */
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* --- TOPBAR --- */
+/* --- EN-TÊTE (TOPBAR) --- */
 .topbar {
   display: flex;
   justify-content: space-between;
@@ -42,76 +44,96 @@ body {
   position: sticky;
   top: 0;
   z-index: 1000;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
-.brand { display: flex; gap: 12px; align-items: center; }
-.logo { width: 50px; height: 50px; border-radius: 8px; border: 1px solid var(--border); object-fit: cover; }
-.brand h1 { margin: 0; font-size: 1.1rem; }
-.subtitle { font-size: 0.8rem; color: var(--muted); }
+.brand { display: flex; align-items: center; gap: 12px; }
+.logo { width: 42px; height: 42px; border-radius: 10px; object-fit: cover; }
+h1 { margin: 0; font-size: 1.1rem; font-weight: 800; letter-spacing: -0.5px; }
+.subtitle { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 600; }
 
-#weekSelect {
+.controls select {
   padding: 8px 12px;
   border-radius: 8px;
   border: 1px solid var(--border);
-  font-size: 14px;
+  font-weight: 600;
+  background: #f9f9f9;
   cursor: pointer;
-  background: white;
 }
 
-/* --- CONTENU PRINCIPAL --- */
-main {
-  max-width: 1000px;
-  margin: 20px auto;
-  padding: 0 15px;
+/* --- ZONE DE CONTENU --- */
+main { max-width: 900px; margin: 20px auto; padding: 0 15px; }
+
+.dateDisplay {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: 5px;
 }
 
-#meta { margin-bottom: 20px; }
-.dateDisplay { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; color: var(--primary); }
-#infoText { font-size: 0.85rem; color: var(--muted); }
+#infoText {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
 
 /* --- TABLEAU DE PLANNING --- */
 #planning {
   background: var(--card);
-  border-radius: 12px;
+  border-radius: 14px;
   border: 1px solid var(--border);
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
 
 .sectionTitle {
-  padding: 12px 16px;
   background: #f1f1f1;
-  font-weight: bold;
-  font-size: 0.85rem;
+  padding: 10px 15px;
+  font-size: 0.75rem;
+  font-weight: 800;
   text-transform: uppercase;
+  color: #555;
   border-bottom: 1px solid var(--border);
-  color: #444;
 }
 
 .row {
   display: grid;
-  grid-template-columns: 70px 1fr 60px 250px;
+  grid-template-columns: 70px 1fr 50px 220px;
   gap: 15px;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
+  padding: 12px 15px;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
   align-items: start;
 }
 
-/* Couleurs de sections */
-.row.section-1 { background: linear-gradient(90deg, var(--section1), #fff); }
-.row.section-2 { background: linear-gradient(90deg, var(--section2), #fff); }
-.row.section-3 { background: linear-gradient(90deg, var(--section3), #fff); }
+/* Couleurs alternées par section */
+.row.section-1 { background-color: var(--section1); }
+.row.section-2 { background-color: var(--section2); }
+.row.section-3 { background-color: var(--section3); }
 
-.time { font-weight: bold; color: var(--muted); font-size: 0.9rem; }
-.editable:focus { outline: 2px solid var(--primary); background: #fff; border-radius: 4px; padding: 2px; }
-.person { font-weight: bold; color: #111; }
-.note { font-size: 0.85rem; color: var(--muted); font-style: italic; }
+/* Champs éditables */
+.editable {
+  min-height: 1.2em;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+.editable:hover { background: rgba(255,255,255,0.5); cursor: text; }
+.editable:focus {
+  background: #fff;
+  outline: 2px solid var(--primary);
+  box-shadow: 0 0 8px rgba(79, 70, 229, 0.2);
+}
+
+.time { font-weight: 700; color: #444; font-variant-numeric: tabular-nums; }
+.duration { text-align: center; font-weight: 600; color: var(--muted); font-size: 0.9rem; }
+.person { font-weight: 700; color: #000; }
+.note { font-size: 0.8rem; color: var(--muted); margin-top: 2px; font-style: italic; }
 
 /* --- BOUTON FLOTTANT (FAB) --- */
 .fab-toggle {
   position: fixed;
-  bottom: 30px;
-  right: 30px;
+  bottom: 25px;
+  right: 25px;
   width: 60px;
   height: 60px;
   border-radius: 50%;
@@ -120,92 +142,94 @@ main {
   border: none;
   font-size: 30px;
   cursor: pointer;
-  z-index: 3000;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  z-index: 2000;
+  box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .fab-toggle.active {
   transform: rotate(45deg);
   background: var(--danger);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
 }
 
-/* --- MENU DES BOUTONS --- */
 .button-group {
   position: fixed;
-  bottom: 100px;
-  right: 30px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  padding: 15px;
+  bottom: 95px;
+  right: 25px;
+  background: white;
   border-radius: 16px;
+  padding: 12px;
   display: none;
-  flex-direction: column-reverse;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1999;
   box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-  z-index: 2999;
   width: 240px;
+  border: 1px solid var(--border);
   animation: slideUp 0.3s ease-out;
 }
 
 .button-group.show { display: flex; }
 
 .button-group button {
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: #fff;
   text-align: left;
-  cursor: pointer;
+  padding: 12px 15px;
+  border: none;
+  background: #f8f9fa;
+  border-radius: 10px;
   font-weight: 600;
   font-size: 0.9rem;
-  transition: background 0.2s;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.button-group button:hover { background: #f5f5f5; }
+.button-group button:hover { background: #eee; transform: translateX(5px); }
 
-/* Classes utilitaires pour les boutons */
-.btn-success { color: var(--success) !important; }
-.btn-danger { color: var(--danger) !important; }
-.btn-primary { background: var(--primary) !important; color: white !important; border: none !important; }
+/* Boutons spéciaux */
+.btn-success { color: white !important; background: var(--success) !important; }
+.btn-primary { color: white !important; background: var(--primary) !important; }
+.btn-danger { color: #fff !important; background: #666 !important; }
+.btn-danger:hover { background: var(--danger) !important; }
 
-/* --- RESPONSIVE --- */
-@media (max-width: 800px) {
+/* --- RESPONSIVE MOBILE --- */
+@media (max-width: 700px) {
+  .topbar h1 { font-size: 0.9rem; }
   .row {
-    grid-template-columns: 60px 1fr 45px;
+    grid-template-columns: 55px 1fr 45px;
   }
   .personNoteContainer {
     grid-column: 1 / -1;
-    padding-top: 8px;
-    border-top: 1px dashed #eee;
+    background: rgba(255,255,255,0.3);
+    padding: 8px;
+    border-radius: 8px;
     margin-top: 5px;
   }
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* --- MODE SOMBRE --- */
+/* --- MODE SOMBRE (DARK MODE) --- */
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #121212;
     --card: #1e1e1e;
-    --text: #eee;
+    --text: #e0e0e0;
+    --muted: #a0a0a0;
     --border: #333;
-    --section1: #1a2e2c;
+    --section1: #1a2e2c; 
     --section2: #2e2a1a;
     --section3: #2e1a1c;
   }
-  
-  .topbar, .sectionTitle { background: #1e1e1e; }
-  .button-group { background: #1e1e1e; }
-  .button-group button { background: #2a2a2a; color: white; border-color: #444; }
-  .button-group button:hover { background: #333; }
+  .topbar, .button-group { background: #1e1e1e; }
+  .button-group button { background: #2a2a2a; color: #eee; }
+  .sectionTitle { background: #252525; color: #888; }
+  .editable:focus { background: #2a2a2a; color: #fff; }
   .person { color: #fff; }
-  #weekSelect { background: #2a2a2a; color: white; border-color: #444; }
 }
