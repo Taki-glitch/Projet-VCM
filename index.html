@@ -28,43 +28,45 @@
   <main>
     <section id="meta">
       <div id="dateDisplay" class="dateDisplay"></div>
-      <div id="infoText">Cliquez sur un champ pour éditer. Les modifications sont enregistrées localement.</div>
+      <div id="infoText">
+        Cliquez sur un champ pour éditer. 
+        Les horaires et les modifications sont gérés en temps réel.
+      </div>
     </section>
 
     <section id="planning" aria-live="polite"></section>
 
-    <section id="pdfPreviewContainer" style="display:none;margin-top:20px;">
-      <h2>Предосмотр PDF (Prévisualisation)</h2>
-      <iframe id="pdfPreview" style="width:100%; height:600px; border:1px solid #ccc; border-radius: 12px;"></iframe>
+    <section id="pdfPreviewContainer" style="display:none; margin-top:30px;">
+      <hr>
+      <h2 style="text-align:center;">Предосмотр PDF</h2>
+      <iframe id="pdfPreview" style="width:100%; height:600px; border:1px solid #ccc; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"></iframe>
     </section>
   </main>
 
-  <footer>
-    <small>Version A4 — Export PDF 2 semaines par page</small>
+  <footer style="text-align: center; padding: 20px; color: #888;">
+    <small>VCM Planning Tool — Version A4 (2 semaines/page)</small>
   </footer>
 
-  <button id="fabToggle" class="fab-toggle" title="Actions">+</button>
+  <button id="fabToggle" class="fab-toggle" title="Ouvrir le menu">+</button>
   
   <div id="buttonGroup" class="button-group">
+    <p style="margin: 0 0 10px 5px; font-size: 0.75rem; color: #999; font-weight: bold; text-transform: uppercase;">Édition Rapide</p>
     <button id="changeChairmanBtn">👤 Modifier Président</button>
-    <button id="changeDateBtn">📅 Modifier Date</button>
+    <button id="changeDateBtn">📅 Modifier Date/Semaine</button>
     <button id="changeScriptureBtn">📖 Modifier Lecture</button> 
-    <hr style="border:0; border-top:1px solid #eee; margin:5px 0;">
+    
+    <div style="height: 1px; background: #eee; margin: 5px 0;"></div>
+    
+    <p style="margin: 5px 0 10px 5px; font-size: 0.75rem; color: #999; font-weight: bold; text-transform: uppercase;">Actions</p>
+    <button id="saveBtn" class="btn-success">💾 Sauvegarder Local</button>
+    <button id="pdfBtn" class="btn-primary">📄 Générer le PDF A4</button>
     <button id="resetBtn" class="btn-danger">🔄 Reset (Serveur)</button>
-    <button id="saveBtn" class="btn-success">💾 Sauvegarder</button>
-    <button id="pdfBtn" class="btn-primary">📄 Exporter PDF</button>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
   
   <script src="script.js"></script>
-
-  <script>
-    document.getElementById('siteLogo').addEventListener('error', function(e) {
-        e.target.style.display = 'none';
-    });
-  </script>
 
 </body>
 </html>
