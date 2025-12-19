@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#4f46e5">
-  <title>Программа встречи — VCM</title>
+  <title>НАНТ РУССКОЕ — Программа встречи</title>
   
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css" />
@@ -15,8 +15,8 @@
     <div class="brand">
       <img src="logo.jpeg" alt="logo" class="logo" id="siteLogo"/>
       <div>
-        <h1>Программа встречи</h1>
-        <div class="subtitle">Programme VCM</div>
+        <h1 id="mainTitle">НАНТ РУССКОЕ</h1>
+        <div class="subtitle">Программа встречи в будние дни</div>
       </div>
     </div>
 
@@ -29,38 +29,33 @@
     <section id="meta">
       <div id="dateDisplay" class="dateDisplay"></div>
       <div id="infoText">
-        Cliquez sur un champ pour éditer. 
-        Les horaires et les modifications sont gérés en temps réel.
+        Нажмите sur n'importe quel champ pour modifier le texte ou la durée.
       </div>
     </section>
 
     <section id="planning" aria-live="polite"></section>
 
     <section id="pdfPreviewContainer" style="display:none; margin-top:30px;">
-      <hr>
-      <h2 style="text-align:center;">Предосмотр PDF</h2>
-      <iframe id="pdfPreview" style="width:100%; height:600px; border:1px solid #ccc; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"></iframe>
+      <hr style="border:0; border-top: 2px solid #eee; margin-bottom: 20px;">
+      <h2 style="text-align:center; font-family: sans-serif; color: #444;">Предосмотр PDF</h2>
+      <iframe id="pdfPreview" style="width:100%; height:600px; border:1px solid #ccc; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);"></iframe>
     </section>
   </main>
 
-  <footer style="text-align: center; padding: 20px; color: #888;">
-    <small>VCM Planning Tool — Version A4 (2 semaines/page)</small>
-  </footer>
-
-  <button id="fabToggle" class="fab-toggle" title="Ouvrir le menu">+</button>
+  <button id="fabToggle" class="fab-toggle" title="Actions">+</button>
   
   <div id="buttonGroup" class="button-group">
-    <p style="margin: 0 0 10px 5px; font-size: 0.75rem; color: #999; font-weight: bold; text-transform: uppercase;">Édition Rapide</p>
-    <button id="changeChairmanBtn">👤 Modifier Président</button>
-    <button id="changeDateBtn">📅 Modifier Date/Semaine</button>
-    <button id="changeScriptureBtn">📖 Modifier Lecture</button> 
+    <p class="menu-label">ÉDITION GÉNÉRALE</p>
+    <button id="changeChairmanBtn">👤 Председатель</button>
+    <button id="changeDateBtn">📅 Изменить Дату</button>
+    <button id="changeScriptureBtn">📖 Изменить Чтение</button> 
     
-    <div style="height: 1px; background: #eee; margin: 5px 0;"></div>
+    <div class="menu-divider"></div>
     
-    <p style="margin: 5px 0 10px 5px; font-size: 0.75rem; color: #999; font-weight: bold; text-transform: uppercase;">Actions</p>
-    <button id="saveBtn" class="btn-success">💾 Sauvegarder Local</button>
-    <button id="pdfBtn" class="btn-primary">📄 Générer le PDF A4</button>
-    <button id="resetBtn" class="btn-danger">🔄 Reset (Serveur)</button>
+    <p class="menu-label">DOCUMENTS & SYNC</p>
+    <button id="pdfBtn" class="btn-primary">📄 Сформировать PDF A4</button>
+    <button id="saveBtn" class="btn-success">💾 Сохранить (Local)</button>
+    <button id="resetBtn" class="btn-danger">🔄 Сброс (Server)</button>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
